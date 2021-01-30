@@ -17,28 +17,28 @@
 
 package com.adobe.marketing.mobile;
 
-public class IdentityEdge {
-    private static final String LOG_TAG = "IdentityEdge";
+public class Identity {
+    private static final String LOG_TAG = "Identity";
 
-    private IdentityEdge() {}
+    private Identity() {}
 
     /**
-     * Returns the version of the {@code IdentityEdge} extension
+     * Returns the version of the {@code Identity} extension
      * @return The version as {@code String}
      */
     public static String extensionVersion() {
-        return IdentityEdgeConstants.EXTENSION_VERSION;
+        return IdentityConstants.EXTENSION_VERSION;
     }
 
     /**
      * Registers the extension with the Mobile SDK. This method should be called only once in your application class.
      */
     public static void registerExtension() {
-        MobileCore.registerExtension(IdentityEdgeExtension.class, new ExtensionErrorCallback<ExtensionError>() {
+        MobileCore.registerExtension(IdentityExtension.class, new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(ExtensionError extensionError) {
                 MobileCore.log(LoggingMode.ERROR, LOG_TAG,
-                        "There was an error registering the IdentityEdge extension: " + extensionError.getErrorName());
+                        "There was an error registering the Identity Edge extension: " + extensionError.getErrorName());
             }
         });
     }

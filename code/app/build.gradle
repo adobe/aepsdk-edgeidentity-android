@@ -26,7 +26,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation project(':identityedge')
-    implementation 'com.adobe.marketing.mobile:sdk-core:1+'
+    implementation 'com.adobe.marketing.mobile:core:1+'
+    implementation 'com.adobe.marketing.mobile:signal:1+'
     implementation 'com.adobe.marketing.mobile:edge:1+'
     implementation 'com.adobe.marketing.mobile:assurance:1+'
 }

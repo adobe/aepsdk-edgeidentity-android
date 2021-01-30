@@ -17,10 +17,10 @@
 
 package com.adobe.marketing.mobile;
 
-class IdentityEdgeConstants {
+class IdentityConstants {
 
     static final String EXTENSION_VERSION = "1.0.0-alpha-1";
 
 
-    private IdentityEdgeConstants() {}
+    private IdentityConstants() {}
 }

@@ -17,8 +17,8 @@
 
 package com.adobe.marketing.mobile;
 
-class IdentityEdgeExtension extends Extension {
-    protected IdentityEdgeExtension(ExtensionApi extensionApi) {
+class IdentityExtension extends Extension {
+    protected IdentityExtension(ExtensionApi extensionApi) {
         super(extensionApi);
     }
 
@@ -37,6 +37,6 @@ class IdentityEdgeExtension extends Extension {
      */
     @Override
     protected String getVersion() {
-        return IdentityEdgeConstants.EXTENSION_VERSION;
+        return IdentityConstants.EXTENSION_VERSION;
     }
 }

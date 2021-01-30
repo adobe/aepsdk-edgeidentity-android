@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-public class IdentityEdgeExtensionVersionTest {
+public class IdentityExtensionVersionTest {
     private static String GRADLE_PROPERTIES_PATH = "../gradle.properties";
     private static String PROPERTY_MODULE_VERSION = "moduleVersion";
 
@@ -36,16 +36,16 @@ public class IdentityEdgeExtensionVersionTest {
     public void extensionVersion_verifyModuleVersionInPropertiesFile_asEqual() {
         Properties properties = loadProperties(GRADLE_PROPERTIES_PATH);
 
-        assertNotNull(IdentityEdge.extensionVersion());
-        assertFalse(IdentityEdge.extensionVersion().isEmpty());
+        assertNotNull(Identity.extensionVersion());
+        assertFalse(Identity.extensionVersion().isEmpty());
 
         String moduleVersion = properties.getProperty(PROPERTY_MODULE_VERSION);
         assertNotNull(moduleVersion);
         assertFalse(moduleVersion.isEmpty());
 
         assertEquals(String.format("Expected version to match in gradle.properties (%s) and extensionVersion API (%s)",
-                moduleVersion, IdentityEdge.extensionVersion()),
-                moduleVersion, IdentityEdge.extensionVersion());
+                moduleVersion, Identity.extensionVersion()),
+                moduleVersion, Identity.extensionVersion());
     }
 
 

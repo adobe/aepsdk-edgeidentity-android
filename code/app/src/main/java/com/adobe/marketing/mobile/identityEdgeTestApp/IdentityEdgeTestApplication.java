@@ -22,7 +22,7 @@ import android.util.Log;
 
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.Assurance;
-import com.adobe.marketing.mobile.IdentityEdge;
+import com.adobe.marketing.mobile.Identity;
 import com.adobe.marketing.mobile.Edge;
 import com.adobe.marketing.mobile.InvalidInitException;
 import com.adobe.marketing.mobile.LoggingMode;
@@ -52,7 +52,7 @@ public class IdentityEdgeTestApplication extends Application {
         // register Adobe core extensions
         try {
             Signal.registerExtension();
-            IdentityEdge.registerExtension();
+            Identity.registerExtension();
             Edge.registerExtension();
             Assurance.registerExtension();
         } catch (InvalidInitException e) {
