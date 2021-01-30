@@ -28,7 +28,7 @@ class IdentityExtension extends Extension {
      */
     @Override
     protected String getName() {
-        return "com.adobe.module.identity";
+        return IdentityConstants.EXTENSION_NAME;
     }
 
     /**

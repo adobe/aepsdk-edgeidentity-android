@@ -19,6 +19,7 @@ package com.adobe.marketing.mobile;
 
 class IdentityConstants {
 
+    static final String EXTENSION_NAME = "com.adobe.module.identity";
     static final String EXTENSION_VERSION = "1.0.0-alpha-1";
 
 
