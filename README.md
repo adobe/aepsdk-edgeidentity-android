@@ -13,7 +13,7 @@ Integrate the Identity Edge extension into your app by including the following i
 ```
 implementation 'com.adobe.marketing.mobile:identityedge:1.+'
 implementation 'com.adobe.marketing.mobile:edge:1.+'
-implementation 'com.adobe.marketing.mobile:sdk-core:1.+'
+implementation 'com.adobe.marketing.mobile:core:1.+'
 ```
 
 ### Development
