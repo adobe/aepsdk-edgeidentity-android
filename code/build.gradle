@@ -21,18 +21,7 @@ allprojects {
         google()
         jcenter()
         maven {
-            url artifactoryUrl
-            credentials {
-                username = artifactoryUserName
-                password = artifactoryPassword
-            }
-        }
-        maven {
-            url artifactorySnapshotUrl
-            credentials {
-                username = artifactoryUserName
-                password = artifactoryPassword
-            }
+            url "https://eaps.bintray.com/mobileservicesdk"
         }
     }
 

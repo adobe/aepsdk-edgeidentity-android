@@ -34,7 +34,7 @@ class ListenerGenericIdentityRequestContent extends ExtensionListener {
      * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
      * and with event source {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}  is dispatched through eventHub.
      *
-     * @param event the edge request {@link Event} to be processed
+     * @param event the generic identity request content {@link Event} to be processed
      */
     @Override
     public void hear(final Event event) {
@@ -47,7 +47,7 @@ class ListenerGenericIdentityRequestContent extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityEdgeConstants.LOG_TAG,
-                    "The parent extension, associated with the ListenerGenericIdentityRequestContent is null, ignoring the configuration response content event.");
+                    "The parent extension, associated with the ListenerGenericIdentityRequestContent is null, ignoring the generic identity request content event.");
             return;
         }
 

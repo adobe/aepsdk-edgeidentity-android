@@ -34,7 +34,7 @@ class ListenerConfigurationResponseContent extends ExtensionListener {
      * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#CONFIGURATION}
      * and with event source {@link IdentityEdgeConstants.EventSource#RESPONSE_CONTENT}  is dispatched through eventHub.
      *
-     * @param event the edge request {@link Event} to be processed
+     * @param event the configuration response content {@link Event} to be processed
      */
     @Override
     public void hear(final Event event) {

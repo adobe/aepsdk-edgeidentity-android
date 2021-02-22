@@ -22,7 +22,7 @@ public class IdentityEdge {
     private IdentityEdge() {}
 
     /**
-     * Returns the version of the {@code Identity} extension
+     * Returns the version of the {@link IdentityEdge} extension
      * @return The version as {@code String}
      */
     public static String extensionVersion() {
