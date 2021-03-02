@@ -1,11 +1,14 @@
 version: 2.1
- 
+orbs:
+  android: circleci/android@1.0
+
 # Workflows orchestrate a set of jobs to be run;
 workflows:
   version: 2
   build-test-deploy:
     jobs:
       - build-and-test
+      - functional-test
       - hold:
           filters:
             branches:
@@ -14,6 +17,7 @@ workflows:
           type: approval
           requires:
            - build-and-test
+           - functional-test
       - publish:
           requires:
             - hold
@@ -48,6 +52,27 @@ jobs:
           path: ci/unit-test/build/reports
       - store_test_results:
           path: ci/unit-test/build/test-results
+
+functional-test:
+    executor:
+      name: android/android-machine
+      resource-class: large
+    steps:
+      - checkout
+      - android/start-emulator-and-run-tests:
+          #   It should match the name seen in the "sdkmanager --list" output
+          system-image: system-images;android-29;default;x86
+          #   The command to be run, while waiting for emulator startup
+          post-emulator-launch-assemble-command: ./code/gradlew -p code/identityedge assemblePhone
+          #   The test command
+          test-command: ./code/gradlew -p code/identityedge connectedPhoneDebugAndroidTest platformFunctionalTestJacocoReport
+      - run:
+          name: Copy Functional Test files
+          command: mkdir -p ./ci/functional-test && cp -r ./code/identityedge/build ./ci/functional-test
+      - store_artifacts:
+          path: ci/functional-test/build/reports
+      - store_test_results:
+          path: ci/functional-test/build/outputs/androidTest-results
 
   publish:
     docker:
