@@ -53,7 +53,7 @@ jobs:
       - store_test_results:
           path: ci/unit-test/build/test-results
 
-functional-test:
+  functional-test:
     executor:
       name: android/android-machine
       resource-class: large
