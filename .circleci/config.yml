@@ -63,12 +63,10 @@ jobs:
           #   It should match the name seen in the "sdkmanager --list" output
           system-image: system-images;android-29;default;x86
           #   The command to be run, while waiting for emulator startup
-          post-emulator-launch-assemble-command: ./code/gradlew -p code/identityedge assemblePhone
+          post-emulator-launch-assemble-command: make ci-build
           #   The test command
-          test-command: ./code/gradlew -p code/identityedge connectedPhoneDebugAndroidTest platformFunctionalTestJacocoReport
-      - run:
-          name: Copy Functional Test files
-          command: mkdir -p ./ci/functional-test && cp -r ./code/identityedge/build ./ci/functional-test
+          test-command: make ci-functional-test
+      
       - store_artifacts:
           path: ci/functional-test/build/reports
       - store_test_results:
