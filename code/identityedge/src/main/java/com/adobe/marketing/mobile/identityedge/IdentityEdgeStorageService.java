@@ -29,6 +29,10 @@ import java.util.Map;
 class IdentityEdgeStorageService {
     private static final String LOG_TAG = "IdentityEdgeStorageService";
 
+    /**
+     * Loads identity edge properties from local storage, returns null if not found.
+     * @return properties stored in local storage if present, otherwise null.
+     */
     static IdentityEdgeProperties loadPropertiesFromPersistence() {
         final SharedPreferences sharedPreferences = getSharedPreference();
         if (sharedPreferences == null) {
@@ -54,6 +58,10 @@ class IdentityEdgeStorageService {
         }
     }
 
+    /**
+     * Saves the properties to local storage
+     * @param properties properties to be stored
+     */
     static void savePropertiesToPersistence(final IdentityEdgeProperties properties) {
         SharedPreferences sharedPreferences = getSharedPreference();
         if (sharedPreferences == null) {
