@@ -11,10 +11,15 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
+import com.adobe.marketing.mobile.AdobeCallback;
+import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
@@ -40,5 +45,37 @@ public class IdentityEdge {
                         "There was an error registering the Identity Edge extension: " + extensionError.getErrorName());
             }
         });
+    }
+
+    /**
+     * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
+     * @param callback callback which will be invoked once Experience Cloud ID is available
+     */
+    public static void getExperienceCloudId(final AdobeCallback<String> callback) {
+        final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
+                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventSource.REQUEST_CONTENT).build();
+
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Identity Edge request event with error: " + extensionError.getErrorName());
+            }
+        };
+
+        MobileCore.dispatchEventWithResponseCallback(event, new AdobeCallback<Event>() {
+            @Override
+            public void call(Event responseEvent) {
+                if (responseEvent == null || responseEvent.getEventData() == null) {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Response event for event " + event.getUniqueIdentifier() + " was null.");
+                    return;
+                }
+
+                final Map<String, Object> data = responseEvent.getEventData();
+                // TODO: Parse
+                final IdentityMap identityMap = IdentityMap.fromEventData(data);
+
+            }
+        }, errorCallback);
     }
 }

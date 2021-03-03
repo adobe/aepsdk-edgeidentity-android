@@ -19,8 +19,12 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.Map;
+
 
 class IdentityEdgeExtension extends Extension {
+    private final String LOG_TAG = "IdentityEdgeExtension";
+    private IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
 
     /**
      * Constructor.
@@ -78,9 +82,47 @@ class IdentityEdgeExtension extends Extension {
         // TODO
     }
 
+    /**
+     * Handles events requesting for identifiers. Dispatches response event containing the identifiers. Called by listener registered with event hub.
+     * @param event the identity request event
+     */
     void handleIdentityRequest(final Event event) {
-        // TODO
+        if (!canProcessEvents(event)) { return; }
+
+        Map<String, Object> xdmData = state.getIdentityEdgeProperties().toXDMData(false);
+        Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
+                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY)
+                .setEventData(xdmData)
+                .build();
+
+        MobileCore.dispatchResponseEvent(responseEvent, event, new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Identity Edge response event for event " +
+                        event.getUniqueIdentifier() +
+                        " with error " +
+                        extensionError.getErrorName());
+            }
+        });
     }
 
+    /**
+     * Determines if Identity Edge is ready to handle events, this is determined by if the Identity Edge extension has booted up
+     * @param event An {@link Event}
+     * @return True if we can process events, false otherwise
+     */
+    private boolean canProcessEvents(final Event event) {
+        if (state.hasBooted()) { return true; } // we have booted, return true
+
+        final ExtensionApi extensionApi = super.getApi();
+        if (extensionApi == null ) { return false; }
+
+        if (state.bootupIfReady()) {
+            extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), null, null);
+            return true;
+        }
+
+        return false; // cannot handle any events until we have booted
     }
 }
