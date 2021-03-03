@@ -30,6 +30,16 @@ public class ECIDTests {
     }
 
     @Test
+    public void testECID_correctWithConstructor() {
+        // setup
+        ECID ecid = new ECID();
+
+        // test
+        ECID constructedEcid = new ECID(ecid.getEcidString());
+        assertEquals(ecid.getEcidString(), constructedEcid.getEcidString());
+    }
+
+    @Test
     public void testECID_onlyContainsNumbers() {
         // contains only digits
         String regex = "[0-9]+";
