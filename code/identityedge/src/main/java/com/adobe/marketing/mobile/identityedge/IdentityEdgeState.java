@@ -30,7 +30,7 @@ class IdentityEdgeState {
      *  Creates a new {@link IdentityEdgeState} with the given {@link IdentityEdgeProperties}
      * @param identityProperties identity edge properties
      */
-    public IdentityEdgeState(final IdentityEdgeProperties identityProperties) {
+    IdentityEdgeState(final IdentityEdgeProperties identityProperties) {
         this.identityProperties = identityProperties;
     }
 
@@ -44,7 +44,7 @@ class IdentityEdgeState {
     /**
      * @return Returns true if IdentityEdge has booted, false otherwise
      */
-    public boolean hasBooted() {
+    boolean hasBooted() {
         return hasBooted;
     }
 
