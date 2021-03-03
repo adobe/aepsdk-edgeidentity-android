@@ -51,8 +51,7 @@ class IdentityEdgeExtension extends Extension {
             }
         };
 
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.CONFIGURATION, IdentityEdgeConstants.EventSource.RESPONSE_CONTENT, ListenerConfigurationResponseContent.class, listenerErrorCallback);
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY, ListenerIdentityRequestIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY, ListenerIdentityRequestIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
     }
 
@@ -83,7 +82,5 @@ class IdentityEdgeExtension extends Extension {
         // TODO
     }
 
-    void handleConfigurationResponse(final Event event) {
-        // TODO
     }
 }
