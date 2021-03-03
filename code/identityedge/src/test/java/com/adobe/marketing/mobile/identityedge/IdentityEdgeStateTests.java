@@ -74,22 +74,6 @@ public class IdentityEdgeStateTests {
     }
 
     @Test
-    public void testIdentityEdgeState_BootupIfReadyECIDExisting() {
-        // setup
-        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
-        ECID existingECID = new ECID();
-        state.getIdentityEdgeProperties().setECID(existingECID);
-
-        // test
-        boolean result = state.bootupIfReady();
-
-        // verify
-        assertTrue(result);
-        assertEquals(existingECID.getEcidString(), state.getIdentityEdgeProperties().getECID().getEcidString());
-    }
-
-
-    @Test
     public void testIdentityEdgeState_BootupIfReadyLoadsFromPersistence() {
         // setup
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
