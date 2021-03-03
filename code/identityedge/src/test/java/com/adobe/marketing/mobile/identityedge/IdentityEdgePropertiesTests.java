@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
-import com.adobe.marketing.mobile.MobilePrivacyStatus;
-
 import org.junit.Test;
 
 import java.util.ArrayList;
