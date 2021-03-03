@@ -58,7 +58,7 @@ class IdentityEdgeProperties {
      * Sets the current {@link ECID}
      * @param ecid the new {@link ECID}
      */
-    void setECID(ECID ecid) {
+    void setECID(final ECID ecid) {
         this.ecid = ecid;
     }
 
