@@ -15,10 +15,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.adobe.marketing.mobile.Event;
-import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.MobilePrivacyStatus;
 
 import org.json.JSONObject;
 import org.junit.Before;
@@ -30,15 +27,11 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
@@ -72,14 +65,14 @@ public class IdentityEdgeStateTests {
     public void testIdentityEdgeState_BootupIfReadyGeneratesECID() {
         // setup
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
-        assertNull(state.getIdentityProperties().getECID());
+        assertNull(state.getIdentityEdgeProperties().getECID());
 
         // test
         boolean result = state.bootupIfReady();
 
         // verify
         assertTrue(result);
-        assertNotNull(state.getIdentityProperties().getECID());
+        assertNotNull(state.getIdentityEdgeProperties().getECID());
     }
 
     @Test
@@ -87,14 +80,14 @@ public class IdentityEdgeStateTests {
         // setup
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
         ECID existingECID = new ECID();
-        state.getIdentityProperties().setECID(existingECID);
+        state.getIdentityEdgeProperties().setECID(existingECID);
 
         // test
         boolean result = state.bootupIfReady();
 
         // verify
         assertTrue(result);
-        assertEquals(existingECID.getEcidString(), state.getIdentityProperties().getECID().getEcidString());
+        assertEquals(existingECID.getEcidString(), state.getIdentityEdgeProperties().getECID().getEcidString());
     }
 
 
@@ -114,6 +107,6 @@ public class IdentityEdgeStateTests {
 
         // verify
         assertTrue(result);
-        assertEquals(persistedProps.getECID().getEcidString(), state.getIdentityProperties().getECID().getEcidString());
+        assertEquals(persistedProps.getECID().getEcidString(), state.getIdentityEdgeProperties().getECID().getEcidString());
     }
 }

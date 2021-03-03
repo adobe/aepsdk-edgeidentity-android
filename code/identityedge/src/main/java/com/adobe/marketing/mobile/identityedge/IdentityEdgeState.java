@@ -37,7 +37,7 @@ class IdentityEdgeState {
     /**
      * @return The current {@link IdentityEdgeProperties} for this identity state
      */
-    IdentityEdgeProperties getIdentityProperties() {
+    IdentityEdgeProperties getIdentityEdgeProperties() {
         return identityProperties;
     }
 
