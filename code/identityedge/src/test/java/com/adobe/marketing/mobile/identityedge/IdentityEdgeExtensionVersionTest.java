@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-public class IdentityExtensionVersionTest {
+public class IdentityEdgeExtensionVersionTest {
     private static String GRADLE_PROPERTIES_PATH = "../gradle.properties";
     private static String PROPERTY_MODULE_VERSION = "moduleVersion";
 
