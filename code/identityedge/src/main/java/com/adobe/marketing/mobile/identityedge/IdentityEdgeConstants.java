@@ -29,7 +29,6 @@ class IdentityEdgeConstants {
     final class EventType {
         static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
         static final String IDENTITY_EDGE = "com.adobe.eventType.identityEdge";
-        static final String CONFIGURATION = "com.adobe.eventType.configuration";
         static final String IDENTITY = "com.adobe.eventType.identity";
         private EventType() { }
     }
@@ -46,7 +45,6 @@ class IdentityEdgeConstants {
     }
 
     final class Configuration {
-        static final String GLOBAL_CONFIG_PRIVACY = "global.privacy";
         private Configuration() { }
     }
 

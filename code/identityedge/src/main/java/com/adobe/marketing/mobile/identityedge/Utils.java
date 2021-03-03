@@ -276,21 +276,4 @@ class Utils {
         return deepCopy;
     }
 
-    /**
-     * Returns a {@link MobilePrivacyStatus} object based on the provided {@code text}.
-     * <p>
-     * If the text provided is not valid, unknown will be returned.
-     *
-     * @param text {@link String} to be converted to a {@code MobilePrivacyStatus} object
-     * @return {@code MobilePrivacyStatus} object equivalent to the provided text
-     */
-    static MobilePrivacyStatus privacyFromString(final String text) {
-        for (MobilePrivacyStatus b : MobilePrivacyStatus.values()) {
-            if (b.getValue().equalsIgnoreCase(text)) {
-                return b;
-            }
-        }
-
-        return MobilePrivacyStatus.UNKNOWN;
-    }
 }

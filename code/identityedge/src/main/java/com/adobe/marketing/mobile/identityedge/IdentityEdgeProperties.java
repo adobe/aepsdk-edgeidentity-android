@@ -27,15 +27,11 @@ class IdentityEdgeProperties {
      */
     class PersistentKeys {
         static final String ECID = "ecid";
-        static final String PRIVACY_STATUS = "privacy.status";
         private PersistentKeys(){ }
     }
 
     // The current Experience Cloud ID
     private ECID ecid;
-
-    // The current privacy status provided by the Configuration extension, defaults to `unknown`
-    private MobilePrivacyStatus privacyStatus = Utils.privacyFromString(IdentityEdgeConstants.Defaults.DEFAULT_MOBILE_PRIVACY);
 
     IdentityEdgeProperties() { }
 
@@ -53,7 +49,6 @@ class IdentityEdgeProperties {
             if (ecidStr != null) {
                 ecid = new ECID(ecidStr);
             }
-            privacyStatus = Utils.privacyFromString((String) map.get(PersistentKeys.PRIVACY_STATUS));
         } catch (ClassCastException e) {
             // add log
         }
@@ -76,22 +71,6 @@ class IdentityEdgeProperties {
     }
 
     /**
-     * Retrieves the current {@link MobilePrivacyStatus}
-     * @return current {@link MobilePrivacyStatus}
-     */
-    public MobilePrivacyStatus getPrivacyStatus() {
-        return privacyStatus;
-    }
-
-    /**
-     * Sets the current privacy status
-     * @param privacyStatus a privacy status
-     */
-    public void setPrivacyStatus(MobilePrivacyStatus privacyStatus) {
-        this.privacyStatus = privacyStatus;
-    }
-
-    /**
      * Converts this instance into a map representation
      * @return this identity edge properties as a map
      */
@@ -100,9 +79,6 @@ class IdentityEdgeProperties {
 
         if (ecid != null) {
             map.put(PersistentKeys.ECID, ecid.getEcidString());
-        }
-        if (privacyStatus != null) {
-            map.put(PersistentKeys.PRIVACY_STATUS, privacyStatus.getValue());
         }
 
         return map;

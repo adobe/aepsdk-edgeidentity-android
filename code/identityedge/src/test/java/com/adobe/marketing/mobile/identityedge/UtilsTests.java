@@ -161,13 +161,4 @@ public class UtilsTests {
         assertEquals(2, ((Map<String, Object>)nestedDeepCopy.get(0).get("nestedMap")).size());
     }
 
-    @Test
-    public void testUtils_PrivacyFromString() {
-        assertEquals(MobilePrivacyStatus.OPT_IN, Utils.privacyFromString("optedin"));
-        assertEquals(MobilePrivacyStatus.OPT_OUT, Utils.privacyFromString("optedout"));
-        assertEquals(MobilePrivacyStatus.UNKNOWN, Utils.privacyFromString("optunknown"));
-        assertEquals(MobilePrivacyStatus.UNKNOWN, Utils.privacyFromString(null));
-        assertEquals(MobilePrivacyStatus.UNKNOWN, Utils.privacyFromString("something else"));
-    }
-
 }

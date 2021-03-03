@@ -43,28 +43,24 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
-        props.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
 
         // test
         Map<String, Object> map = props.toMap();
 
         // verify
         assertEquals(props.getECID().getEcidString(), map.get(IdentityEdgeProperties.PersistentKeys.ECID));
-        assertEquals(props.getPrivacyStatus().getValue(), map.get(IdentityEdgeProperties.PersistentKeys.PRIVACY_STATUS));
     }
 
     @Test
     public void testIdentityEdgeProperties_toMapMissingECID() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
 
         // test
         Map<String, Object> map = props.toMap();
 
         // verify
         assertNull(map.get(IdentityEdgeProperties.PersistentKeys.ECID));
-        assertEquals(props.getPrivacyStatus().getValue(), map.get(IdentityEdgeProperties.PersistentKeys.PRIVACY_STATUS));
     }
 
     @Test
@@ -78,7 +74,6 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertEquals(props.getECID().getEcidString(), map.get(IdentityEdgeProperties.PersistentKeys.ECID));
-        assertEquals(MobilePrivacyStatus.UNKNOWN.getValue(), map.get(IdentityEdgeProperties.PersistentKeys.PRIVACY_STATUS));
     }
 
     @Test
@@ -86,7 +81,6 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
-        props.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
 
         // test
         Map<String, Object> map = props.toMap();
@@ -94,14 +88,12 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertEquals(map.get(IdentityEdgeProperties.PersistentKeys.ECID), loadedProps.getECID().getEcidString());
-        assertEquals(map.get(IdentityEdgeProperties.PersistentKeys.PRIVACY_STATUS), loadedProps.getPrivacyStatus().getValue());
     }
 
     @Test
     public void testIdentityEdgeProperties_fromMapMissingECID() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setPrivacyStatus(MobilePrivacyStatus.OPT_IN);
 
         // test
         Map<String, Object> map = props.toMap();
@@ -109,7 +101,6 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertNull(loadedProps.getECID());
-        assertEquals(map.get(IdentityEdgeProperties.PersistentKeys.PRIVACY_STATUS), loadedProps.getPrivacyStatus().getValue());
     }
 
     @Test
@@ -124,7 +115,6 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertEquals(map.get(IdentityEdgeProperties.PersistentKeys.ECID), loadedProps.getECID().getEcidString());
-        assertEquals(MobilePrivacyStatus.UNKNOWN, loadedProps.getPrivacyStatus());
     }
 
     @Test

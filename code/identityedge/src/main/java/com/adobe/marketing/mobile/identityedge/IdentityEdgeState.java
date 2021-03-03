@@ -50,13 +50,9 @@ class IdentityEdgeState {
 
     /**
      * Completes init for the Identity Edge extension.
-     * @param configSharedState the current configuration shared state available at registration time
      * @return True if we should share state after bootup, false otherwise
      */
-    boolean bootupIfReady(final Map<String, Object> configSharedState) {
-        if (configSharedState == null) {
-            return false;
-        }
+    boolean bootupIfReady() {
         // Load properties from local storage
         identityProperties = IdentityEdgeStorageService.loadPropertiesFromPersistence();
 
@@ -64,66 +60,14 @@ class IdentityEdgeState {
             identityProperties = new IdentityEdgeProperties();
         }
 
-        // Load privacy status
-        String privacyStr = (String) configSharedState.get(IdentityEdgeConstants.Configuration.GLOBAL_CONFIG_PRIVACY);
-        if (privacyStr == null) {
-            privacyStr = MobilePrivacyStatus.UNKNOWN.getValue();
-        }
-
-        final MobilePrivacyStatus privacyStatus = Utils.privacyFromString(privacyStr);
-        identityProperties.setPrivacyStatus(privacyStatus);
-
         // Generate new ECID if privacy status allows
-        if (identityProperties.getPrivacyStatus() != MobilePrivacyStatus.OPT_OUT && identityProperties.getECID() == null) {
+        if (identityProperties.getECID() == null) {
             identityProperties.setECID(new ECID());
         }
 
         hasBooted = true;
         MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity Edge has successfully booted up");
         return true;
-    }
-
-    /**
-     * Handles the configuration response event and determines if we should share XDM state based on the event data
-     * @param event an {@link Event}
-     * @return true XDM shared state should be created
-     */
-    boolean processPrivacyChange(final Event event) {
-        if (event == null) {
-            return false;
-        }
-
-        final Map<String, Object> eventData = event.getEventData();
-        if (eventData == null) {
-            return false;
-        }
-
-        String privacyStr = (String) eventData.get(IdentityEdgeConstants.Configuration.GLOBAL_CONFIG_PRIVACY);
-        if (privacyStr == null) {
-            privacyStr = MobilePrivacyStatus.UNKNOWN.getValue();
-        }
-
-        final MobilePrivacyStatus newPrivacyStatus = Utils.privacyFromString(privacyStr);
-
-        if (newPrivacyStatus == identityProperties.getPrivacyStatus()) {
-            // privacy did not change, no need to create shared state
-            return false;
-        }
-
-        identityProperties.setPrivacyStatus(newPrivacyStatus);
-
-        if (newPrivacyStatus == MobilePrivacyStatus.OPT_OUT) {
-            identityProperties.setECID(null);
-            IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
-            return true;
-        } else if (identityProperties.getECID() == null) {
-            // When changing privacy status from optedout, need to generate a new Experience Cloud ID for the user
-            identityProperties.setECID(new ECID());
-            IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
-            return true;
-        }
-
-        return false;
     }
 
 }
