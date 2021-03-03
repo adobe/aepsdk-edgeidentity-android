@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Represents a type which contains instances variables for the Identity extension
+ * Represents a type which contains instances variables for the Identity Edge extension
  */
 class IdentityEdgeProperties {
 
