@@ -34,8 +34,8 @@ class IdentityEdgeConstants {
     }
 
     final class EventNames {
-        static final String IDENTITY_REQUEST_IDENTITY_ECID = "Identity Request ECID";
-        static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "IDENTITY_RESPONSE_CONTENT_ONE_TIME";
+        static final String IDENTITY_REQUEST_IDENTITY_ECID = "Identity Edge Request ECID";
+        static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Identity Edge Response Content One Time";
         private EventNames() { }
     }
 
@@ -44,23 +44,9 @@ class IdentityEdgeConstants {
         private EventDataKeys() { }
     }
 
-    final class Configuration {
-        private Configuration() { }
-    }
-
-    final class Defaults {
-        static final String DEFAULT_MOBILE_PRIVACY = "optunknown";
-        private Defaults() { }
-    }
-
     final class Namespaces {
         static final String ECID = "ECID";
         private Namespaces() { }
-    }
-
-    final class SharedStateKeys {
-        static final String CONFIGURATION = "com.adobe.module.configuration";
-        private SharedStateKeys() { }
     }
 
     final class XDMKeys {
