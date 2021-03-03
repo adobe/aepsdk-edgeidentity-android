@@ -22,14 +22,58 @@ class IdentityEdgeConstants {
         static final String REQUEST_IDENTITY = "com.adobe.eventSource.requestIdentity";
         static final String REQUEST_CONTENT = "com.adobe.eventSource.requestContent";
         static final String RESPONSE_CONTENT = "com.adobe.eventSource.responseContent";
+        static final String RESPONSE_IDENTITY = "com.adobe.eventSource.responseIdentity";
         private EventSource() { }
     }
 
     final class EventType {
         static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
+        static final String IDENTITY_EDGE = "com.adobe.eventType.identityEdge";
         static final String CONFIGURATION = "com.adobe.eventType.configuration";
         static final String IDENTITY = "com.adobe.eventType.identity";
         private EventType() { }
+    }
+
+    final class EventNames {
+        static final String IDENTITY_REQUEST_IDENTITY_ECID = "Identity Request ECID";
+        static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "IDENTITY_RESPONSE_CONTENT_ONE_TIME";
+        private EventNames() { }
+    }
+
+    final class EventDataKeys {
+        static final String VISITOR_ID_ECID = "mid";
+        private EventDataKeys() { }
+    }
+
+    final class Configuration {
+        static final String GLOBAL_CONFIG_PRIVACY = "global.privacy";
+        private Configuration() { }
+    }
+
+    final class Defaults {
+        static final String DEFAULT_MOBILE_PRIVACY = "optunknown";
+        private Defaults() { }
+    }
+
+    final class Namespaces {
+        static final String ECID = "ECID";
+        private Namespaces() { }
+    }
+
+    final class SharedStateKeys {
+        static final String CONFIGURATION = "com.adobe.module.configuration";
+        private SharedStateKeys() { }
+    }
+
+    final class XDMKeys {
+        static final String IDENTITY_MAP = "identityMap";
+        private XDMKeys() { }
+    }
+
+    final class DataStoreKey {
+        static final String DATASTORE_NAME = "com.adobe.identityedge";
+        static final String IDENTITY_PROPERTIES = "identity.properties";
+        private DataStoreKey() { }
     }
 
     private IdentityEdgeConstants() {}
