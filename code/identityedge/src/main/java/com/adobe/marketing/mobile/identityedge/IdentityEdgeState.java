@@ -22,7 +22,7 @@ import java.util.Map;
  * Manages the business logic of the Identity Edge extension
  */
 class IdentityEdgeState {
-    private String LOG_TAG = "IdentityState";
+    private String LOG_TAG = "IdentityEdgeState";
     private boolean hasBooted = false;
     private IdentityEdgeProperties identityProperties;
 
