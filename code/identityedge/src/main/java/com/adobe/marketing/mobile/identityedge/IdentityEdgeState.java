@@ -83,7 +83,11 @@ class IdentityEdgeState {
         return true;
     }
 
-    // Return true if should share state
+    /**
+     * Handles the configuration response event and determines if we should share XDM state based on the event data
+     * @param event an {@link Event}
+     * @return true XDM shared state should be created
+     */
     boolean processPrivacyChange(final Event event) {
         if (event == null) {
             return false;
