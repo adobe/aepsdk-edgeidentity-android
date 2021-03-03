@@ -66,7 +66,7 @@ class IdentityEdgeProperties {
      * Retrieves the current {@link ECID}
      * @return current {@link ECID}
      */
-    public ECID getECID() {
+    ECID getECID() {
         return ecid;
     }
 
