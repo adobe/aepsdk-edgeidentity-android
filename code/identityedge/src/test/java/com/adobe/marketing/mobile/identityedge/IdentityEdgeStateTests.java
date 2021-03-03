@@ -80,7 +80,7 @@ public class IdentityEdgeStateTests {
 
         IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
         persistedProps.setECID(new ECID());
-        final JSONObject jsonObject = new JSONObject(persistedProps.toMap());
+        final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
         final String propsJSON = jsonObject.toString();
         Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
 

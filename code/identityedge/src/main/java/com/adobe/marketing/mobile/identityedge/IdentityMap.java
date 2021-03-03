@@ -68,6 +68,15 @@ class IdentityMap {
     }
 
     /**
+     * Gets the IdentityItem for the namespace
+     * @param namespace namespace for the id
+     * @return IdentityItem for the namespace, null if not found
+     */
+    List<Map<String, Object>> getIdentityItemForNamespace(final String namespace) {
+        return identityItems.get(namespace);
+    }
+
+    /**
      * Add an identity item which is used to clearly distinguish people that are interacting
      * with digital experiences.
      *
@@ -148,7 +157,23 @@ class IdentityMap {
         return identityItems;
     }
 
-    static IdentityMap fromEventData(Map<String, Object> eventData) {
-        return null;
+    static IdentityMap fromData(Map<String, Object> data) {
+        final Map<String, Object> identityMapDict = (HashMap<String, Object>) data.get(IdentityEdgeConstants.XDMKeys.IDENTITY_MAP);
+        if (identityMapDict == null) { return null; }
+
+        final IdentityMap identityMap = new IdentityMap();
+
+        for (String namespace : identityMapDict.keySet()) {
+            try {
+                final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
+                for (Object idMap: idArr) {
+                    identityMap.addItemToMap(namespace, (Map<String, Object>) idMap);
+                }
+            } catch (ClassCastException e) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityMap from data.");
+            }
+        }
+
+        return identityMap;
     }
 }

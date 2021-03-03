@@ -76,7 +76,7 @@ class IdentityEdgeStorageService {
             return;
         }
 
-        final JSONObject jsonObject = new JSONObject(properties.toMap());
+        final JSONObject jsonObject = new JSONObject(properties.toXDMData(false));
         final String jsonString = jsonObject.toString();
         editor.putString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, jsonString);
         editor.apply();
