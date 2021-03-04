@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MobileCore.class})
@@ -67,6 +69,7 @@ public class IdentityEdgeStateTests {
 
         // test
         boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
 
         // verify
         assertTrue(result);
@@ -86,6 +89,7 @@ public class IdentityEdgeStateTests {
 
         // test
         boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, never()).apply();
 
         // verify
         assertTrue(result);
