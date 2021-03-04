@@ -158,6 +158,7 @@ class IdentityMap {
     }
 
     static IdentityMap fromData(Map<String, Object> data) {
+        if (data == null) { return null; }
         final Map<String, Object> identityMapDict = (HashMap<String, Object>) data.get(IdentityEdgeConstants.XDMKeys.IDENTITY_MAP);
         if (identityMapDict == null) { return null; }
 
