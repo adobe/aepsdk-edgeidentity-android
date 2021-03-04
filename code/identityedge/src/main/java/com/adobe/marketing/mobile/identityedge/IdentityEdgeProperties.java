@@ -11,8 +11,10 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
-import com.adobe.marketing.mobile.MobilePrivacyStatus;
+import com.adobe.marketing.mobile.LoggingMode;
+import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +24,7 @@ import java.util.Map;
  */
 class IdentityEdgeProperties {
 
-    /**
-     * Helper class to store datastore keys
-     */
-    class PersistentKeys {
-        static final String ECID = "ecid";
-        private PersistentKeys(){ }
-    }
+    private static final String LOG_TAG = "IdentityEdgeProperties";
 
     // The current Experience Cloud ID
     private ECID ecid;
@@ -37,21 +33,15 @@ class IdentityEdgeProperties {
 
     /**
      * Creates a identity edge properties instance based on the map
-     * @param map a map representing an identity edge properties instance
+     * @param xdmData a map representing an identity edge properties instance
      */
-    IdentityEdgeProperties(final Map<String, Object> map) {
-        if (map == null || map.isEmpty()) {
+    IdentityEdgeProperties(final Map<String, Object> xdmData) {
+        if (xdmData == null || xdmData.isEmpty()) {
             return;
         }
 
-        try {
-            final String ecidStr = (String) map.get(PersistentKeys.ECID);
-            if (ecidStr != null) {
-                ecid = new ECID(ecidStr);
-            }
-        } catch (ClassCastException e) {
-            // add log
-        }
+        IdentityMap identityMap = IdentityMap.fromData(xdmData);
+        ecid = readECIDFromIdentityMap(identityMap);
     }
 
     /**
@@ -68,20 +58,6 @@ class IdentityEdgeProperties {
      */
     ECID getECID() {
         return ecid;
-    }
-
-    /**
-     * Converts this instance into a map representation
-     * @return this identity edge properties as a map
-     */
-    Map<String, Object> toMap() {
-        final Map<String, Object> map = new HashMap<>();
-
-        if (ecid != null) {
-            map.put(PersistentKeys.ECID, ecid.getEcidString());
-        }
-
-        return map;
     }
 
     /**
@@ -103,6 +79,27 @@ class IdentityEdgeProperties {
         }
 
         return map;
+    }
+
+    /**
+     * Reads the ECID from an IdentityMap
+     * @param identityMap an IdentityMap
+     * @return ECID stored in the IdentityMap or null if not found
+     */
+    static ECID readECIDFromIdentityMap(IdentityMap identityMap) {
+        final List<Map<String, Object>>ecidArr = identityMap.getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+        if (ecidArr == null) { return null; }
+        final Map<String, Object> ecidDict = ecidArr.get(0);
+        if (ecidDict == null) { return null; }
+        String ecidStr = null;
+        try {
+            ecidStr = (String) ecidDict.get(IdentityEdgeConstants.XDMKeys.ID);
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create read ECID from IdentityMap");
+        }
+
+        if (ecidStr == null) { return null; }
+        return new ECID(ecidStr);
     }
 
 }

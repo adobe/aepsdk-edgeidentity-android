@@ -51,11 +51,12 @@ class IdentityEdgeConstants {
 
     final class XDMKeys {
         static final String IDENTITY_MAP = "identityMap";
+        static final String ID = "id";
         private XDMKeys() { }
     }
 
     final class DataStoreKey {
-        static final String DATASTORE_NAME = "com.adobe.identityedge";
+        static final String DATASTORE_NAME = EXTENSION_NAME;
         static final String IDENTITY_PROPERTIES = "identity.properties";
         private DataStoreKey() { }
     }

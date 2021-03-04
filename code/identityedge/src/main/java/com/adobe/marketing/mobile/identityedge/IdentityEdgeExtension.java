@@ -33,9 +33,7 @@ class IdentityEdgeExtension extends Extension {
      * Called during the Identity extension's registration.
      * The following listeners are registered during this extension's registration.
      * <ul>
-     *     <li> Listener {@link ListenerConfigurationResponseContent} to listen for event with eventType {@link IdentityEdgeConstants.EventType#CONFIGURATION}
-     *     and EventSource {@link IdentityEdgeConstants.EventSource#RESPONSE_CONTENT}</li>
-     *     <li> Listener {@link ListenerIdentityRequestIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY}
+     *     <li> Listener {@link ListenerIdentityRequestIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_IDENTITY}</li>
      *     <li> Listener {@link ListenerGenericIdentityRequestContent} to listen for event with eventType {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
      *  *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>

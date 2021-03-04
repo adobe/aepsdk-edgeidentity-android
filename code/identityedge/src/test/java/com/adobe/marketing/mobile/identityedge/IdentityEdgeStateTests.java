@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({MobileCore.class})
@@ -67,27 +69,12 @@ public class IdentityEdgeStateTests {
 
         // test
         boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
 
         // verify
         assertTrue(result);
         assertNotNull(state.getIdentityEdgeProperties().getECID());
     }
-
-    @Test
-    public void testIdentityEdgeState_BootupIfReadyECIDExisting() {
-        // setup
-        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
-        ECID existingECID = new ECID();
-        state.getIdentityEdgeProperties().setECID(existingECID);
-
-        // test
-        boolean result = state.bootupIfReady();
-
-        // verify
-        assertTrue(result);
-        assertEquals(existingECID.getEcidString(), state.getIdentityEdgeProperties().getECID().getEcidString());
-    }
-
 
     @Test
     public void testIdentityEdgeState_BootupIfReadyLoadsFromPersistence() {
@@ -96,12 +83,13 @@ public class IdentityEdgeStateTests {
 
         IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
         persistedProps.setECID(new ECID());
-        final JSONObject jsonObject = new JSONObject(persistedProps.toMap());
+        final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
         final String propsJSON = jsonObject.toString();
         Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
 
         // test
         boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, never()).apply();
 
         // verify
         assertTrue(result);
