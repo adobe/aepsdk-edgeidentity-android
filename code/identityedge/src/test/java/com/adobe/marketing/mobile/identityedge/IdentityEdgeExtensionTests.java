@@ -9,6 +9,7 @@ import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,7 @@ import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -119,21 +121,66 @@ public class IdentityEdgeExtensionTests {
     // ========================================================================================
 
     @Test
-    public void test_handleIdentityRequest_nullEvent() {
+    public void test_handleIdentityRequest_nullEvent_shouldNotThrow() {
         // test
         extension.handleIdentityRequest(null);
     }
+
     @Test
-    public void test_handleIdentityRequest() {
+    public void test_handleIdentityRequest_generatesNewECID() {
         // setup
         Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
-        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
         // test
         extension.handleIdentityRequest(event);
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchResponseEvent(responseEventCaptor.capture(), requestEventCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // verify response event containing ECID is dispatched
+        Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
+        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
+
+        assertNotNull(ecid);
+        assertTrue(ecid.getEcidString().length() > 0);
     }
 
-    // ========================================================================================
-    // handleConfigurationResponse
-    // ========================================================================================
+    @Test
+    public void test_handleIdentityRequest_loadsPersistedECID() {
+        // setup
+        final ECID existingECID = new ECID();
+        setupExistingIdentityEdgeProps(existingECID);
+
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+        final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+        // test
+        extension.handleIdentityRequest(event);
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchResponseEvent(responseEventCaptor.capture(), requestEventCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // verify response event containing ECID is dispatched
+        Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
+        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
+
+        assertEquals(existingECID.getEcidString(), ecid.getEcidString());
+    }
+
+    private void setupExistingIdentityEdgeProps(final ECID ecid) {
+        IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
+        persistedProps.setECID(ecid);
+        final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
+        final String propsJSON = jsonObject.toString();
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
+    }
+
+
 }

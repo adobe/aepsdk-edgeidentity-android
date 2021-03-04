@@ -46,4 +46,9 @@ class ECID {
     public String getEcidString() {
         return ecidString;
     }
+
+    @Override
+    public String toString() {
+        return ecidString;
+    }
 }

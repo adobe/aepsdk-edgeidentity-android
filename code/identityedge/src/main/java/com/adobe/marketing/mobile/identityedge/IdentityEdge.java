@@ -68,12 +68,18 @@ public class IdentityEdge {
             public void call(Event responseEvent) {
                 if (responseEvent == null || responseEvent.getEventData() == null) {
                     MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Response event for event " + event.getUniqueIdentifier() + " was null.");
+                    callback.call(null);
                     return;
                 }
 
-                final Map<String, Object> data = responseEvent.getEventData();
-                // TODO: Parse
-                final IdentityMap identityMap = IdentityMap.fromEventData(data);
+                final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
+                if (ecid != null) {
+                    callback.call(ecid.getEcidString());
+                } else {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read ECID from IdentityMap, returning null");
+                    callback.call(null);
+                }
 
             }
         }, errorCallback);
