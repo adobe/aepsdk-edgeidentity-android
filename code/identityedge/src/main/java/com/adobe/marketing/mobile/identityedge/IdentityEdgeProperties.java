@@ -87,6 +87,7 @@ class IdentityEdgeProperties {
      * @return ECID stored in the IdentityMap or null if not found
      */
     static ECID readECIDFromIdentityMap(IdentityMap identityMap) {
+        if (identityMap == null) { return null; }
         final List<Map<String, Object>>ecidArr = identityMap.getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
         if (ecidArr == null) { return null; }
         final Map<String, Object> ecidDict = ecidArr.get(0);
