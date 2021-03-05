@@ -36,7 +36,7 @@ class IdentityEdgeProperties {
      * @param xdmData a map representing an identity edge properties instance
      */
     IdentityEdgeProperties(final Map<String, Object> xdmData) {
-        if (xdmData == null || xdmData.isEmpty()) {
+        if (Utils.isNullOrEmpty(xdmData)) {
             return;
         }
 

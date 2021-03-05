@@ -60,7 +60,7 @@ class IdentityEdgeState {
             identityProperties = new IdentityEdgeProperties();
         }
 
-        // Generate new ECID if privacy status allows
+        // Generate new ECID on first launch
         if (identityProperties.getECID() == null) {
             identityProperties.setECID(new ECID());
             IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);

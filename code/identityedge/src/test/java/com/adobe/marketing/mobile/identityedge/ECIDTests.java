@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
 
 @SuppressWarnings("unchecked")
 public class ECIDTests {
@@ -37,6 +38,20 @@ public class ECIDTests {
         // test
         ECID constructedEcid = new ECID(ecid.getEcidString());
         assertEquals(ecid.getEcidString(), constructedEcid.getEcidString());
+    }
+
+    @Test
+    public void testECID_correctWithConstructor_null() {
+        // test
+        ECID constructedEcid = new ECID(null);
+        assertNotNull(constructedEcid.getEcidString());
+    }
+
+    @Test
+    public void testECID_correctWithConstructor_emptyString() {
+        // test
+        ECID constructedEcid = new ECID(null);
+        assertNotNull(constructedEcid.getEcidString());
     }
 
     @Test

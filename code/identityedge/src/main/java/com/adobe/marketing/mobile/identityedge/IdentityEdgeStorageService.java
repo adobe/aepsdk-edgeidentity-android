@@ -36,14 +36,14 @@ class IdentityEdgeStorageService {
     static IdentityEdgeProperties loadPropertiesFromPersistence() {
         final SharedPreferences sharedPreferences = getSharedPreference();
         if (sharedPreferences == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to load saved identity edge properties from persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to load saved identity properties from persistence.");
             return null;
         }
 
         final String jsonString = sharedPreferences.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null);
 
         if (jsonString == null) {
-            MobileCore.log(LoggingMode.VERBOSE, LOG_TAG, "No previous properties were stored in persistence. Current identity edge properties are null");
+            MobileCore.log(LoggingMode.VERBOSE, LOG_TAG, "No previous properties were stored in persistence. Current identity properties are null");
             return null;
         }
 
@@ -53,7 +53,7 @@ class IdentityEdgeStorageService {
             final IdentityEdgeProperties loadedProperties = new IdentityEdgeProperties(propertyMap);
             return loadedProperties;
         } catch (JSONException exception) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Serialization error while reading properties jsonString from persistence. Unable to load saved identity edge properties from persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Serialization error while reading properties jsonString from persistence. Unable to load saved identity properties from persistence.");
             return null;
         }
     }
@@ -65,14 +65,14 @@ class IdentityEdgeStorageService {
     static void savePropertiesToPersistence(final IdentityEdgeProperties properties) {
         SharedPreferences sharedPreferences = getSharedPreference();
         if (sharedPreferences == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to write identity edge properties to persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to write identity properties to persistence.");
             return;
         }
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         if (editor == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference Editor is null. Unable to write identity edge properties to persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference Editor is null. Unable to write identity properties to persistence.");
             return;
         }
 
@@ -92,13 +92,13 @@ class IdentityEdgeStorageService {
     private static SharedPreferences getSharedPreference() {
         final Application application = MobileCore.getApplication();
         if (application == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Application value is null. Unable to read/write consent data from persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Application value is null. Unable to read/write data from persistence.");
             return null;
         }
 
         final Context context = application.getApplicationContext();
         if (context == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Context value is null. Unable to read/write consent data from persistence.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Context value is null. Unable to read/write data from persistence.");
             return null;
         }
 
