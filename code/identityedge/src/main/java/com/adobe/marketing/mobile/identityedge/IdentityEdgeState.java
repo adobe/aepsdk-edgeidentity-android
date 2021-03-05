@@ -53,6 +53,7 @@ class IdentityEdgeState {
      * @return True if we should share state after bootup, false otherwise
      */
     boolean bootupIfReady() {
+        if (hasBooted) { return true; }
         // Load properties from local storage
         identityProperties = IdentityEdgeStorageService.loadPropertiesFromPersistence();
 

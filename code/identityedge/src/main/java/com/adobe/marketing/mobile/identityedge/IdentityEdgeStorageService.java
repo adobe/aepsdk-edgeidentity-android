@@ -76,6 +76,13 @@ class IdentityEdgeStorageService {
             return;
         }
 
+        if (properties == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity Properties are null, removing them from persistence.");
+            editor.remove(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES);
+            editor.apply();
+            return;
+        }
+
         final JSONObject jsonObject = new JSONObject(properties.toXDMData(false));
         final String jsonString = jsonObject.toString();
         editor.putString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, jsonString);
