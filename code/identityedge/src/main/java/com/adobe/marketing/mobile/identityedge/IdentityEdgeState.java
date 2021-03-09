@@ -53,6 +53,7 @@ class IdentityEdgeState {
      * @return True if we should share state after bootup, false otherwise
      */
     boolean bootupIfReady() {
+        if (hasBooted) { return true; }
         // Load properties from local storage
         identityProperties = IdentityEdgeStorageService.loadPropertiesFromPersistence();
 
@@ -60,7 +61,7 @@ class IdentityEdgeState {
             identityProperties = new IdentityEdgeProperties();
         }
 
-        // Generate new ECID if privacy status allows
+        // Generate new ECID on first launch
         if (identityProperties.getECID() == null) {
             identityProperties.setECID(new ECID());
             IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);

@@ -11,6 +11,9 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
+import com.adobe.marketing.mobile.LoggingMode;
+import com.adobe.marketing.mobile.MobileCore;
+
 import java.util.Locale;
 import java.util.UUID;
 
@@ -33,9 +36,15 @@ class ECID {
 
     /**
      * Creates a new ECID with the passed in string
-     * @param ecidString a valid ECID string representation
+     * @param ecidString a valid (38-digit UUID) ECID string representation, if null or empty a new ECID will be generated
      */
     ECID(final String ecidString) {
+        if (Utils.isNullOrEmpty(ecidString)) {
+            MobileCore.log(LoggingMode.DEBUG, IdentityEdgeConstants.LOG_TAG, "Creating an ECID with null or empty ecidString is not allowed, generating a new ECID.");
+            this.ecidString = new ECID().getEcidString();
+            return;
+        }
+
         this.ecidString = ecidString;
     }
 

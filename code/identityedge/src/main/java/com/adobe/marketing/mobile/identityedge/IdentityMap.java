@@ -77,13 +77,13 @@ class IdentityMap {
     }
 
     /**
-     * Add an identity item which is used to clearly distinguish people that are interacting
+     * Add an identity item which is used to clearly distinguish entities that are interacting
      * with digital experiences.
      *
      * @param namespace the namespace integration code or namespace ID of the identity
      * @param id identity of the consumer in the related namespace
      * @param state the state this identity is authenticated as for this observed ExperienceEvent.
-     *              Default is ambiguous.
+     *              Default is {@link AuthenticationState.AMBIGUOUS}.
      * @param primary Indicates this identity is the preferred identity. Is used as a hint to help
      *                systems better organize how identities are queried. Default is false.
      *
@@ -113,7 +113,7 @@ class IdentityMap {
     }
 
     /**
-     * Add an identity item which is used to clearly distinguish people that are interacting
+     * Add an identity item which is used to clearly distinguish entities that are interacting
      * with digital experiences. Uses default authentication state and primary as defined by the Experience Platform.
      *
      * @param namespace the namespace integration code or namespace ID of the identity
