@@ -109,7 +109,7 @@ public class IdentityEdgeTests {
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, dispatchedEvent.getName());
         assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
-        assertEquals(IdentityEdgeConstants.EventSource.REQUEST_CONTENT.toLowerCase(), dispatchedEvent.getSource());
+        assertEquals(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
         assertTrue(dispatchedEvent.getEventData().isEmpty());
 
         // verify callback responses
