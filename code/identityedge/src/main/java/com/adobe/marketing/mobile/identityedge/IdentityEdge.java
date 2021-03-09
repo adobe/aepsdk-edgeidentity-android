@@ -60,7 +60,7 @@ public class IdentityEdge {
 
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
                 IdentityEdgeConstants.EventType.IDENTITY_EDGE,
-                IdentityEdgeConstants.EventSource.REQUEST_CONTENT).build();
+                IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override

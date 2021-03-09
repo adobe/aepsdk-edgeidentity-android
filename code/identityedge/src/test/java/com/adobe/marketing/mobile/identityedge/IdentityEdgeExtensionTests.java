@@ -96,7 +96,7 @@ public class IdentityEdgeExtensionTests {
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY), eq(ListenerIdentityRequestIdentity.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.GENERIC_IDENTITY),
-                eq(IdentityEdgeConstants.EventSource.REQUEST_CONTENT), eq(ListenerGenericIdentityRequestContent.class), callbackCaptor.capture());
+                eq(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY), eq(ListenerGenericIdentityRequestContent.class), callbackCaptor.capture());
 
         // verify the callback
         ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
