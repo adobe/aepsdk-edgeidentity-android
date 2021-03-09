@@ -20,9 +20,6 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
 
