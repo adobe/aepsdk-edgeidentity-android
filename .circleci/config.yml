@@ -1,11 +1,14 @@
 version: 2.1
- 
+orbs:
+  android: circleci/android@1.0
+
 # Workflows orchestrate a set of jobs to be run;
 workflows:
   version: 2
   build-test-deploy:
     jobs:
-      - build-and-test
+      - build-and-unit-test
+      - functional-test
       - hold:
           filters:
             branches:
@@ -13,13 +16,14 @@ workflows:
                 - main
           type: approval
           requires:
-           - build-and-test
+           - build-and-unit-test
+           - functional-test
       - publish:
           requires:
             - hold
  
 jobs:
-  build-and-test:
+  build-and-unit-test:
     working_directory: ~/code
     docker:
       - image: circleci/android:api-29
@@ -48,6 +52,25 @@ jobs:
           path: ci/unit-test/build/reports
       - store_test_results:
           path: ci/unit-test/build/test-results
+
+  functional-test:
+    executor:
+      name: android/android-machine
+      resource-class: large
+    steps:
+      - checkout
+      - android/start-emulator-and-run-tests:
+          #   It should match the name seen in the "sdkmanager --list" output
+          system-image: system-images;android-29;default;x86
+          #   The command to be run, while waiting for emulator startup
+          post-emulator-launch-assemble-command: make ci-build
+          #   The test command
+          test-command: make ci-functional-test
+      
+      - store_artifacts:
+          path: ci/functional-test/build/reports
+      - store_test_results:
+          path: ci/functional-test/build/outputs/androidTest-results
 
   publish:
     docker:
