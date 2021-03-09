@@ -48,7 +48,9 @@ public class IdentityEdge {
 
     /**
      * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
-     * @param callback callback which will be invoked once Experience Cloud ID is available
+     * @param callback  {@link AdobeCallback} of {@link String} invoked with the Experience Cloud ID
+     *  If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *  eventuality of any error that occurred while getting the Experience Cloud ID
      */
     public static void getExperienceCloudId(final AdobeCallback<String> callback) {
         if (callback == null) {
@@ -82,7 +84,7 @@ public class IdentityEdge {
                 if (ecid != null) {
                     callback.call(ecid.getEcidString());
                 } else {
-                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read ECID from IdentityMap, returning null");
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read ECID from IdentityMap, invoking error callback with AdobeError.UNEXPECTED_ERROR");
                     returnError(callback, AdobeError.UNEXPECTED_ERROR);
                 }
 

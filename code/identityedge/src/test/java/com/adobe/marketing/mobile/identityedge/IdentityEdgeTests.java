@@ -69,7 +69,7 @@ public class IdentityEdgeTests {
         IdentityEdge.registerExtension();
         final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
-        // The monitor extension should register with core
+        // The identity edge extension should register with core
         PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
         MobileCore.registerExtension(ArgumentMatchers.eq(IdentityEdgeExtension.class), callbackCaptor.capture());
 
