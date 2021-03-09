@@ -87,7 +87,7 @@ class IdentityEdgeExtension extends Extension {
     void handleIdentityRequest(final Event event) {
         if (!canProcessEvents(event)) { return; }
 
-        Map<String, Object> xdmData = state.getIdentityEdgeProperties().toXDMData(false);
+        Map<String, Object> xdmData = state.getIdentityEdgeProperties().toXDMData(true);
         Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
                 IdentityEdgeConstants.EventType.IDENTITY_EDGE,
                 IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY)
