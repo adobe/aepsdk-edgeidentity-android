@@ -80,6 +80,12 @@ public class IdentityEdge {
                 }
 
                 final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                if (identityMap == null) {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR");
+                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    return;
+                }
+                
                 final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
                 if (ecid != null) {
                     callback.call(ecid.getEcidString());
