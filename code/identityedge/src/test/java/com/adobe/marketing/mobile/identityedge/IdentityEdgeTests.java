@@ -18,7 +18,6 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -117,7 +116,7 @@ public class IdentityEdgeTests {
         ECID ecid = new ECID();
         props.setECID(ecid);
         adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(props.toXDMData(false)));
-        assertEquals(ecid.getEcidString(), callbackReturnValues.get(0));
+        assertEquals(ecid.toString(), callbackReturnValues.get(0));
 
         // TODO - enable when ExtensionError creation is available
         // should not crash on calling the callback

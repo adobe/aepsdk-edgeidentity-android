@@ -93,6 +93,6 @@ public class IdentityEdgeStateTests {
 
         // verify
         assertTrue(result);
-        assertEquals(persistedProps.getECID().getEcidString(), state.getIdentityEdgeProperties().getECID().getEcidString());
+        assertEquals(persistedProps.getECID().toString(), state.getIdentityEdgeProperties().getECID().toString());
     }
 }

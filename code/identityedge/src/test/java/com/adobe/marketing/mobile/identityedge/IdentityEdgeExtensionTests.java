@@ -26,15 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
-
-import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
@@ -157,7 +153,7 @@ public class IdentityEdgeExtensionTests {
         final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
 
         assertNotNull(ecid);
-        assertTrue(ecid.getEcidString().length() > 0);
+        assertTrue(ecid.toString().length() > 0);
     }
 
     @Test
@@ -182,7 +178,7 @@ public class IdentityEdgeExtensionTests {
         final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
         final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
 
-        assertEquals(existingECID.getEcidString(), ecid.getEcidString());
+        assertEquals(existingECID.toString(), ecid.toString());
     }
 
     private void setupExistingIdentityEdgeProps(final ECID ecid) {

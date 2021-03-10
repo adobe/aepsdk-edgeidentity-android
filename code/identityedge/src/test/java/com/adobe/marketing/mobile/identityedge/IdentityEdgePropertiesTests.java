@@ -45,7 +45,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().getEcidString(), ecidFromIdentityMap(xdmData));
+        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmData));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().getEcidString(), ecidFromIdentityMap(xdmData));
+        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmData));
     }
 
     @Test
@@ -84,7 +84,7 @@ public class IdentityEdgePropertiesTests {
         IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmData);
 
         // verify
-        assertEquals(ecidFromIdentityMap(xdmData), loadedProps.getECID().getEcidString());
+        assertEquals(ecidFromIdentityMap(xdmData), loadedProps.getECID().toString());
     }
 
     @Test
@@ -111,7 +111,7 @@ public class IdentityEdgePropertiesTests {
         IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmMap);
 
         // verify
-        assertEquals(ecidFromIdentityMap(xdmMap), loadedProps.getECID().getEcidString());
+        assertEquals(ecidFromIdentityMap(xdmMap), loadedProps.getECID().toString());
     }
 
     @Test
@@ -124,7 +124,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmMap = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().getEcidString(), ecidFromIdentityMap(xdmMap));
+        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmMap));
     }
 
     private String ecidFromIdentityMap(Map<String, Object> xdmMap) {

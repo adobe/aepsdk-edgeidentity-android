@@ -27,7 +27,7 @@ public class ECIDTests {
 
     @Test
     public void testECID_correctLength() {
-        assertEquals(38, new ECID().getEcidString().length());
+        assertEquals(38, new ECID().toString().length());
     }
 
     @Test
@@ -36,22 +36,22 @@ public class ECIDTests {
         ECID ecid = new ECID();
 
         // test
-        ECID constructedEcid = new ECID(ecid.getEcidString());
-        assertEquals(ecid.getEcidString(), constructedEcid.getEcidString());
+        ECID constructedEcid = new ECID(ecid.toString());
+        assertEquals(ecid.toString(), constructedEcid.toString());
     }
 
     @Test
     public void testECID_correctWithConstructor_null() {
         // test
         ECID constructedEcid = new ECID(null);
-        assertNotNull(constructedEcid.getEcidString());
+        assertNotNull(constructedEcid.toString());
     }
 
     @Test
     public void testECID_correctWithConstructor_emptyString() {
         // test
         ECID constructedEcid = new ECID(null);
-        assertNotNull(constructedEcid.getEcidString());
+        assertNotNull(constructedEcid.toString());
     }
 
     @Test
@@ -59,7 +59,7 @@ public class ECIDTests {
         // contains only digits
         String regex = "[0-9]+";
         Pattern p = Pattern.compile(regex);
-        Matcher m = p.matcher(new ECID().getEcidString());
+        Matcher m = p.matcher(new ECID().toString());
 
         assertTrue(m.matches());
     }
@@ -72,7 +72,7 @@ public class ECIDTests {
 
         // test
         for (int i = 0; i < count; i++) {
-            ecids.add(new ECID().getEcidString());
+            ecids.add(new ECID().toString());
         }
 
         // verify

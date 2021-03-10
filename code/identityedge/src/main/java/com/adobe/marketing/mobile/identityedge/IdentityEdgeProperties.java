@@ -14,7 +14,6 @@ package com.adobe.marketing.mobile.identityedge;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +69,7 @@ class IdentityEdgeProperties {
         final IdentityMap identityMap = new IdentityMap();
 
         if (ecid != null) {
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecid.getEcidString());
+            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecid.toString());
         }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();

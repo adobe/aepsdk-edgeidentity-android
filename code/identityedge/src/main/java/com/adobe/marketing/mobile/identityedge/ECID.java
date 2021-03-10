@@ -41,7 +41,7 @@ class ECID {
     ECID(final String ecidString) {
         if (Utils.isNullOrEmpty(ecidString)) {
             MobileCore.log(LoggingMode.DEBUG, IdentityEdgeConstants.LOG_TAG, "Creating an ECID with null or empty ecidString is not allowed, generating a new ECID.");
-            this.ecidString = new ECID().getEcidString();
+            this.ecidString = new ECID().toString();
             return;
         }
 
@@ -52,10 +52,6 @@ class ECID {
      * Retrieves the string representation of the ECID
      * @return string representation of the ECID
      */
-    public String getEcidString() {
-        return ecidString;
-    }
-
     @Override
     public String toString() {
         return ecidString;

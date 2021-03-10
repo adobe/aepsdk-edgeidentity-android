@@ -85,13 +85,12 @@ public class IdentityEdge {
                     returnError(callback, AdobeError.UNEXPECTED_ERROR);
                     return;
                 }
-                
+
                 final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
                 if (ecid != null) {
-                    callback.call(ecid.getEcidString());
+                    callback.call(ecid.toString());
                 } else {
-                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read ECID from IdentityMap, invoking error callback with AdobeError.UNEXPECTED_ERROR");
-                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    callback.call("");
                 }
 
             }
