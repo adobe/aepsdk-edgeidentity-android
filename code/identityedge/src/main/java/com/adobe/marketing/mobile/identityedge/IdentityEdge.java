@@ -86,7 +86,7 @@ public class IdentityEdge {
                     return;
                 }
 
-                final ECID ecid = IdentityEdgeProperties.readECIDFromIdentityMap(identityMap);
+                final ECID ecid = identityMap.getFirstECID();
                 if (ecid != null) {
                     callback.call(ecid.toString());
                 } else {

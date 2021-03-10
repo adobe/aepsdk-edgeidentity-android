@@ -40,7 +40,9 @@ class IdentityEdgeProperties {
         }
 
         IdentityMap identityMap = IdentityMap.fromData(xdmData);
-        ecid = readECIDFromIdentityMap(identityMap);
+        if (identityMap != null) {
+            ecid = identityMap.getFirstECID();
+        }
     }
 
     /**
@@ -78,28 +80,6 @@ class IdentityEdgeProperties {
         }
 
         return map;
-    }
-
-    /**
-     * Reads the ECID from an IdentityMap
-     * @param identityMap an IdentityMap
-     * @return ECID stored in the IdentityMap or null if not found
-     */
-    static ECID readECIDFromIdentityMap(IdentityMap identityMap) {
-        if (identityMap == null) { return null; }
-        final List<Map<String, Object>>ecidArr = identityMap.getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-        if (ecidArr == null) { return null; }
-        final Map<String, Object> ecidDict = ecidArr.get(0);
-        if (ecidDict == null) { return null; }
-        String ecidStr = null;
-        try {
-            ecidStr = (String) ecidDict.get(IdentityEdgeConstants.XDMKeys.ID);
-        } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create read ECID from IdentityMap");
-        }
-
-        if (ecidStr == null) { return null; }
-        return new ECID(ecidStr);
     }
 
 }

@@ -177,4 +177,24 @@ class IdentityMap {
 
         return identityMap;
     }
+
+    /**
+     * Reads the ECID from an IdentityMap
+     * @return ECID stored in the IdentityMap or null if not found
+     */
+    ECID getFirstECID() {
+        final List<Map<String, Object>> ecidArr = getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+        if (ecidArr == null) { return null; }
+        final Map<String, Object> ecidDict = ecidArr.get(0);
+        if (ecidDict == null) { return null; }
+        String ecidStr = null;
+        try {
+            ecidStr = (String) ecidDict.get(IdentityEdgeConstants.XDMKeys.ID);
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create read ECID from IdentityMap");
+        }
+
+        if (ecidStr == null) { return null; }
+        return new ECID(ecidStr);
+    }
 }
