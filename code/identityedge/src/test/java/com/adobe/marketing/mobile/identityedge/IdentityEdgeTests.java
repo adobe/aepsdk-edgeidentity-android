@@ -114,7 +114,7 @@ public class IdentityEdgeTests {
 
         // verify callback responses
         ECID ecid = new ECID();
-        
+
         Map<String, Object> ecidDict = new HashMap<>();
         ecidDict.put("id", ecid.toString());
         ArrayList<Object> ecidArr = new ArrayList<>();
@@ -169,6 +169,41 @@ public class IdentityEdgeTests {
 
         // set response event to null
         adobeCallbackCaptor.getValue().call(null);
+
+        // verify
+        assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+        assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+    }
+
+    @Test
+    public void testGetExperienceCloudId_InvalidEventData() {
+        // setup
+        final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+        final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+        final Map<String, Object> errorCapture = new HashMap<>();
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+            @Override
+            public void fail(AdobeError adobeError) {
+                errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+                errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+            }
+
+            @Override
+            public void call(Object o) { }
+        };
+
+        // test
+        IdentityEdge.getExperienceCloudId(callbackWithError);
+
+        // verify if the event is dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEventWithResponseCallback(any(Event.class), adobeCallbackCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // set response event to null
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("someKey", "someValue");
+        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(eventData));
 
         // verify
         assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
