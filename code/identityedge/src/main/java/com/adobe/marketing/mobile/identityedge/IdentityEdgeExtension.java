@@ -114,7 +114,10 @@ class IdentityEdgeExtension extends Extension {
         if (state.hasBooted()) { return true; } // we have booted, return true
 
         final ExtensionApi extensionApi = super.getApi();
-        if (extensionApi == null ) { return false; }
+        if (extensionApi == null ) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process events");
+            return false;
+        }
 
         if (state.bootupIfReady()) {
             extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), null, null);
