@@ -28,6 +28,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -112,10 +113,18 @@ public class IdentityEdgeTests {
         assertTrue(dispatchedEvent.getEventData().isEmpty());
 
         // verify callback responses
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
         ECID ecid = new ECID();
-        props.setECID(ecid);
-        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(props.toXDMData(false)));
+        
+        Map<String, Object> ecidDict = new HashMap<>();
+        ecidDict.put("id", ecid.toString());
+        ArrayList<Object> ecidArr = new ArrayList<>();
+        ecidArr.add(ecidDict);
+        Map<String, Object> identityMap = new HashMap<>();
+        identityMap.put("ECID", ecidArr);
+        Map<String, Object> xdmData = new HashMap<>();
+        xdmData.put("identityMap", identityMap);
+
+        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(xdmData));
         assertEquals(ecid.toString(), callbackReturnValues.get(0));
 
         // TODO - enable when ExtensionError creation is available
@@ -192,8 +201,8 @@ public class IdentityEdgeTests {
         MobileCore.dispatchEventWithResponseCallback(any(Event.class), adobeCallbackCaptor.capture(), any(ExtensionErrorCallback.class));
 
         // set response event to map missing ECID
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(props.toXDMData(false)));
+        Map<String, Object> emptyXDMData = new HashMap<>();
+        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(emptyXDMData));
 
         // verify
         assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
