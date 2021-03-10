@@ -32,6 +32,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Map;
+
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
@@ -42,7 +44,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Event.class, MobileCore.class, ExtensionApi.class})
+@PrepareForTest({Event.class, MobileCore.class, ExtensionApi.class, IdentityEdgeState.class})
 public class IdentityEdgeExtensionTests {
     private IdentityEdgeExtension extension;
 
@@ -179,6 +181,31 @@ public class IdentityEdgeExtensionTests {
         final ECID ecid = identityMap.getFirstECID();
 
         assertEquals(existingECID.toString(), ecid.toString());
+    }
+
+    @Test
+    public void test_handleIdentityRequest_noIdentifiers_emptyIdentityMap() {
+        // setup
+        IdentityEdgeProperties emptyProps = new IdentityEdgeProperties();
+        PowerMockito.stub(PowerMockito.method(IdentityEdgeState.class, "getIdentityEdgeProperties")).toReturn(emptyProps);
+        
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+        final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+        // test
+        extension.handleIdentityRequest(event);
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchResponseEvent(responseEventCaptor.capture(), requestEventCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // verify response event containing ECID is dispatched
+        Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
+        final Map<String, Object> xdmData = ecidResponseEvent.getEventData();
+        final Map<String, Object> identityMap = (Map<String, Object>) xdmData.get("identityMap");
+
+        assertTrue(identityMap.isEmpty());
     }
 
     private void setupExistingIdentityEdgeProps(final ECID ecid) {
