@@ -113,12 +113,16 @@ class IdentityEdgeExtension extends Extension {
      * @param event the identity request reset event
      */
     void handleRequestReset(final Event event) {
-        if (!canProcessEvents(event)) { return; }
+        if (!canProcessEvents(event)) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
+            return;
+        }
         state.resetIdentifiers();
 
         final ExtensionApi extensionApi = super.getApi();
         if (extensionApi == null ) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
+            return;
         }
 
         // set the shared state
