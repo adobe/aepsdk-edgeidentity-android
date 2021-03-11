@@ -87,7 +87,7 @@ public class IdentityEdgeExtensionTests {
         // constructor is called in the setup step()
 
         // verify 2 listeners are registered
-        verify(mockExtensionApi, times(2)).registerEventListener(anyString(),
+        verify(mockExtensionApi, times(4)).registerEventListener(anyString(),
                 anyString(), any(Class.class), any(ExtensionErrorCallback.class));
 
         // verify listeners are registered with correct event source and type
@@ -95,6 +95,10 @@ public class IdentityEdgeExtensionTests {
                 eq(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY), eq(ListenerIdentityRequestIdentity.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.GENERIC_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_CONTENT), eq(ListenerGenericIdentityRequestContent.class), callbackCaptor.capture());
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+                eq(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY), eq(ListenerIdentityEdgeUpdateIdentity.class), callbackCaptor.capture());
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+                eq(IdentityEdgeConstants.EventSource.REMOVE_IDENTITY), eq(ListenerIdentityEdgeRemoveIdentity.class), callbackCaptor.capture());
 
         // verify the callback
         ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();

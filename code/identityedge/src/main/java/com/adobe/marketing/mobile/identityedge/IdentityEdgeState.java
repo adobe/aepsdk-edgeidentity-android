@@ -11,12 +11,9 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
-import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.MobilePrivacyStatus;
 
-import java.util.Map;
 
 /**
  * Manages the business logic of the Identity Edge extension

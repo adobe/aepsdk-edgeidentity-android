@@ -20,6 +20,8 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.Map;
+
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
 
@@ -27,6 +29,7 @@ public class IdentityEdge {
 
     /**
      * Returns the version of the {@link IdentityEdge} extension
+     *
      * @return The version as {@code String}
      */
     public static String extensionVersion() {
@@ -48,9 +51,10 @@ public class IdentityEdge {
 
     /**
      * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
-     * @param callback  {@link AdobeCallback} of {@link String} invoked with the Experience Cloud ID
-     *  If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
-     *  eventuality of any error that occurred while getting the Experience Cloud ID
+     *
+     * @param callback {@link AdobeCallback} of {@link String} invoked with the Experience Cloud ID
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the Experience Cloud ID
      */
     public static void getExperienceCloudId(final AdobeCallback<String> callback) {
         if (callback == null) {
@@ -98,11 +102,39 @@ public class IdentityEdge {
     }
 
     /**
-     * When an {@link AdobeCallbackWithError} is provided, the fail method will be called with provided {@link AdobeError}.
-     * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
-     * @param error the {@code AdobeError} returned back in the callback
+     * Updates the currently known {@link IdentityMap} within the SDK and XDM shared state.
+     * The IdentityEdge extension will merge the received identifiers with the previously saved one in an additive manner, no identifiers will be removed using this API.
+     *
+     * @param identityMap The identifiers to add or update.
      */
-    private static void returnError (final AdobeCallback<String> callback, final AdobeError error) {
+    public static void updateIdentities(final IdentityMap identityMap) {
+        if (identityMap == null || identityMap.toObjectMap().isEmpty()) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to updateIdentities, IdentityMap is null or empty");
+            return;
+        }
+
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Consents.update() API. Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
+                        extensionError.getErrorName()));
+            }
+        };
+
+
+        final Event updateIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
+                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asEventData()).build();
+        MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
+    }
+
+    /**
+     * When an {@link AdobeCallbackWithError} is provided, the fail method will be called with provided {@link AdobeError}.
+     *
+     * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
+     * @param error    the {@code AdobeError} returned back in the callback
+     */
+    private static void returnError(final AdobeCallback<String> callback, final AdobeError error) {
         if (callback == null) {
             return;
         }

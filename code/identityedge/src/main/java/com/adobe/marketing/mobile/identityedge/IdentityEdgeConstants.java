@@ -23,6 +23,8 @@ class IdentityEdgeConstants {
         static final String REQUEST_CONTENT = "com.adobe.eventSource.requestContent";
         static final String RESPONSE_CONTENT = "com.adobe.eventSource.responseContent";
         static final String RESPONSE_IDENTITY = "com.adobe.eventSource.responseIdentity";
+        static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
+        static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
         private EventSource() { }
     }
 
@@ -36,6 +38,8 @@ class IdentityEdgeConstants {
     final class EventNames {
         static final String IDENTITY_REQUEST_IDENTITY_ECID = "Identity Edge Request ECID";
         static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Identity Edge Response Content One Time";
+        static final String UPDATE_IDENTITIES = "Identity Edge Update Identities";
+        static final String REMOVE_IDENTITIES = "Idetity Edge Remove Identities";
         private EventNames() { }
     }
 

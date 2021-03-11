@@ -36,7 +36,11 @@ class IdentityEdgeExtension extends Extension {
      *     <li> Listener {@link ListenerIdentityRequestIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_IDENTITY}</li>
      *     <li> Listener {@link ListenerGenericIdentityRequestContent} to listen for event with eventType {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
-     *  *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
+     *     <li> Listener {@link ListenerIdentityEdgeUpdateIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}</li>
+     *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
      * </ul>
      * <p>
      * Thread : Background thread created by MobileCore
@@ -55,6 +59,8 @@ class IdentityEdgeExtension extends Extension {
 
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY, ListenerIdentityRequestIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
     }
 
     /**
@@ -75,6 +81,15 @@ class IdentityEdgeExtension extends Extension {
         return IdentityEdgeConstants.EXTENSION_VERSION;
     }
 
+    // TODO: Docme
+    void handleUpdateIdentities(final Event event) {
+        // TODO
+    }
+
+    // TODO: Docme
+    void handleRemoveIdentity(final Event event) {
+        // TODO
+    }
 
     void handleGenericIdentityRequest(final Event event) {
         // TODO

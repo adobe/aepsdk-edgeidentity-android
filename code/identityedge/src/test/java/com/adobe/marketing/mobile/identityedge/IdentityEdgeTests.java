@@ -245,6 +245,49 @@ public class IdentityEdgeTests {
     }
 
     // ========================================================================================
+    // updateIdentities API
+    // ========================================================================================
+    @Test
+    public void testUpdateIdentities() {
+        // setup
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+        // test
+        IdentityMap map = new IdentityMap();
+        map.addItem("mainspace", "id", IdentityMap.AuthenticationState.AUTHENTICATED, true);
+        map.addItem("secondspace", "idtwo", IdentityMap.AuthenticationState.LOGGED_OUT, false);
+        IdentityEdge.updateIdentities(map);
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEvent(eventCaptor.capture(), extensionErrorCallbackCaptor.capture());
+
+        // TODO - enable when ExtensionError creation is available
+        // should not crash on calling the callback
+        //extensionErrorCallback.error(ExtensionError.UNEXPECTED_ERROR);
+
+        // verify the dispatched event details
+        Event dispatchedEvent = eventCaptor.getValue();
+        assertEquals(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,dispatchedEvent.getName());
+        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(),dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY.toLowerCase(),dispatchedEvent.getSource());
+        assertEquals(map.asEventData(),dispatchedEvent.getEventData());
+    }
+
+    @Test
+    public void testUpdateIdentitiesNullAndEmptyMap() {
+        // test
+        IdentityMap map = new IdentityMap();
+        IdentityEdge.updateIdentities(map);
+        IdentityEdge.updateIdentities(null);
+
+        // verify no of these API calls dispatch an event
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+        MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class));
+    }
+
+    // ========================================================================================
     // Private method
     // ========================================================================================
     private Event buildECIDResponseEvent (final Map<String, Object> eventData) {
