@@ -32,6 +32,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
@@ -208,12 +211,40 @@ public class IdentityEdgeExtensionTests {
         assertTrue(identityMap.isEmpty());
     }
 
+    @Test
+    public void test_handleIdentityResetRequest() {
+        // setup
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
+        final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+
+        // test
+        extension.handleRequestReset(event);
+
+        // verify
+        verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
+        Map<String, Object> sharedState = sharedStateCaptor.getValue();
+        String sharedEcid = ecidFromIdentityMap(sharedState);
+        assertTrue(sharedEcid.length() > 0);
+    }
+
     private void setupExistingIdentityEdgeProps(final ECID ecid) {
         IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
         persistedProps.setECID(ecid);
         final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
         final String propsJSON = jsonObject.toString();
         Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
+    }
+
+    private String ecidFromIdentityMap(Map<String, Object> xdmMap) {
+        if (xdmMap == null) { return null; }
+        Map<String, Object> identityMap = (HashMap<String, Object>) xdmMap.get("identityMap");
+        if (identityMap == null) { return null; }
+        List<Object> ecidArr = (ArrayList<Object>) identityMap.get("ECID");
+        if (ecidArr == null) { return null; }
+        Map<String, Object> ecidDict = (HashMap<String, Object>) ecidArr.get(0);
+        if (ecidDict == null) { return null; }
+        String ecid = (String) ecidDict.get("id");
+        return ecid;
     }
 
 

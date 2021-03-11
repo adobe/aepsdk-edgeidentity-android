@@ -121,7 +121,15 @@ class IdentityEdgeExtension extends Extension {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
         }
 
-        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(true), event, null);
+        // set the shared state
+        ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));
+            }
+        };
+
+        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(true), event, errorCallback);
     }
 
     /**
