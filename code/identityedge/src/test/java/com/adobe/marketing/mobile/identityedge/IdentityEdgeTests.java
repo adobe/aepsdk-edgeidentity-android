@@ -28,7 +28,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -242,6 +241,32 @@ public class IdentityEdgeTests {
         // verify
         assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
         assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+    }
+
+    // ========================================================================================
+    // resetIdentities API
+    // ========================================================================================
+    @Test
+    public void testResetIdentities() {
+        // setup
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+
+        // test
+        IdentityEdge.resetIdentities();
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEvent(eventCaptor.capture(), extensionErrorCallbackCaptor.capture());
+
+        // verify the dispatched event details
+        Event dispatchedEvent = eventCaptor.getValue();
+        assertEquals(IdentityEdgeConstants.EventNames.REQUEST_RESET, dispatchedEvent.getName());
+        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventSource.REQUEST_RESET.toLowerCase(), dispatchedEvent.getSource());
+        assertTrue(dispatchedEvent.getEventData().isEmpty());
     }
 
     // ========================================================================================
