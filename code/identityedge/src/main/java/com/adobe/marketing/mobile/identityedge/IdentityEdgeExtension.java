@@ -41,6 +41,9 @@ class IdentityEdgeExtension extends Extension {
      *     and EventSource {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}</li>
      *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
+     *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}</li>
      * </ul>
      * <p>
      * Thread : Background thread created by MobileCore
@@ -61,6 +64,7 @@ class IdentityEdgeExtension extends Extension {
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
     }
 
     /**
@@ -118,6 +122,34 @@ class IdentityEdgeExtension extends Extension {
                         extensionError.getErrorName());
             }
         });
+    }
+
+    /**
+     * Handles IdentityEdge request reset events.
+     * @param event the identity request reset event
+     */
+    void handleRequestReset(final Event event) {
+        if (!canProcessEvents(event)) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
+            return;
+        }
+        state.resetIdentifiers();
+
+        final ExtensionApi extensionApi = super.getApi();
+        if (extensionApi == null ) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
+            return;
+        }
+
+        // set the shared state
+        ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));
+            }
+        };
+
+        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
     }
 
     /**

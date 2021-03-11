@@ -69,4 +69,17 @@ class IdentityEdgeState {
         return true;
     }
 
+    /**
+     * Clears all identities and regenerates a new ECID value, then saves the new identities to persistence.
+     */
+    void resetIdentifiers() {
+        // TODO: AMSDK-11208 Determine if we should dispatch consent event
+
+        identityProperties = new IdentityEdgeProperties();
+        identityProperties.setECID(new ECID());
+        IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
+
+        // TODO: AMSDK-11208 Use return value to tell IdentityEdge to dispatch consent ad id update
+    }
+
 }

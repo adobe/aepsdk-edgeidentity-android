@@ -28,6 +28,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -94,5 +96,21 @@ public class IdentityEdgeStateTests {
         // verify
         assertTrue(result);
         assertEquals(persistedProps.getECID().toString(), state.getIdentityEdgeProperties().getECID().toString());
+    }
+
+    @Test
+    public void testIdentityEdgeState_resetIdentifiers() {
+        // setup
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        state.getIdentityEdgeProperties().setECID(new ECID());
+        ECID existingEcid = state.getIdentityEdgeProperties().getECID();
+
+        // test
+        state.resetIdentifiers();
+
+        // verify
+        assertNotEquals(existingEcid.toString(), state.getIdentityEdgeProperties().getECID().toString()); // ECID should be regenerated
+        assertFalse(state.getIdentityEdgeProperties().getECID().toString().isEmpty()); // ECID should not be empty
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // should save to data store
     }
 }
