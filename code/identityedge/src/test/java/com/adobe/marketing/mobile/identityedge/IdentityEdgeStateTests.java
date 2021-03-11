@@ -109,6 +109,7 @@ public class IdentityEdgeStateTests {
 
         // verify
         assertNotEquals(existingEcid.toString(), state.getIdentityEdgeProperties().getECID().toString()); // ECID should be regenerated
+        assertTrue(state.getIdentityEdgeProperties().getECID().toString().length() > 0); // ECID should be non-empty
         verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // should save to data store
     }
 }

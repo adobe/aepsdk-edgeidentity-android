@@ -133,7 +133,7 @@ class IdentityEdgeExtension extends Extension {
             }
         };
 
-        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(true), event, errorCallback);
+        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
     }
 
     /**
