@@ -157,10 +157,10 @@ public class IdentityEdgeExtensionTests {
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
         final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
-        final ECID ecid = identityMap.getFirstECID();
+        final String ecid = identityMap.getIdentityItemForNamespace("ECID").get(0).getId();
 
         assertNotNull(ecid);
-        assertTrue(ecid.toString().length() > 0);
+        assertTrue(ecid.length() > 0);
     }
 
     @Test
@@ -183,9 +183,9 @@ public class IdentityEdgeExtensionTests {
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
         final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
-        final ECID ecid = identityMap.getFirstECID();
+        final String ecid = identityMap.getIdentityItemForNamespace("ECID").get(0).getId();
 
-        assertEquals(existingECID.toString(), ecid.toString());
+        assertEquals(existingECID.toString(), ecid);
     }
 
     @Test

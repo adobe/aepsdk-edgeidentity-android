@@ -20,6 +20,8 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.List;
+
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
 
@@ -86,11 +88,11 @@ public class IdentityEdge {
                     return;
                 }
 
-                final ECID ecid = identityMap.getFirstECID();
-                if (ecid != null) {
-                    callback.call(ecid.toString());
-                } else {
+                final List<IdentityItem> ecidItems = identityMap.getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+                if (ecidItems == null || ecidItems.isEmpty() || ecidItems.get(0).getId() == null) {
                     callback.call("");
+                } else {
+                    callback.call(ecidItems.get(0).getId());
                 }
 
             }

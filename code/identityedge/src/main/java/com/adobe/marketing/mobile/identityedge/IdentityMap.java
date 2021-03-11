@@ -31,37 +31,7 @@ import java.util.Map;
 class IdentityMap {
     private static final String LOG_TAG = "IdentityMap";
 
-    private static final String JSON_KEY_ID = "id";
-    private static final String JSON_KEY_AUTHENTICATION_STATE = "authenticationState";
-    private static final String JSON_KEY_PRIMARY = "primary";
-
-    enum AuthenticationState {
-        AMBIGUOUS("ambiguous"),
-        AUTHENTICATED("authenticated"),
-        LOGGED_OUT("loggedOut");
-
-        private String name;
-
-        AuthenticationState(final String name) {
-            this.name = name;
-        }
-
-        String getName() {
-            return name;
-        }
-
-        AuthenticationState fromString(final String state) {
-            if ("authenticated".equalsIgnoreCase(state)) {
-                return AUTHENTICATED;
-            } else if ("loggedOut".equalsIgnoreCase(state)) {
-                return LOGGED_OUT;
-            } else {
-                return AMBIGUOUS;
-            }
-        }
-    }
-
-    private Map<String, List<Map<String, Object>>> identityItems;
+    private Map<String, List<IdentityItem>> identityItems;
 
     IdentityMap() {
         identityItems = new HashMap<>();
@@ -72,7 +42,7 @@ class IdentityMap {
      * @param namespace namespace for the id
      * @return IdentityItem for the namespace, null if not found
      */
-    List<Map<String, Object>> getIdentityItemForNamespace(final String namespace) {
+    List<IdentityItem> getIdentityItemForNamespace(final String namespace) {
         return identityItems.get(namespace);
     }
 
@@ -101,15 +71,7 @@ class IdentityMap {
             return;
         }
 
-        Map<String, Object> item = new HashMap<>();
-        item.put(JSON_KEY_ID, id);
-        item.put(JSON_KEY_PRIMARY, primary);
-
-        if (state != null) {
-            item.put(JSON_KEY_AUTHENTICATION_STATE, state.getName());
-        }
-
-        addItemToMap(namespace, item);
+        addItemToMap(namespace, new IdentityItem(id, state, primary));
     }
 
     /**
@@ -133,15 +95,12 @@ class IdentityMap {
             return;
         }
 
-        Map<String, Object> item = new HashMap<>();
-        item.put(JSON_KEY_ID, id);
-
-        addItemToMap(namespace, item);
+        addItemToMap(namespace, new IdentityItem(id, AuthenticationState.AMBIGUOUS, false));
     }
 
-    private void addItemToMap(final String namespace, final Map<String, Object> item) {
+    private void addItemToMap(final String namespace, final IdentityItem item) {
         // check if namespace exists
-        List<Map<String, Object>> itemList;
+        List<IdentityItem> itemList;
 
         if (identityItems.containsKey(namespace)) {
             itemList = identityItems.get(namespace);
@@ -154,7 +113,19 @@ class IdentityMap {
     }
 
     Map<String, List<Map<String, Object>>> toObjectMap() {
-        return identityItems;
+        Map<String, List<Map<String, Object>>> map = new HashMap<String, List<Map<String, Object>>>();
+
+        for (String namespace : identityItems.keySet()) {
+            List<Map<String, Object>> namespaceIds = new ArrayList<>();
+
+            for(IdentityItem identityItem: identityItems.get(namespace)) {
+                namespaceIds.add(identityItem.toObjectMap());
+            }
+
+            map.put(namespace, namespaceIds);
+        }
+
+        return map;
     }
 
     static IdentityMap fromData(Map<String, Object> data) {
@@ -168,7 +139,10 @@ class IdentityMap {
             try {
                 final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
                 for (Object idMap: idArr) {
-                    identityMap.addItemToMap(namespace, (Map<String, Object>) idMap);
+                    IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
+                    if (item != null) {
+                        identityMap.addItemToMap(namespace, item);
+                    }
                 }
             } catch (ClassCastException e) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityMap from data.");
@@ -176,25 +150,5 @@ class IdentityMap {
         }
 
         return identityMap;
-    }
-
-    /**
-     * Reads the ECID from an IdentityMap
-     * @return ECID stored in the IdentityMap or null if not found
-     */
-    ECID getFirstECID() {
-        final List<Map<String, Object>> ecidArr = getIdentityItemForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-        if (ecidArr == null) { return null; }
-        final Map<String, Object> ecidDict = ecidArr.get(0);
-        if (ecidDict == null) { return null; }
-        String ecidStr = null;
-        try {
-            ecidStr = (String) ecidDict.get(IdentityEdgeConstants.XDMKeys.ID);
-        } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create read ECID from IdentityMap");
-        }
-
-        if (ecidStr == null) { return null; }
-        return new ECID(ecidStr);
     }
 }
