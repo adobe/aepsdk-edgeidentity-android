@@ -109,6 +109,22 @@ class IdentityEdgeExtension extends Extension {
     }
 
     /**
+     * Handles IdentityEdge request reset events.
+     * @param event the identity request reset event
+     */
+    void handleRequestReset(final Event event) {
+        if (!canProcessEvents(event)) { return; }
+        state.resetIdentifiers();
+
+        final ExtensionApi extensionApi = super.getApi();
+        if (extensionApi == null ) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
+        }
+
+        extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(true), event, null);
+    }
+
+    /**
      * Determines if Identity Edge is ready to handle events, this is determined by if the Identity Edge extension has booted up
      * @param event An {@link Event}
      * @return True if we can process events, false otherwise
