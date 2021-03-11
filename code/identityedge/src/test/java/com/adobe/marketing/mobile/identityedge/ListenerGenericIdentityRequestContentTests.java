@@ -25,7 +25,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class ListenerGenericIdentityRequestContentTest {
+public class ListenerGenericIdentityRequestContentTests {
     
     @Mock
     private IdentityEdgeExtension mockIdentityEdgeExtension;
