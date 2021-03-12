@@ -44,6 +44,11 @@ public class IdentityMap {
      * @return IdentityItem for the namespace, null if not found
      */
     public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
+        List<IdentityItem> items = new ArrayList<>();
+        for (IdentityItem item : identityItems.get(namespace)) {
+            items.add(new IdentityItem((item)));
+        }
+
         return identityItems.get(namespace);
     }
 
@@ -56,7 +61,7 @@ public class IdentityMap {
      *
      * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
      */
-    public void addItem(final IdentityItem item, final String namespace) {
+    public void addItem(final String namespace, final IdentityItem item) {
         if (item == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
             return;

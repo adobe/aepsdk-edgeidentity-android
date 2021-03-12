@@ -60,6 +60,14 @@ public final class IdentityItem {
     }
 
     /**
+     * Creates a copy of item
+     * @param item A {@link IdentityItem} to be copied
+     */
+    public IdentityItem(final IdentityItem item) {
+        this(item.id, item.authenticationState, item.primary);
+    }
+
+    /**
      * Converts this object into a map representation
      * @return this object in a map representation
      */
