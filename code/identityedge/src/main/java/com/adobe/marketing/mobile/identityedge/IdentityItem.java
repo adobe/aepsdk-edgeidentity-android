@@ -33,6 +33,7 @@ public final class IdentityItem {
 
     /**
      * Creates a new {@link IdentityItem}
+     * @throws IllegalArgumentException if id is null
      * @param id id for the item
      * @param authenticationState {@link AuthenticationState} for the item
      * @param primary primary flag for the item
