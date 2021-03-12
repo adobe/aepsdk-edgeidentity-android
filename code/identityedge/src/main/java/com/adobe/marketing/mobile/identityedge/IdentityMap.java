@@ -44,7 +44,7 @@ public class IdentityMap {
      * @return IdentityItem for the namespace, null if not found
      */
     public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
-        List<IdentityItem> items = new ArrayList<>();
+        final List<IdentityItem> items = new ArrayList<>();
         for (IdentityItem item : identityItems.get(namespace)) {
             items.add(new IdentityItem((item)));
         }
@@ -78,7 +78,7 @@ public class IdentityMap {
 
     private void addItemToMap(final String namespace, final IdentityItem item) {
         // check if namespace exists
-        List<IdentityItem> itemList;
+        final List<IdentityItem> itemList;
 
         if (identityItems.containsKey(namespace)) {
             itemList = identityItems.get(namespace);
@@ -91,10 +91,10 @@ public class IdentityMap {
     }
 
     Map<String, List<Map<String, Object>>> toObjectMap() {
-        Map<String, List<Map<String, Object>>> map = new HashMap<String, List<Map<String, Object>>>();
+        final Map<String, List<Map<String, Object>>> map = new HashMap<String, List<Map<String, Object>>>();
 
         for (String namespace : identityItems.keySet()) {
-            List<Map<String, Object>> namespaceIds = new ArrayList<>();
+            final List<Map<String, Object>> namespaceIds = new ArrayList<>();
 
             for(IdentityItem identityItem: identityItems.get(namespace)) {
                 namespaceIds.add(identityItem.toObjectMap());
@@ -130,7 +130,7 @@ public class IdentityMap {
             try {
                 final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
                 for (Object idMap: idArr) {
-                    IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
+                    final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
                     if (item != null) {
                         identityMap.addItemToMap(namespace, item);
                     }
