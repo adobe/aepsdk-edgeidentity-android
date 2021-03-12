@@ -28,7 +28,7 @@ import java.util.Map;
  * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identitymap.schema.md">IdentityMap Schema</a>
  */
 @SuppressWarnings("unused")
-class IdentityMap {
+public class IdentityMap {
     private static final String LOG_TAG = "IdentityMap";
 
     private Map<String, List<IdentityItem>> identityItems;
@@ -42,7 +42,7 @@ class IdentityMap {
      * @param namespace namespace for the id
      * @return IdentityItem for the namespace, null if not found
      */
-    List<IdentityItem> getIdentityItemForNamespace(final String namespace) {
+    public List<IdentityItem> getIdentityItemForNamespace(final String namespace) {
         return identityItems.get(namespace);
     }
 
@@ -51,17 +51,13 @@ class IdentityMap {
      * with digital experiences.
      *
      * @param namespace the namespace integration code or namespace ID of the identity
-     * @param id identity of the consumer in the related namespace
-     * @param state the state this identity is authenticated as for this observed ExperienceEvent.
-     *              Default is {@link AuthenticationState.AMBIGUOUS}.
-     * @param primary Indicates this identity is the preferred identity. Is used as a hint to help
-     *                systems better organize how identities are queried. Default is false.
+     * @param item {@link IdentityItem} to be added to the namespace
      *
      * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
      */
-    void addItem(final String namespace, final String id, final AuthenticationState state, final boolean primary) {
-        if (Utils.isNullOrEmpty(id)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null/non-empty id.");
+    public void addItem(final IdentityItem item, final String namespace) {
+        if (item == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
             return;
         }
 
@@ -71,31 +67,7 @@ class IdentityMap {
             return;
         }
 
-        addItemToMap(namespace, new IdentityItem(id, state, primary));
-    }
-
-    /**
-     * Add an identity item which is used to clearly distinguish entities that are interacting
-     * with digital experiences. Uses default authentication state and primary as defined by the Experience Platform.
-     *
-     * @param namespace the namespace integration code or namespace ID of the identity
-     * @param id identity of the consumer in the related namespace
-     *
-     * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
-     */
-    void addItem(final String namespace, final String id) {
-        if (Utils.isNullOrEmpty(id)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null/non-empty id.");
-            return;
-        }
-
-        if (Utils.isNullOrEmpty(namespace)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                    "IdentityMap add item ignored as must contain a non-null/non-empty namespace.");
-            return;
-        }
-
-        addItemToMap(namespace, new IdentityItem(id, AuthenticationState.AMBIGUOUS, false));
+        addItemToMap(namespace, item);
     }
 
     private void addItemToMap(final String namespace, final IdentityItem item) {

@@ -75,7 +75,8 @@ class IdentityEdgeProperties {
         final IdentityMap identityMap = new IdentityMap();
 
         if (ecid != null) {
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecid.toString());
+            IdentityItem ecidItem = new IdentityItem(ecid.toString());
+            identityMap.addItem(ecidItem, IdentityEdgeConstants.Namespaces.ECID);
         }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
