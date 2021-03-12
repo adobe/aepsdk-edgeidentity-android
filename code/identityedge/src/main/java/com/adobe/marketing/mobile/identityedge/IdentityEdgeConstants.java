@@ -41,6 +41,7 @@ class IdentityEdgeConstants {
         static final String UPDATE_IDENTITIES = "Identity Edge Update Identities";
         static final String REMOVE_IDENTITIES = "Identity Edge Remove Identities";
         static final String REQUEST_RESET = "Identity Edge Request Reset";
+        static final String REQUEST_IDENTITIES = "Identity Edge Request Identities";
         private EventNames() { }
     }
 
