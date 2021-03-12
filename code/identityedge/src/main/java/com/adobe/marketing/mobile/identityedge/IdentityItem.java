@@ -96,7 +96,11 @@ public final class IdentityItem {
 
         try {
             final String id = (String) data.get(JSON_KEY_ID);
-            final AuthenticationState authenticationState = AuthenticationState.fromString((String) data.get(JSON_KEY_AUTHENTICATION_STATE));
+            AuthenticationState authenticationState = AuthenticationState.fromString((String) data.get(JSON_KEY_AUTHENTICATION_STATE));
+            if (authenticationState == null) {
+                authenticationState = AuthenticationState.AMBIGUOUS;
+            }
+
             boolean primary = false;
             if (data.get(JSON_KEY_PRIMARY) != null) {
                 primary = (boolean) data.get(JSON_KEY_PRIMARY);
