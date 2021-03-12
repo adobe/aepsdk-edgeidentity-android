@@ -121,6 +121,6 @@ public class IdentityItemTests {
         IdentityItem item1 = new IdentityItem("id", AuthenticationState.AMBIGUOUS , false);
         IdentityItem item2 = new IdentityItem("id2", AuthenticationState.AUTHENTICATED , true);
 
-        assertTrue(item1.equals(item2));
+        assertFalse(item1.equals(item2));
     }
 }
