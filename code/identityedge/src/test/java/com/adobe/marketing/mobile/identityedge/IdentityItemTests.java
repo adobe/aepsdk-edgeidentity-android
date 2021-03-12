@@ -35,18 +35,13 @@ public class IdentityItemTests {
         assertEquals(true, (boolean) data.get("primary"));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testIdentityItem_toObjectMap_missingId() {
         // setup
         IdentityItem item = new IdentityItem(null, AuthenticationState.AUTHENTICATED, true);
 
         // test
         Map<String, Object> data = item.toObjectMap();
-
-        // verify
-        assertNull(data.get("id"));
-        assertEquals("AUTHENTICATED", (String) data.get("authenticationState"));
-        assertEquals(true, (boolean) data.get("primary"));
     }
 
     @Test

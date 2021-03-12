@@ -37,6 +37,9 @@ public final class IdentityItem {
      * @param primary primary flag for the item
      */
     public IdentityItem(final String id, final AuthenticationState authenticationState, final boolean primary) {
+        if (id == null) {
+            throw new IllegalArgumentException("id must be non-null");
+        }
         this.id = id;
         this.authenticationState = authenticationState;
         if (authenticationState == null) {
