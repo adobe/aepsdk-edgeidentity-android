@@ -46,6 +46,16 @@ public final class IdentityItem {
     }
 
     /**
+     * Creates a new {@link IdentityItem} with default values
+     * authenticationState is set to {@link AuthenticationState.AMBIGUOUS}
+     * primary is set to false
+     * @param id
+     */
+    public IdentityItem(final String id) {
+        this(id, AuthenticationState.AMBIGUOUS, false);
+    }
+
+    /**
      * Converts this object into a map representation
      * @return this object in a map representation
      */
