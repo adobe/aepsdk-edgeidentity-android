@@ -280,8 +280,8 @@ public class IdentityEdgeTests {
 
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("mainspace", "id", IdentityMap.AuthenticationState.AUTHENTICATED, true);
-        map.addItem("secondspace", "idtwo", IdentityMap.AuthenticationState.LOGGED_OUT, false);
+        map.addItem(new IdentityItem("id", AuthenticationState.AUTHENTICATED, true), "mainspace");
+        map.addItem(new IdentityItem("idtwo", AuthenticationState.LOGGED_OUT, false), "secondspace");
         IdentityEdge.updateIdentities(map);
 
         // verify
