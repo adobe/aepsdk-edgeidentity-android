@@ -39,10 +39,11 @@ public class IdentityMap {
 
     /**
      * Gets the IdentityItem for the namespace
+     *
      * @param namespace namespace for the id
      * @return IdentityItem for the namespace, null if not found
      */
-    public List<IdentityItem> getIdentityItemForNamespace(final String namespace) {
+    public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
         return identityItems.get(namespace);
     }
 
@@ -100,10 +101,23 @@ public class IdentityMap {
         return map;
     }
 
+    /**
+     * Use this method to cast the {@code IdentityMap} as eventData for an SDK Event.
+     *
+     * @return {@link Map<String,Object>} representation of IdentityMap
+     */
+    Map<String, Object> asEventData() {
+        return new HashMap<String, Object>(identityItems);
+    }
+
     static IdentityMap fromData(Map<String, Object> data) {
-        if (data == null) { return null; }
+        if (data == null) {
+            return null;
+        }
         final Map<String, Object> identityMapDict = (HashMap<String, Object>) data.get(IdentityEdgeConstants.XDMKeys.IDENTITY_MAP);
-        if (identityMapDict == null) { return null; }
+        if (identityMapDict == null) {
+            return null;
+        }
 
         final IdentityMap identityMap = new IdentityMap();
 
