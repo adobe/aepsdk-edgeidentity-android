@@ -38,7 +38,7 @@ public class IdentityMap {
     }
 
     /**
-     * Gets the IdentityItem for the namespace
+     * Gets the {@link IdentityItem}s for the namespace
      *
      * @param namespace namespace for the id
      * @return IdentityItem for the namespace, null if not found
