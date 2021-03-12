@@ -33,10 +33,10 @@ public final class IdentityItem {
 
     /**
      * Creates a new {@link IdentityItem}
-     * @throws IllegalArgumentException if id is null
      * @param id id for the item
      * @param authenticationState {@link AuthenticationState} for the item
      * @param primary primary flag for the item
+     * @throws IllegalArgumentException if id is null
      */
     public IdentityItem(final String id, final AuthenticationState authenticationState, final boolean primary) {
         if (id == null) {
