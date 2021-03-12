@@ -21,7 +21,6 @@ import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.List;
-import java.util.Map;
 
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
@@ -64,7 +63,7 @@ public class IdentityEdge {
         }
 
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
@@ -124,7 +123,7 @@ public class IdentityEdge {
 
 
         final Event updateIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asEventData()).build();
         MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
     }
@@ -134,7 +133,7 @@ public class IdentityEdge {
      */
     public static void resetIdentities() {
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_RESET,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {

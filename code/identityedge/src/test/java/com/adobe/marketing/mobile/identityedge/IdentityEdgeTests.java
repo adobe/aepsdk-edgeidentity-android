@@ -107,7 +107,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
         assertTrue(dispatchedEvent.getEventData().isEmpty());
 
@@ -264,7 +264,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.REQUEST_RESET, dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.REQUEST_RESET.toLowerCase(), dispatchedEvent.getSource());
         assertTrue(dispatchedEvent.getEventData().isEmpty());
     }
@@ -295,7 +295,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(),dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(),dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY.toLowerCase(),dispatchedEvent.getSource());
         assertEquals(map.asEventData(),dispatchedEvent.getEventData());
     }
@@ -316,7 +316,7 @@ public class IdentityEdgeTests {
     // Private method
     // ========================================================================================
     private Event buildECIDResponseEvent (final Map<String, Object> eventData) {
-        return new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).setEventData(eventData).build();
+        return new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).setEventData(eventData).build();
     }
 
 }
