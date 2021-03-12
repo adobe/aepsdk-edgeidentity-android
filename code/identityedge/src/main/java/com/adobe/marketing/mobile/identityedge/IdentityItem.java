@@ -53,7 +53,7 @@ public final class IdentityItem {
      * Creates a new {@link IdentityItem} with default values
      * authenticationState is set to {@link AuthenticationState.AMBIGUOUS}
      * primary is set to false
-     * @param id
+     * @param id the id for this {@link IdentityItem}
      */
     public IdentityItem(final String id) {
         this(id, AuthenticationState.AMBIGUOUS, false);
