@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class IdentityItemTests {
 
@@ -105,5 +106,21 @@ public class IdentityItemTests {
         assertEquals("test-id", item.getId());
         assertEquals("LOGGED_OUT", item.getAuthenticationState().toString());
         assertEquals(false, item.isPrimary());
+    }
+
+    @Test
+    public void testIdentityItem_isEqualShouldReturnTrue() {
+        IdentityItem item1 = new IdentityItem("id", AuthenticationState.AMBIGUOUS , false);
+        IdentityItem item2 = new IdentityItem("id", AuthenticationState.AUTHENTICATED , true);
+
+        assertTrue(item1.equals(item2));
+    }
+
+    @Test
+    public void testIdentityItem_isEqualShouldReturnFalse() {
+        IdentityItem item1 = new IdentityItem("id", AuthenticationState.AMBIGUOUS , false);
+        IdentityItem item2 = new IdentityItem("id2", AuthenticationState.AUTHENTICATED , true);
+
+        assertTrue(item1.equals(item2));
     }
 }
