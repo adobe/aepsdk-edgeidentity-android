@@ -35,7 +35,7 @@ public class ListenerIdentityRequestResetTests {
     public void setup() {
         mockIdentityEdgeExtension = Mockito.mock(IdentityEdgeExtension.class);
         MobileCore.start(null);
-        listener = spy(new ListenerIdentityRequestReset(null, IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_RESET));
+        listener = spy(new ListenerIdentityRequestReset(null, IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET));
     }
 
     @Test
