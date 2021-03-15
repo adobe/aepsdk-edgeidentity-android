@@ -28,7 +28,7 @@ public final class IdentityItem {
 
     private static final String LOG_TAG = "IdentityItem";
     private static final String JSON_KEY_ID = "id";
-    private static final String JSON_KEY_AUTHENTICATION_STATE = "authenticationState";
+    private static final String JSON_KEY_AUTHENTICATION_STATE = "authenticatedState";
     private static final String JSON_KEY_PRIMARY = "primary";
 
     /**

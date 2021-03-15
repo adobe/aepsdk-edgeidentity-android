@@ -129,6 +129,51 @@ public class IdentityEdge {
     }
 
     /**
+     * Returns all identifiers, including customer identifiers which were previously added.
+     * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the stored identities.
+     */
+    public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
+        if (callback == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unexpected null callback, provide a callback to retrieve current IdentityMap.");
+            return;
+        }
+
+        final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
+                IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                returnError(callback, extensionError);
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES,
+                        extensionError.getErrorName()));
+            }
+        };
+
+        MobileCore.dispatchEventWithResponseCallback(event, new AdobeCallback<Event>() {
+            @Override
+            public void call(Event responseEvent) {
+                if (responseEvent == null || responseEvent.getEventData() == null) {
+                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    return;
+                }
+
+                final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                if (identityMap == null) {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR");
+                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    return;
+                }
+
+                callback.call(identityMap);
+            }
+        }, errorCallback);
+    }
+
+    /**
      * Clears all Identity Edge identifiers and generates a new Experience Cloud ID (ECID).
      */
     public static void resetIdentities() {
@@ -153,13 +198,13 @@ public class IdentityEdge {
      * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
      * @param error    the {@code AdobeError} returned back in the callback
      */
-    private static void returnError(final AdobeCallback<String> callback, final AdobeError error) {
+    private static <T> void returnError(final AdobeCallback<T> callback, final AdobeError error) {
         if (callback == null) {
             return;
         }
 
-        final AdobeCallbackWithError<String> adobeCallbackWithError = callback instanceof AdobeCallbackWithError ?
-                (AdobeCallbackWithError<String>) callback : null;
+        final AdobeCallbackWithError<T> adobeCallbackWithError = callback instanceof AdobeCallbackWithError ?
+                (AdobeCallbackWithError<T>) callback : null;
 
         if (adobeCallbackWithError != null) {
             adobeCallbackWithError.fail(error);

@@ -33,7 +33,7 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("id", (String) data.get("id"));
-        assertEquals("AUTHENTICATED", (String) data.get("authenticationState"));
+        assertEquals("AUTHENTICATED", (String) data.get("authenticatedState"));
         assertEquals(true, (boolean) data.get("primary"));
     }
 
@@ -56,7 +56,7 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("id", (String) data.get("id"));
-        assertEquals("AMBIGUOUS", (String) data.get("authenticationState"));
+        assertEquals("AMBIGUOUS", (String) data.get("authenticatedState"));
         assertEquals(true, (boolean) data.get("primary"));
     }
 
@@ -65,7 +65,7 @@ public class IdentityItemTests {
         // setup
         Map<String, Object> map = new HashMap<>();
         map.put("id", "test-id");
-        map.put("authenticationState", "loggedOut");
+        map.put("authenticatedState", "loggedOut");
         map.put("primary", true);
 
         // test
@@ -98,7 +98,7 @@ public class IdentityItemTests {
         // setup
         Map<String, Object> map = new HashMap<>();
         map.put("id", "test-id");
-        map.put("authenticationState", "loggedOut");
+        map.put("authenticatedState", "loggedOut");
 
         // test
         IdentityItem item = IdentityItem.fromData(map);
