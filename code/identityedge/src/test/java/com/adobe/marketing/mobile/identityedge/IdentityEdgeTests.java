@@ -441,7 +441,7 @@ public class IdentityEdgeTests {
     }
 
     @Test
-    public void testGetIdentities_missingECID() {
+    public void testGetIdentities_missingIdentityMap() {
         // setup
         final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
         final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
