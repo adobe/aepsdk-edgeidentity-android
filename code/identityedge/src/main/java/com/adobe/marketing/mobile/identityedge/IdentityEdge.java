@@ -128,6 +128,12 @@ public class IdentityEdge {
         MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
     }
 
+    /**
+     * Returns all identifiers, including customer identifiers which were previously added.
+     * @param callback {@link AdobeCallback} of {@link IdentityMap} invoked with the
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the stored identities.
+     */
     public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
         if (callback == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unexpected null callback, provide a callback to retrieve current IdentityMap.");
@@ -142,7 +148,7 @@ public class IdentityEdge {
             @Override
             public void error(final ExtensionError extensionError) {
                 returnError(callback, extensionError);
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES,
                         extensionError.getErrorName()));
             }
         };
