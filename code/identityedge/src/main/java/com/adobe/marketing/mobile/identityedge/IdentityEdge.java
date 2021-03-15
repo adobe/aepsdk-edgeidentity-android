@@ -130,7 +130,7 @@ public class IdentityEdge {
 
     /**
      * Returns all identifiers, including customer identifiers which were previously added.
-     * @param callback {@link AdobeCallback} of {@link IdentityMap} invoked with the
+     * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
      *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
      *                 eventuality of any error that occurred while getting the stored identities.
      */
