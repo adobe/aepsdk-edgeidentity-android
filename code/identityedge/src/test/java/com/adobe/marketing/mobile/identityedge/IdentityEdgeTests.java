@@ -18,6 +18,7 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -316,7 +317,7 @@ public class IdentityEdgeTests {
     // getIdentities API
     // ========================================================================================
     @Test
-    public void testGetIdentities() {
+    public void testGetIdentities() throws Exception {
         // setup
         final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
@@ -343,19 +344,41 @@ public class IdentityEdgeTests {
         assertTrue(dispatchedEvent.getEventData().isEmpty());
 
         // verify callback responses
-        ECID ecid = new ECID();
+        final ECID ecid = new ECID();
+        final String coreId = "core-test-id";
+        final String jsonStr = "{\n" +
+                "      \"identityMap\": {\n" +
+                "        \"ECID\": [\n" +
+                "          {\n" +
+                "            \"id\":" + ecid.toString() + ",\n" +
+                "            \"authenticatedState\": \"ambiguous\",\n" +
+                "            \"primary\": true\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"CORE\": [\n" +
+                "          {\n" +
+                "            \"id\":" + coreId + ",\n" +
+                "            \"authenticatedState\": \"authenticated\",\n" +
+                "            \"primary\": false\n" +
+                "          }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "}";
 
-        Map<String, Object> ecidDict = new HashMap<>();
-        ecidDict.put("id", ecid.toString());
-        ArrayList<Object> ecidArr = new ArrayList<>();
-        ecidArr.add(ecidDict);
-        Map<String, Object> identityMap = new HashMap<>();
-        identityMap.put("ECID", ecidArr);
-        Map<String, Object> xdmData = new HashMap<>();
-        xdmData.put("identityMap", identityMap);
+        final JSONObject jsonObject = new JSONObject(jsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
 
         adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(xdmData));
-        assertEquals(ecid.toString(), callbackReturnValues.get(0).getIdentityItemsForNamespace("ECID").get(0).getId());
+        IdentityItem ecidItem = callbackReturnValues.get(0).getIdentityItemsForNamespace("ECID").get(0);
+        IdentityItem coreItem = callbackReturnValues.get(0).getIdentityItemsForNamespace("CORE").get(0);
+
+        assertEquals(ecid.toString(), ecidItem.getId());
+        assertEquals(AuthenticationState.AMBIGUOUS, ecidItem.getAuthenticationState());
+        assertEquals(true, ecidItem.isPrimary());
+
+        assertEquals(coreId, coreItem.getId());
+        assertEquals(AuthenticationState.AUTHENTICATED, coreItem.getAuthenticationState());
+        assertEquals(false, coreItem.isPrimary());
 
         // TODO - enable when ExtensionError creation is available
         // should not crash on calling the callback
