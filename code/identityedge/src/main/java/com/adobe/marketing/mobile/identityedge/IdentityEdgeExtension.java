@@ -33,16 +33,16 @@ class IdentityEdgeExtension extends Extension {
      * Called during the Identity extension's registration.
      * The following listeners are registered during this extension's registration.
      * <ul>
-     *     <li> Listener {@link ListenerIdentityRequestIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     <li> Listener {@link ListenerIdentityRequestIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_IDENTITY}</li>
      *     <li> Listener {@link ListenerGenericIdentityRequestContent} to listen for event with eventType {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
-     *     <li> Listener {@link ListenerIdentityEdgeUpdateIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     <li> Listener {@link ListenerIdentityEdgeUpdateIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}</li>
-     *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
-     *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}</li>
      * </ul>
      * <p>
@@ -60,11 +60,11 @@ class IdentityEdgeExtension extends Extension {
             }
         };
 
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY, ListenerIdentityRequestIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY, ListenerIdentityRequestIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
     }
 
     /**
@@ -108,7 +108,7 @@ class IdentityEdgeExtension extends Extension {
 
         Map<String, Object> xdmData = state.getIdentityEdgeProperties().toXDMData(true);
         Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY)
                 .setEventData(xdmData)
                 .build();

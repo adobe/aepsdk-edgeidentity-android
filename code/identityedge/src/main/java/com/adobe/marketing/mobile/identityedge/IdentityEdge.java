@@ -20,6 +20,7 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.List;
 
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
@@ -62,7 +63,7 @@ public class IdentityEdge {
         }
 
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
@@ -89,11 +90,11 @@ public class IdentityEdge {
                     return;
                 }
 
-                final ECID ecid = identityMap.getFirstECID();
-                if (ecid != null) {
-                    callback.call(ecid.toString());
-                } else {
+                final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+                if (ecidItems == null || ecidItems.isEmpty() || ecidItems.get(0).getId() == null) {
                     callback.call("");
+                } else {
+                    callback.call(ecidItems.get(0).getId());
                 }
 
             }
@@ -122,7 +123,7 @@ public class IdentityEdge {
 
 
         final Event updateIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asEventData()).build();
         MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
     }
@@ -132,7 +133,7 @@ public class IdentityEdge {
      */
     public static void resetIdentities() {
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_RESET,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {

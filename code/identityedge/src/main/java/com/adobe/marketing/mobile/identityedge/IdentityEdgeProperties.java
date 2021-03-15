@@ -41,7 +41,11 @@ class IdentityEdgeProperties {
 
         IdentityMap identityMap = IdentityMap.fromData(xdmData);
         if (identityMap != null) {
-            ecid = identityMap.getFirstECID();
+            final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+            boolean containsEcid = ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0).getId() != null;
+            if (containsEcid) {
+                ecid = new ECID(ecidItems.get(0).getId());
+            }
         }
     }
 
@@ -71,7 +75,8 @@ class IdentityEdgeProperties {
         final IdentityMap identityMap = new IdentityMap();
 
         if (ecid != null) {
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecid.toString());
+            IdentityItem ecidItem = new IdentityItem(ecid.toString());
+            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
         }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
