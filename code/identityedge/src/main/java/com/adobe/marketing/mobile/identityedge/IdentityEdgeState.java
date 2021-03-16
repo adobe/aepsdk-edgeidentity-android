@@ -84,9 +84,27 @@ class IdentityEdgeState {
 
         identityProperties = new IdentityEdgeProperties();
         identityProperties.setECID(new ECID());
+        identityProperties.setECIDSecondary(null);
         IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
 
         // TODO: AMSDK-11208 Use return value to tell IdentityEdge to dispatch consent ad id update
+    }
+
+    /**
+     * Update the legacy ECID property with {@code legacyEcid} provided it does not equal the primary or secondary ECIDs
+     * currently in {@code IdentityEdgePoperties}.
+     * @param legacyEcid the current ECID from the direct Identity extension
+     * @return true if the legacy ECID was updated in {@code IdentityEdgeProperties}
+     */
+    boolean updateLegacyExperienceCloudId(final ECID legacyEcid) {
+        if (legacyEcid == identityProperties.getECID() || legacyEcid == identityProperties.getECIDSecondary()) {
+            return false;
+        }
+
+        identityProperties.setECIDSecondary(legacyEcid);
+        IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
+        MobileCore.log(LoggingMode.DEBUG, LOG_TAG,"Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
+        return true;
     }
 
 }
