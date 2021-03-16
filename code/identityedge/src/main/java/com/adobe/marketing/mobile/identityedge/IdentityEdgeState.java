@@ -60,7 +60,14 @@ class IdentityEdgeState {
 
         // Generate new ECID on first launch
         if (identityProperties.getECID() == null) {
-            identityProperties.setECID(new ECID());
+            ECID directIdentityEcid = IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence();
+            if (directIdentityEcid == null) {
+                identityProperties.setECID(new ECID());
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Bootup - Generating new ECID '" + identityProperties.getECID().toString() + "'");
+            } else {
+                identityProperties.setECID(directIdentityEcid);
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Bootup - Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
+            }
             IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
         }
 
