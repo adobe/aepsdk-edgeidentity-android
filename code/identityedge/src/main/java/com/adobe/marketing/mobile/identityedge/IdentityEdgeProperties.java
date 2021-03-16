@@ -28,6 +28,9 @@ class IdentityEdgeProperties {
     // The current Experience Cloud ID
     private ECID ecid;
 
+    // A secondary (non-primary) Experience Cloud ID
+    private ECID ecidSecondary;
+
     IdentityEdgeProperties() { }
 
     /**
@@ -42,9 +45,13 @@ class IdentityEdgeProperties {
         IdentityMap identityMap = IdentityMap.fromData(xdmData);
         if (identityMap != null) {
             final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-            boolean containsEcid = ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0).getId() != null;
-            if (containsEcid) {
-                ecid = new ECID(ecidItems.get(0).getId());
+            if (ecidItems != null) {
+                if (ecidItems.size() > 0 && ecidItems.get(0) != null && ecidItems.get(0).getId() != null) {
+                    ecid = new ECID(ecidItems.get(0).getId());
+                }
+                if (ecidItems.size() > 1 && ecidItems.get(1) != null && ecidItems.get(1).getId() != null) {
+                    ecidSecondary = new ECID(ecidItems.get(1).getId());
+                }
             }
         }
     }
@@ -66,6 +73,22 @@ class IdentityEdgeProperties {
     }
 
     /**
+     * Sets a secondary {@link ECID}
+     * @param ecid a new secondary {@code ECID}
+     */
+    void setECIDSecondary(final ECID ecid) {
+        this.ecidSecondary = ecid;
+    }
+
+    /**
+     * Retrieves the secondary {@link ECID}.
+     * @return secondary {@code ECID}
+     */
+    ECID getECIDSecondary() {
+        return ecidSecondary;
+    }
+
+    /**
      * Converts this into an event data representation in XDM format
      * @param allowEmpty  If this {@link IdentityEdgeProperties} contains no data, return a dictionary with a single {@link IdentityMap} key
      * @return A dictionary representing this in XDM format
@@ -77,6 +100,11 @@ class IdentityEdgeProperties {
         if (ecid != null) {
             IdentityItem ecidItem = new IdentityItem(ecid.toString());
             identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
+        }
+
+        if (ecidSecondary != null) {
+            IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
+            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
         }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class IdentityEdgePropertiesTests {
@@ -40,12 +41,32 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
+        props.setECIDSecondary(new ECID());
 
         // test
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmData));
+        Map<String, Object> ecidItem = getItemFromIdentityMap(xdmData, "ECID", 0);
+        Map<String, Object> ecidSecondaryItem = getItemFromIdentityMap(xdmData, "ECID", 1);
+
+        assertNotNull(ecidItem);
+        assertNotNull(ecidSecondaryItem);
+        assertEquals(props.getECID().toString(), (String)ecidItem.get("id"));
+        assertEquals(props.getECIDSecondary().toString(), (String)ecidSecondaryItem.get("id"));
+    }
+
+    @Test
+    public void testIdentityEdgeProperties_toXDMDataOnlyPrimaryECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+        props.setECID(new ECID());
+
+        // test
+        Map<String, Object> xdmMap = props.toXDMData(false);
+
+        // verify
+        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmMap));
     }
 
     @Test
@@ -78,6 +99,7 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
+        props.setECIDSecondary(new ECID());
 
         // test
         Map<String, Object> xdmData = props.toXDMData(false);
@@ -85,6 +107,7 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertEquals(ecidFromIdentityMap(xdmData), loadedProps.getECID().toString());
+        assertEquals(props.getECIDSecondary(), loadedProps.getECIDSecondary());
     }
 
     @Test
@@ -114,19 +137,6 @@ public class IdentityEdgePropertiesTests {
         assertEquals(ecidFromIdentityMap(xdmMap), loadedProps.getECID().toString());
     }
 
-    @Test
-    public void testIdentityEdgeProperties_toXDMDataWithECID() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setECID(new ECID());
-
-        // test
-        Map<String, Object> xdmMap = props.toXDMData(false);
-
-        // verify
-        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmMap));
-    }
-
     private String ecidFromIdentityMap(Map<String, Object> xdmMap) {
         if (xdmMap == null) { return null; }
         Map<String, Object> identityMap = (HashMap<String, Object>) xdmMap.get("identityMap");
@@ -137,6 +147,15 @@ public class IdentityEdgePropertiesTests {
         if (ecidDict == null) { return null; }
         String ecid = (String) ecidDict.get("id");
         return ecid;
+    }
+
+    private static Map<String, Object> getItemFromIdentityMap(final Map<String, Object> xdmMap, final String namespace, final int itemIndex) {
+        if (xdmMap == null) { return null; }
+        Map<String, Object> identityMap = (Map<String, Object>) xdmMap.get("identityMap");
+        if (identityMap == null) { return null; }
+        List<Object> itemList = (List<Object>) identityMap.get(namespace);
+        if (itemList == null) { return null; }
+        return (Map<String, Object>) itemList.get(itemIndex);
     }
 
 }
