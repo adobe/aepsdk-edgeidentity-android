@@ -15,6 +15,7 @@ import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -55,5 +56,27 @@ class ECID {
     @Override
     public String toString() {
         return ecidString;
+    }
+
+    /**
+     * Determine if ECID {@code o} is equal to this ECID.
+     * @param o the ECID instance to check for equality with this ECID.
+     * @return true if {@code o} is equal to this ECID instance.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ECID ecid = (ECID) o;
+        return Objects.equals(ecidString, ecid.ecidString);
+    }
+
+    /**
+     * Get the hash code for this ECID.
+     * @return hash code for this ECID.
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(ecidString);
     }
 }
