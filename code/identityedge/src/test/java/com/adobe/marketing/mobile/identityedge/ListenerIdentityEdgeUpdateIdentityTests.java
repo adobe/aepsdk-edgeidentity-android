@@ -36,13 +36,13 @@ public class ListenerIdentityEdgeUpdateIdentityTests {
     public void setup() {
         mockIdentityEdgeExtension = Mockito.mock(IdentityEdgeExtension.class);
         MobileCore.start(null);
-        listener = spy(new ListenerIdentityEdgeUpdateIdentity(null, IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY));
+        listener = spy(new ListenerIdentityEdgeUpdateIdentity(null, IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY));
     }
 
     @Test
     public void testHear() {
         // setup
-        Event event = new Event.Builder("Update Identities", IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+        Event event = new Event.Builder("Update Identities", IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).build();
         doReturn(mockIdentityEdgeExtension).when(listener).getIdentityEdgeExtension();
 
@@ -56,7 +56,7 @@ public class ListenerIdentityEdgeUpdateIdentityTests {
     @Test
     public void testHear_WhenParentExtensionNull() {
         // setup
-        Event event = new Event.Builder("Update Identities", IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+        Event event = new Event.Builder("Update Identities", IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).build();
         doReturn(null).when(listener).getIdentityEdgeExtension();
 

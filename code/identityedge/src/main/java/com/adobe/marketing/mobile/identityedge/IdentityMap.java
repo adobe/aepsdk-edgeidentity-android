@@ -31,49 +31,24 @@ import java.util.Map;
 public class IdentityMap {
     private static final String LOG_TAG = "IdentityMap";
 
-    private static final String JSON_KEY_ID = "id";
-    private static final String JSON_KEY_AUTHENTICATION_STATE = "authenticationState";
-    private static final String JSON_KEY_PRIMARY = "primary";
-
-    enum AuthenticationState {
-        AMBIGUOUS("ambiguous"),
-        AUTHENTICATED("authenticated"),
-        LOGGED_OUT("loggedOut");
-
-        private String name;
-
-        AuthenticationState(final String name) {
-            this.name = name;
-        }
-
-        String getName() {
-            return name;
-        }
-
-        AuthenticationState fromString(final String state) {
-            if ("authenticated".equalsIgnoreCase(state)) {
-                return AUTHENTICATED;
-            } else if ("loggedOut".equalsIgnoreCase(state)) {
-                return LOGGED_OUT;
-            } else {
-                return AMBIGUOUS;
-            }
-        }
-    }
-
-    private Map<String, List<Map<String, Object>>> identityItems;
+    private Map<String, List<IdentityItem>> identityItems;
 
     IdentityMap() {
         identityItems = new HashMap<>();
     }
 
     /**
-     * Gets the IdentityItem for the namespace
+     * Gets the {@link IdentityItem}s for the namespace
      *
      * @param namespace namespace for the id
      * @return IdentityItem for the namespace, null if not found
      */
-    List<Map<String, Object>> getIdentityItemsForNamespace(final String namespace) {
+    public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
+        final List<IdentityItem> items = new ArrayList<>();
+        for (IdentityItem item : identityItems.get(namespace)) {
+            items.add(new IdentityItem((item)));
+        }
+
         return identityItems.get(namespace);
     }
 
@@ -82,47 +57,13 @@ public class IdentityMap {
      * with digital experiences.
      *
      * @param namespace the namespace integration code or namespace ID of the identity
-     * @param id        identity of the consumer in the related namespace
-     * @param state     the state this identity is authenticated as for this observed ExperienceEvent.
-     *                  Default is {@link AuthenticationState#AMBIGUOUS}.
-     * @param primary   Indicates this identity is the preferred identity. Is used as a hint to help
-     *                  systems better organize how identities are queried. Default is false.
-     * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
-     */
-    void addItem(final String namespace, final String id, final AuthenticationState state, final boolean primary) {
-        if (Utils.isNullOrEmpty(id)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null/non-empty id.");
-            return;
-        }
-
-        if (Utils.isNullOrEmpty(namespace)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                    "IdentityMap add item ignored as must contain a non-null/non-empty namespace.");
-            return;
-        }
-
-        Map<String, Object> item = new HashMap<>();
-        item.put(JSON_KEY_ID, id);
-        item.put(JSON_KEY_PRIMARY, primary);
-
-        if (state != null) {
-            item.put(JSON_KEY_AUTHENTICATION_STATE, state.getName());
-        }
-
-        addItemToMap(namespace, item);
-    }
-
-    /**
-     * Add an identity item which is used to clearly distinguish entities that are interacting
-     * with digital experiences. Uses default authentication state and primary as defined by the Experience Platform.
+     * @param item {@link IdentityItem} to be added to the namespace
      *
-     * @param namespace the namespace integration code or namespace ID of the identity
-     * @param id        identity of the consumer in the related namespace
      * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
      */
-    void addItem(final String namespace, final String id) {
-        if (Utils.isNullOrEmpty(id)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null/non-empty id.");
+    public void addItem(final String namespace, final IdentityItem item) {
+        if (item == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
             return;
         }
 
@@ -132,15 +73,12 @@ public class IdentityMap {
             return;
         }
 
-        Map<String, Object> item = new HashMap<>();
-        item.put(JSON_KEY_ID, id);
-
         addItemToMap(namespace, item);
     }
 
-    private void addItemToMap(final String namespace, final Map<String, Object> item) {
+    private void addItemToMap(final String namespace, final IdentityItem item) {
         // check if namespace exists
-        List<Map<String, Object>> itemList;
+        final List<IdentityItem> itemList;
 
         if (identityItems.containsKey(namespace)) {
             itemList = identityItems.get(namespace);
@@ -153,7 +91,19 @@ public class IdentityMap {
     }
 
     Map<String, List<Map<String, Object>>> toObjectMap() {
-        return identityItems;
+        final Map<String, List<Map<String, Object>>> map = new HashMap<String, List<Map<String, Object>>>();
+
+        for (String namespace : identityItems.keySet()) {
+            final List<Map<String, Object>> namespaceIds = new ArrayList<>();
+
+            for(IdentityItem identityItem: identityItems.get(namespace)) {
+                namespaceIds.add(identityItem.toObjectMap());
+            }
+
+            map.put(namespace, namespaceIds);
+        }
+
+        return map;
     }
 
     /**
@@ -179,8 +129,11 @@ public class IdentityMap {
         for (String namespace : identityMapDict.keySet()) {
             try {
                 final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
-                for (Object idMap : idArr) {
-                    identityMap.addItemToMap(namespace, (Map<String, Object>) idMap);
+                for (Object idMap: idArr) {
+                    final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
+                    if (item != null) {
+                        identityMap.addItemToMap(namespace, item);
+                    }
                 }
             } catch (ClassCastException e) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityMap from data.");
@@ -188,32 +141,5 @@ public class IdentityMap {
         }
 
         return identityMap;
-    }
-
-    /**
-     * Reads the ECID from an IdentityMap
-     *
-     * @return ECID stored in the IdentityMap or null if not found
-     */
-    ECID getFirstECID() {
-        final List<Map<String, Object>> ecidArr = getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-        if (ecidArr == null) {
-            return null;
-        }
-        final Map<String, Object> ecidDict = ecidArr.get(0);
-        if (ecidDict == null) {
-            return null;
-        }
-        String ecidStr = null;
-        try {
-            ecidStr = (String) ecidDict.get(IdentityEdgeConstants.XDMKeys.ID);
-        } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create read ECID from IdentityMap");
-        }
-
-        if (ecidStr == null) {
-            return null;
-        }
-        return new ECID(ecidStr);
     }
 }

@@ -30,7 +30,7 @@ class IdentityEdgeConstants {
 
     final class EventType {
         static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
-        static final String IDENTITY_EDGE = "com.adobe.eventType.identityEdge";
+        static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
         static final String IDENTITY = "com.adobe.eventType.identity";
         private EventType() { }
     }
@@ -39,8 +39,9 @@ class IdentityEdgeConstants {
         static final String IDENTITY_REQUEST_IDENTITY_ECID = "Identity Edge Request ECID";
         static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Identity Edge Response Content One Time";
         static final String UPDATE_IDENTITIES = "Identity Edge Update Identities";
-        static final String REMOVE_IDENTITIES = "Idetity Edge Remove Identities";
+        static final String REMOVE_IDENTITIES = "Identity Edge Remove Identities";
         static final String REQUEST_RESET = "Identity Edge Request Reset";
+        static final String REQUEST_IDENTITIES = "Identity Edge Request Identities";
         private EventNames() { }
     }
 

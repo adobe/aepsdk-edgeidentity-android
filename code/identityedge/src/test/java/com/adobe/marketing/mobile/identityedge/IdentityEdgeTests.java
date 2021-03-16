@@ -18,6 +18,7 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,7 +108,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
         assertTrue(dispatchedEvent.getEventData().isEmpty());
 
@@ -123,7 +124,7 @@ public class IdentityEdgeTests {
         Map<String, Object> xdmData = new HashMap<>();
         xdmData.put("identityMap", identityMap);
 
-        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(xdmData));
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(xdmData));
         assertEquals(ecid.toString(), callbackReturnValues.get(0));
 
         // TODO - enable when ExtensionError creation is available
@@ -132,7 +133,7 @@ public class IdentityEdgeTests {
     }
 
     @Test
-    public void testGetExperienceCloudId_NullCallback() {
+    public void testGetExperienceCloudId_nullCallback() {
         // test
         IdentityEdge.getExperienceCloudId(null);
 
@@ -142,7 +143,7 @@ public class IdentityEdgeTests {
     }
 
     @Test
-    public void testGetExperienceCloudId_NullResponseEvent() {
+    public void testGetExperienceCloudId_nullResponseEvent() {
         // setup
         final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
         final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
@@ -175,7 +176,7 @@ public class IdentityEdgeTests {
     }
 
     @Test
-    public void testGetExperienceCloudId_InvalidEventData() {
+    public void testGetExperienceCloudId_invalidEventData() {
         // setup
         final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
         final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
@@ -202,7 +203,7 @@ public class IdentityEdgeTests {
         // set response event to null
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("someKey", "someValue");
-        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(eventData));
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(eventData));
 
         // verify
         assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
@@ -210,7 +211,7 @@ public class IdentityEdgeTests {
     }
 
     @Test
-    public void testGetExperienceCloudId_MissingECID() {
+    public void testGetExperienceCloudId_missingECID() {
         // setup
         final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
         final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
@@ -236,7 +237,7 @@ public class IdentityEdgeTests {
 
         // set response event to map missing ECID
         Map<String, Object> emptyXDMData = new HashMap<>();
-        adobeCallbackCaptor.getValue().call(buildECIDResponseEvent(emptyXDMData));
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(emptyXDMData));
 
         // verify
         assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
@@ -264,7 +265,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.REQUEST_RESET, dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.REQUEST_RESET.toLowerCase(), dispatchedEvent.getSource());
         assertTrue(dispatchedEvent.getEventData().isEmpty());
     }
@@ -280,8 +281,8 @@ public class IdentityEdgeTests {
 
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("mainspace", "id", IdentityMap.AuthenticationState.AUTHENTICATED, true);
-        map.addItem("secondspace", "idtwo", IdentityMap.AuthenticationState.LOGGED_OUT, false);
+        map.addItem("mainspace", new IdentityItem("id", AuthenticationState.AUTHENTICATED, true));
+        map.addItem("secondspace", new IdentityItem("idtwo", AuthenticationState.LOGGED_OUT, false));
         IdentityEdge.updateIdentities(map);
 
         // verify
@@ -295,7 +296,7 @@ public class IdentityEdgeTests {
         // verify the dispatched event details
         Event dispatchedEvent = eventCaptor.getValue();
         assertEquals(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.IDENTITY_EDGE.toLowerCase(),dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(),dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY.toLowerCase(),dispatchedEvent.getSource());
         assertEquals(map.asEventData(),dispatchedEvent.getEventData());
     }
@@ -313,10 +314,194 @@ public class IdentityEdgeTests {
     }
 
     // ========================================================================================
+    // getIdentities API
+    // ========================================================================================
+    @Test
+    public void testGetIdentities() throws Exception {
+        // setup
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+        final List<IdentityMap> callbackReturnValues = new ArrayList<>();
+
+        // test
+        IdentityEdge.getIdentities(new AdobeCallback<IdentityMap>() {
+            @Override
+            public void call(IdentityMap map) {
+                callbackReturnValues.add(map);
+            }
+        });
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEventWithResponseCallback(eventCaptor.capture(), adobeCallbackCaptor.capture(), extensionErrorCallbackCaptor.capture());
+
+        // verify the dispatched event details
+        Event dispatchedEvent = eventCaptor.getValue();
+        assertEquals(IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES, dispatchedEvent.getName());
+        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
+        assertEquals(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
+        assertTrue(dispatchedEvent.getEventData().isEmpty());
+
+        // verify callback responses
+        final ECID ecid = new ECID();
+        final String coreId = "core-test-id";
+        final String jsonStr = "{\n" +
+                "      \"identityMap\": {\n" +
+                "        \"ECID\": [\n" +
+                "          {\n" +
+                "            \"id\":" + ecid.toString() + ",\n" +
+                "            \"authenticatedState\": \"ambiguous\",\n" +
+                "            \"primary\": true\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"CORE\": [\n" +
+                "          {\n" +
+                "            \"id\":" + coreId + ",\n" +
+                "            \"authenticatedState\": \"authenticated\",\n" +
+                "            \"primary\": false\n" +
+                "          }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "}";
+
+        final JSONObject jsonObject = new JSONObject(jsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(xdmData));
+        IdentityItem ecidItem = callbackReturnValues.get(0).getIdentityItemsForNamespace("ECID").get(0);
+        IdentityItem coreItem = callbackReturnValues.get(0).getIdentityItemsForNamespace("CORE").get(0);
+
+        assertEquals(ecid.toString(), ecidItem.getId());
+        assertEquals(AuthenticationState.AMBIGUOUS, ecidItem.getAuthenticationState());
+        assertEquals(true, ecidItem.isPrimary());
+
+        assertEquals(coreId, coreItem.getId());
+        assertEquals(AuthenticationState.AUTHENTICATED, coreItem.getAuthenticationState());
+        assertEquals(false, coreItem.isPrimary());
+
+        // TODO - enable when ExtensionError creation is available
+        // should not crash on calling the callback
+        //extensionErrorCallback.error(ExtensionError.UNEXPECTED_ERROR);
+    }
+
+    @Test
+    public void testGetIdentities_nullCallback() {
+        // test
+        IdentityEdge.getIdentities(null);
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+        MobileCore.dispatchEventWithResponseCallback(any(Event.class), any(AdobeCallback.class), any(ExtensionErrorCallback.class));
+    }
+
+    @Test
+    public void testGetIdentities_nullResponseEvent() {
+        // setup
+        final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+        final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+        final Map<String, Object> errorCapture = new HashMap<>();
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+            @Override
+            public void fail(AdobeError adobeError) {
+                errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+                errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+            }
+
+            @Override
+            public void call(Object o) { }
+        };
+
+        // test
+        IdentityEdge.getIdentities(callbackWithError);
+
+        // verify if the event is dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEventWithResponseCallback(any(Event.class), adobeCallbackCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // set response event to null
+        adobeCallbackCaptor.getValue().call(null);
+
+        // verify
+        assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+        assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+    }
+
+    @Test
+    public void testGetIdentities_invalidEventData() {
+        // setup
+        final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+        final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+        final Map<String, Object> errorCapture = new HashMap<>();
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+            @Override
+            public void fail(AdobeError adobeError) {
+                errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+                errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+            }
+
+            @Override
+            public void call(Object o) { }
+        };
+
+        // test
+        IdentityEdge.getIdentities(callbackWithError);
+
+        // verify if the event is dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEventWithResponseCallback(any(Event.class), adobeCallbackCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // set response event to null
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("someKey", "someValue");
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(eventData));
+
+        // verify
+        assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+        assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+    }
+
+    @Test
+    public void testGetIdentities_missingIdentityMap() {
+        // setup
+        final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+        final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+        final Map<String, Object> errorCapture = new HashMap<>();
+        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+        final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+            @Override
+            public void fail(AdobeError adobeError) {
+                errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+                errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+            }
+
+            @Override
+            public void call(Object o) { }
+        };
+
+        // test
+        IdentityEdge.getIdentities(callbackWithError);
+
+        // verify if the event is dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEventWithResponseCallback(any(Event.class), adobeCallbackCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // set response event to map missing IdentityMap
+        Map<String, Object> emptyXDMData = new HashMap<>();
+        adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(emptyXDMData));
+
+        // verify
+        assertTrue((boolean)errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+        assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+    }
+
+    // ========================================================================================
     // Private method
     // ========================================================================================
-    private Event buildECIDResponseEvent (final Map<String, Object> eventData) {
-        return new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).setEventData(eventData).build();
+    private Event buildIdentityResponseEvent(final Map<String, Object> eventData) {
+        return new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).setEventData(eventData).build();
     }
 
 }

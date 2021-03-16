@@ -94,15 +94,15 @@ public class IdentityEdgeExtensionTests {
                 anyString(), any(Class.class), any(ExtensionErrorCallback.class));
 
         // verify listeners are registered with correct event source and type
-        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_IDENTITY), eq(ListenerIdentityRequestIdentity.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.GENERIC_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_CONTENT), eq(ListenerGenericIdentityRequestContent.class), callbackCaptor.capture());
-        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY), eq(ListenerIdentityEdgeUpdateIdentity.class), callbackCaptor.capture());
-        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REMOVE_IDENTITY), eq(ListenerIdentityEdgeRemoveIdentity.class), callbackCaptor.capture());
-        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.IDENTITY_EDGE),
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_RESET), eq(ListenerIdentityRequestReset.class), callbackCaptor.capture());
 
         // verify the callback
@@ -147,7 +147,7 @@ public class IdentityEdgeExtensionTests {
     @Test
     public void test_handleIdentityRequest_generatesNewECID() {
         // setup
-        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
         final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
@@ -161,10 +161,10 @@ public class IdentityEdgeExtensionTests {
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
         final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
-        final ECID ecid = identityMap.getFirstECID();
+        final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
         assertNotNull(ecid);
-        assertTrue(ecid.toString().length() > 0);
+        assertTrue(ecid.length() > 0);
     }
 
     @Test
@@ -173,7 +173,7 @@ public class IdentityEdgeExtensionTests {
         final ECID existingECID = new ECID();
         setupExistingIdentityEdgeProps(existingECID);
 
-        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
         final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
@@ -187,9 +187,9 @@ public class IdentityEdgeExtensionTests {
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
         final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
-        final ECID ecid = identityMap.getFirstECID();
+        final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
-        assertEquals(existingECID.toString(), ecid.toString());
+        assertEquals(existingECID.toString(), ecid);
     }
 
     @Test
@@ -198,7 +198,7 @@ public class IdentityEdgeExtensionTests {
         IdentityEdgeProperties emptyProps = new IdentityEdgeProperties();
         PowerMockito.stub(PowerMockito.method(IdentityEdgeState.class, "getIdentityEdgeProperties")).toReturn(emptyProps);
         
-        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
         final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
@@ -220,7 +220,7 @@ public class IdentityEdgeExtensionTests {
     @Test
     public void test_handleIdentityResetRequest() {
         // setup
-        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.IDENTITY_EDGE, IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
         final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
 
         // test

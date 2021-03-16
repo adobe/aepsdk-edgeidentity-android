@@ -32,7 +32,7 @@ public class ListenerIdentityEdgeUpdateIdentity extends ExtensionListener {
 
 
     /**
-     * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#IDENTITY_EDGE}
+     * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      * and with event source {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}  is dispatched through eventHub.
      *
      * @param event the udpate identity {@link Event} to be processed

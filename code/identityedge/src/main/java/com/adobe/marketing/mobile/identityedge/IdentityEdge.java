@@ -20,6 +20,8 @@ import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.List;
+
 
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
@@ -62,7 +64,7 @@ public class IdentityEdge {
         }
 
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
@@ -89,11 +91,11 @@ public class IdentityEdge {
                     return;
                 }
 
-                final ECID ecid = identityMap.getFirstECID();
-                if (ecid != null) {
-                    callback.call(ecid.toString());
-                } else {
+                final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+                if (ecidItems == null || ecidItems.isEmpty() || ecidItems.get(0).getId() == null) {
                     callback.call("");
+                } else {
+                    callback.call(ecidItems.get(0).getId());
                 }
 
             }
@@ -122,9 +124,54 @@ public class IdentityEdge {
 
 
         final Event updateIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asEventData()).build();
         MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
+    }
+
+    /**
+     * Returns all identifiers, including customer identifiers which were previously added.
+     * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the stored identities.
+     */
+    public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
+        if (callback == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unexpected null callback, provide a callback to retrieve current IdentityMap.");
+            return;
+        }
+
+        final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
+                IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
+
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                returnError(callback, extensionError);
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.REQUEST_IDENTITIES,
+                        extensionError.getErrorName()));
+            }
+        };
+
+        MobileCore.dispatchEventWithResponseCallback(event, new AdobeCallback<Event>() {
+            @Override
+            public void call(Event responseEvent) {
+                if (responseEvent == null || responseEvent.getEventData() == null) {
+                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    return;
+                }
+
+                final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                if (identityMap == null) {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR");
+                    returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                    return;
+                }
+
+                callback.call(identityMap);
+            }
+        }, errorCallback);
     }
 
     /**
@@ -132,7 +179,7 @@ public class IdentityEdge {
      */
     public static void resetIdentities() {
         final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_RESET,
-                IdentityEdgeConstants.EventType.IDENTITY_EDGE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
@@ -152,13 +199,13 @@ public class IdentityEdge {
      * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
      * @param error    the {@code AdobeError} returned back in the callback
      */
-    private static void returnError(final AdobeCallback<String> callback, final AdobeError error) {
+    private static <T> void returnError(final AdobeCallback<T> callback, final AdobeError error) {
         if (callback == null) {
             return;
         }
 
-        final AdobeCallbackWithError<String> adobeCallbackWithError = callback instanceof AdobeCallbackWithError ?
-                (AdobeCallbackWithError<String>) callback : null;
+        final AdobeCallbackWithError<T> adobeCallbackWithError = callback instanceof AdobeCallbackWithError ?
+                (AdobeCallbackWithError<T>) callback : null;
 
         if (adobeCallbackWithError != null) {
             adobeCallbackWithError.fail(error);
