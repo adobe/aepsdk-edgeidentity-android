@@ -42,7 +42,7 @@ class IdentityEdgeExtension extends Extension {
      *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
-     *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
+     *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}</li>
      * </ul>
      * <p>
@@ -64,7 +64,7 @@ class IdentityEdgeExtension extends Extension {
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
-        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
     }
 
     /**
@@ -136,7 +136,7 @@ class IdentityEdgeExtension extends Extension {
         state.resetIdentifiers();
 
         final ExtensionApi extensionApi = super.getApi();
-        if (extensionApi == null ) {
+        if (extensionApi == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
             return;
         }
@@ -150,6 +150,21 @@ class IdentityEdgeExtension extends Extension {
         };
 
         extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+
+        // dispatch response event
+        final Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.RESET_IDENTITIES_RESPONSE,
+                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
+                IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).build();
+
+        MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Identity Edge reset response event for event " +
+                        event.getUniqueIdentifier() +
+                        " with error " +
+                        extensionError.getErrorName());
+            }
+        });
     }
 
     /**

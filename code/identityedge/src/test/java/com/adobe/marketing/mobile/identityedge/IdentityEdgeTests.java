@@ -245,32 +245,6 @@ public class IdentityEdgeTests {
     }
 
     // ========================================================================================
-    // resetIdentities API
-    // ========================================================================================
-    @Test
-    public void testResetIdentities() {
-        // setup
-        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
-        final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
-
-
-        // test
-        IdentityEdge.resetIdentities();
-
-        // verify
-        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.dispatchEvent(eventCaptor.capture(), extensionErrorCallbackCaptor.capture());
-
-        // verify the dispatched event details
-        Event dispatchedEvent = eventCaptor.getValue();
-        assertEquals(IdentityEdgeConstants.EventNames.REQUEST_RESET, dispatchedEvent.getName());
-        assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
-        assertEquals(IdentityEdgeConstants.EventSource.REQUEST_RESET.toLowerCase(), dispatchedEvent.getSource());
-        assertTrue(dispatchedEvent.getEventData().isEmpty());
-    }
-
-    // ========================================================================================
     // updateIdentities API
     // ========================================================================================
     @Test

@@ -40,8 +40,8 @@ class IdentityEdgeConstants {
         static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Identity Edge Response Content One Time";
         static final String UPDATE_IDENTITIES = "Identity Edge Update Identities";
         static final String REMOVE_IDENTITIES = "Identity Edge Remove Identities";
-        static final String REQUEST_RESET = "Identity Edge Request Reset";
         static final String REQUEST_IDENTITIES = "Identity Edge Request Identities";
+        static final String RESET_IDENTITIES_RESPONSE = "Edge Identity Reset Identities Response";
         private EventNames() { }
     }
 
