@@ -13,11 +13,9 @@ package com.adobe.marketing.mobile.identityedge;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import static com.adobe.marketing.mobile.identityedge.IdentityEdgeTestUtil.flattenMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -45,7 +43,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmData));
+        assertEquals(props.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -57,7 +55,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertNull(ecidFromIdentityMap(xdmData));
+        assertNull(flattenMap(xdmData).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -70,7 +68,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmData));
+        assertEquals(props.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -84,7 +82,7 @@ public class IdentityEdgePropertiesTests {
         IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmData);
 
         // verify
-        assertEquals(ecidFromIdentityMap(xdmData), loadedProps.getECID().toString());
+        assertEquals(loadedProps.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -111,7 +109,7 @@ public class IdentityEdgePropertiesTests {
         IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmMap);
 
         // verify
-        assertEquals(ecidFromIdentityMap(xdmMap), loadedProps.getECID().toString());
+        assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -124,19 +122,16 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> xdmMap = props.toXDMData(false);
 
         // verify
-        assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmMap));
+        assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
     }
 
-    private String ecidFromIdentityMap(Map<String, Object> xdmMap) {
-        if (xdmMap == null) { return null; }
-        Map<String, Object> identityMap = (HashMap<String, Object>) xdmMap.get("identityMap");
-        if (identityMap == null) { return null; }
-        List<Object> ecidArr = (ArrayList<Object>) identityMap.get("ECID");
-        if (ecidArr == null) { return null; }
-        Map<String, Object> ecidDict = (HashMap<String, Object>) ecidArr.get(0);
-        if (ecidDict == null) { return null; }
-        String ecid = (String) ecidDict.get("id");
-        return ecid;
-    }
+    // ======================================================================================================================
+    // Tests for "updateCustomerIdentifiers" is already covered in "handleUpdateRequest" tests in IdentityEdgeExtensionTests
+    // ======================================================================================================================
+
+
+    // ======================================================================================================================
+    // Tests for "removeCustomerIdentifiers" is already covered in handleRemoveRequest tests in IdentityEdgeExtensionTests
+    // ======================================================================================================================
 
 }

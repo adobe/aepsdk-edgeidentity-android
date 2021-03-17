@@ -113,4 +113,14 @@ public class IdentityEdgeStateTests {
         assertFalse(state.getIdentityEdgeProperties().getECID().toString().isEmpty()); // ECID should not be empty
         verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // should save to data store
     }
+
+
+    // ======================================================================================================================
+    // Tests for "updateCustomerIdentifiers" is already covered in "handleUpdateRequest" tests in IdentityEdgeExtensionTests
+    // ======================================================================================================================
+
+
+    // ======================================================================================================================
+    // Tests for "removeCustomerIdentifiers" is already covered in handleRemoveRequest tests in IdentityEdgeExtensionTests
+    // ======================================================================================================================
 }
