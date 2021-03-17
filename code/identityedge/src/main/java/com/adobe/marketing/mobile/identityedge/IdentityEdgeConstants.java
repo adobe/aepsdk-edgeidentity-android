@@ -52,6 +52,8 @@ class IdentityEdgeConstants {
 
     final class Namespaces {
         static final String ECID = "ECID";
+        static final String IDFA = "IDFA";
+        static final String GAID = "GAID";
         private Namespaces() { }
     }
 

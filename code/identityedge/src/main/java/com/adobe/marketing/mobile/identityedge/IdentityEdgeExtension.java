@@ -85,14 +85,39 @@ class IdentityEdgeExtension extends Extension {
         return IdentityEdgeConstants.EXTENSION_VERSION;
     }
 
-    // TODO: Docme
+    /**
+     * Handles update identity requests to add/update customer identifiers.
+     *
+     * @param event the edge update identity {@link Event}
+     */
     void handleUpdateIdentities(final Event event) {
-        // TODO
+        final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+        final IdentityMap map = IdentityMap.fromData(eventData);
+        if (map == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to update identifiers as no identifiers were found in the event data.");
+            return;
+        }
+
+        state.updateCustomerIdentifiers(map);
+        updateIdentityXDMSharedState(event);
     }
 
-    // TODO: Docme
+
+    /**
+     * Handles remove identity requests to remove customer identifiers.
+     *
+     * @param event the edge remove identity request {@link Event}
+     */
     void handleRemoveIdentity(final Event event) {
-        // TODO
+        final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+        final IdentityMap map = IdentityMap.fromData(eventData);
+        if (map == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to remove identifiers as no identifiers were found in the event data.");
+            return;
+        }
+
+        state.removeCustomerIdentifiers(map);
+        updateIdentityXDMSharedState(event);
     }
 
     void handleGenericIdentityRequest(final Event event) {
@@ -134,7 +159,15 @@ class IdentityEdgeExtension extends Extension {
             return;
         }
         state.resetIdentifiers();
+        updateIdentityXDMSharedState(event);
+    }
 
+    /**
+     * Fetches the latest Identity Edge properties and shares the EdgeIdentity's XDMSharedState.
+     *
+     * @param event the {@link Event} that triggered the XDM shared state change
+     */
+    void updateIdentityXDMSharedState(final Event event) {
         final ExtensionApi extensionApi = super.getApi();
         if (extensionApi == null ) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
@@ -142,7 +175,7 @@ class IdentityEdgeExtension extends Extension {
         }
 
         // set the shared state
-        ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));

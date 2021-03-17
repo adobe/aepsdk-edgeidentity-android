@@ -82,4 +82,25 @@ class IdentityEdgeState {
         // TODO: AMSDK-11208 Use return value to tell IdentityEdge to dispatch consent ad id update
     }
 
+
+    /**
+     * Update the customer identifiers by merging the passed in {@link IdentityMap} with the current identifiers present in {@link #identityProperties}.
+     *
+     * @param map the {@link IdentityMap} containing customer identifiers to add or update with the current customer identifiers
+     */
+    void updateCustomerIdentifiers(final IdentityMap map) {
+        identityProperties.updateCustomerIdentifiers(map);
+        IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
+    }
+
+    /**
+     * Remove customer identifiers specified in passed in {@link IdentityMap} from the current identifiers present in {@link #identityProperties}.
+     *
+     * @param map the {@link IdentityMap} with items to remove from current identifiers
+     */
+    void removeCustomerIdentifiers(final IdentityMap map) {
+        identityProperties.removeCustomerIdentifiers(map);
+        IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
+    }
+
 }

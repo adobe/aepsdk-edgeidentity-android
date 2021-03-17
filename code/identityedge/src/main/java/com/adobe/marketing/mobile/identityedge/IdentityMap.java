@@ -16,6 +16,7 @@ import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,17 +40,27 @@ public class IdentityMap {
 
     /**
      * Gets the {@link IdentityItem}s for the namespace
+     * returns an empty list if no {@link IdentityItem}s were found for the namespace
      *
      * @param namespace namespace for the id
-     * @return IdentityItem for the namespace, null if not found
+     * @return IdentityItem for the namespace,
      */
-    public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
-        final List<IdentityItem> items = new ArrayList<>();
-        for (IdentityItem item : identityItems.get(namespace)) {
-            items.add(new IdentityItem((item)));
+    public List<IdentityItem>  getIdentityItemsForNamespace(final String namespace) {
+        final List<IdentityItem> copyItems = new ArrayList<>();
+        if(Utils.isNullOrEmpty(namespace)) {
+            return copyItems;
         }
 
-        return identityItems.get(namespace);
+        final List<IdentityItem> items = identityItems.get(namespace);
+        if (items == null) {
+            return copyItems;
+        }
+
+        for (IdentityItem item : items) {
+            copyItems.add(new IdentityItem((item)));
+        }
+
+        return copyItems;
     }
 
     /**
@@ -57,8 +68,7 @@ public class IdentityMap {
      * with digital experiences.
      *
      * @param namespace the namespace integration code or namespace ID of the identity
-     * @param item {@link IdentityItem} to be added to the namespace
-     *
+     * @param item      {@link IdentityItem} to be added to the namespace
      * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
      */
     public void addItem(final String namespace, final IdentityItem item) {
@@ -76,27 +86,41 @@ public class IdentityMap {
         addItemToMap(namespace, item);
     }
 
-    private void addItemToMap(final String namespace, final IdentityItem item) {
-        // check if namespace exists
-        final List<IdentityItem> itemList;
-
-        if (identityItems.containsKey(namespace)) {
-            itemList = identityItems.get(namespace);
-        } else {
-            itemList = new ArrayList<>();
+    /**
+     * Remove a single {@link IdentityItem} from this map.
+     *
+     * @param namespace The {@code IdentityItem} to remove from the given namespace
+     * @param item      {@link IdentityItem} to be added to the namespace
+     */
+    public void removeItem(final String namespace, final IdentityItem item) {
+        if (item == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap remove item ignored as must contain a non-null IdentityItem.");
+            return;
         }
 
-        itemList.add(item);
-        this.identityItems.put(namespace, itemList);
+        if (Utils.isNullOrEmpty(namespace)) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+                    "IdentityMap remove item ignored as must contain a non-null/non-empty namespace.");
+            return;
+        }
+
+        removeItemFromMap(namespace, item);
     }
 
+    // ========================================================================================
+    // protected methods
+    // ========================================================================================
+
+    /**
+     * @return a {@link Map} representing this {@link IdentityMap} object
+     */
     Map<String, List<Map<String, Object>>> toObjectMap() {
-        final Map<String, List<Map<String, Object>>> map = new HashMap<String, List<Map<String, Object>>>();
+        final Map<String, List<Map<String, Object>>> map = new HashMap<>();
 
         for (String namespace : identityItems.keySet()) {
             final List<Map<String, Object>> namespaceIds = new ArrayList<>();
 
-            for(IdentityItem identityItem: identityItems.get(namespace)) {
+            for (IdentityItem identityItem : identityItems.get(namespace)) {
                 namespaceIds.add(identityItem.toObjectMap());
             }
 
@@ -104,6 +128,51 @@ public class IdentityMap {
         }
 
         return map;
+    }
+
+    /**
+     * Merge the given map on to this {@link IdentityMap}. Any {@link IdentityItem} in map which shares the same
+     * namespace and id as an item in this {@code IdentityMap} will replace that {@code IdentityItem}.
+     *
+     * @param map {@link IdentityMap} to be merged into this object
+     */
+    void merge(final IdentityMap map) {
+        if (map == null) {
+            return;
+        }
+
+        for (final String namespace : map.identityItems.keySet()) {
+            for (IdentityItem identityItem : map.identityItems.get(namespace)) {
+                addItem(namespace, identityItem);
+            }
+        }
+    }
+
+    /**
+     * Remove identities present in passed in map from this {@link IdentityMap}.
+     * Identities are removed which match the same namespace and id.
+     *
+     * @param map Identities to remove from this {@code IdentityMap}
+     */
+    void remove(final IdentityMap map) {
+        if (map == null) {
+            return;
+        }
+
+        for (final String namespace : map.identityItems.keySet()) {
+            for (IdentityItem identityItem : map.identityItems.get(namespace)) {
+                removeItem(namespace, identityItem);
+            }
+        }
+    }
+
+    boolean removeAllIdentityItemsForNamespace(final String namespace) {
+        if (identityItems.containsKey(namespace)) {
+            identityItems.remove(namespace);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -126,10 +195,10 @@ public class IdentityMap {
 
         final IdentityMap identityMap = new IdentityMap();
 
-        for (String namespace : identityMapDict.keySet()) {
+        for (final String namespace : identityMapDict.keySet()) {
             try {
                 final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
-                for (Object idMap: idArr) {
+                for (Object idMap : idArr) {
                     final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
                     if (item != null) {
                         identityMap.addItemToMap(namespace, item);
@@ -141,5 +210,44 @@ public class IdentityMap {
         }
 
         return identityMap;
+    }
+
+    // ========================================================================================
+    // private methods
+    // ========================================================================================
+    private void addItemToMap(final String namespace, final IdentityItem item) {
+        // check if namespace exists
+        final List<IdentityItem> itemList;
+
+        if (identityItems.containsKey(namespace)) {
+            itemList = identityItems.get(namespace);
+        } else {
+            itemList = new ArrayList<>();
+        }
+
+        itemList.add(item);
+        this.identityItems.put(namespace, itemList);
+    }
+
+    private void removeItemFromMap(final String namespace, final IdentityItem item) {
+        // check if namespace exists
+        if (!identityItems.containsKey(namespace)) {
+            return;
+        }
+
+        final List<IdentityItem> itemList = identityItems.get(namespace);
+
+        Iterator<IdentityItem> it = itemList.iterator();
+        while (it.hasNext()) {
+            IdentityItem eachItem = it.next();
+            if (item.equals(eachItem)) {
+                it.remove();
+                break;
+            }
+        }
+
+        if(itemList.isEmpty()) {
+            identityItems.remove(namespace);
+        }
     }
 }

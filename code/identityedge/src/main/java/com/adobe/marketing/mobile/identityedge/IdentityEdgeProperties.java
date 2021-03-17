@@ -14,6 +14,7 @@ package com.adobe.marketing.mobile.identityedge;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +25,21 @@ import java.util.Map;
 class IdentityEdgeProperties {
 
     private static final String LOG_TAG = "IdentityEdgeProperties";
+    private static final List<String> reservedNamespaces = new ArrayList<String>() {{
+        add(IdentityEdgeConstants.Namespaces.ECID);
+        add(IdentityEdgeConstants.Namespaces.GAID);
+        add(IdentityEdgeConstants.Namespaces.IDFA);
+    }};
 
     // The current Experience Cloud ID
     private ECID ecid;
+    private IdentityMap identityMap = new IdentityMap();
 
     IdentityEdgeProperties() { }
 
     /**
      * Creates a identity edge properties instance based on the map
+     *
      * @param xdmData a map representing an identity edge properties instance
      */
     IdentityEdgeProperties(final Map<String, Object> xdmData) {
@@ -39,7 +47,7 @@ class IdentityEdgeProperties {
             return;
         }
 
-        IdentityMap identityMap = IdentityMap.fromData(xdmData);
+        identityMap = IdentityMap.fromData(xdmData);
         if (identityMap != null) {
             final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
             boolean containsEcid = ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0).getId() != null;
@@ -51,6 +59,7 @@ class IdentityEdgeProperties {
 
     /**
      * Sets the current {@link ECID}
+     *
      * @param ecid the new {@link ECID}
      */
     void setECID(final ECID ecid) {
@@ -59,6 +68,7 @@ class IdentityEdgeProperties {
 
     /**
      * Retrieves the current {@link ECID}
+     *
      * @return current {@link ECID}
      */
     ECID getECID() {
@@ -66,8 +76,42 @@ class IdentityEdgeProperties {
     }
 
     /**
+     * Update the customer identifiers by merging the passed in {@link IdentityMap} with the current identifiers.
+     * <p>
+     * Any identifier in the passed in {@link IdentityMap} which has the same id in the same namespace will update the current identifier.
+     * Any new identifier in the passed in {@link IdentityMap} will be added to the current identifiers
+     * Certain namespaces are not allowed to be modified and if exist in the given customer identifiers will be removed before the update operation is executed.
+     * The namespaces which cannot be modified through this function call include:
+     * - ECID
+     * - IDFA
+     * - GAID
+     *
+     * @param map the {@link IdentityMap} containing customer identifiers to add or update with the current customer identifiers
+     */
+    void updateCustomerIdentifiers(final IdentityMap map) {
+        removeIdentitiesWithReservedNamespaces(map);
+        identityMap.merge(map);
+    }
+
+    /**
+     * Remove customer identifiers specified in passed in {@link IdentityMap} from the current identifiers.
+     * <p>
+     * Identifiers with following namespaces are prohibited from removing using the API
+     * - ECID
+     * - IDFA
+     * - GAID
+     *
+     * @param map the {@link IdentityMap} with items to remove from current identifiers
+     */
+    void removeCustomerIdentifiers(final IdentityMap map) {
+        removeIdentitiesWithReservedNamespaces(map);
+        identityMap.remove(map);
+    }
+
+    /**
      * Converts this into an event data representation in XDM format
-     * @param allowEmpty  If this {@link IdentityEdgeProperties} contains no data, return a dictionary with a single {@link IdentityMap} key
+     *
+     * @param allowEmpty If this {@link IdentityEdgeProperties} contains no data, return a dictionary with a single {@link IdentityMap} key
      * @return A dictionary representing this in XDM format
      */
     Map<String, Object> toXDMData(final boolean allowEmpty) {
@@ -85,6 +129,20 @@ class IdentityEdgeProperties {
         }
 
         return map;
+    }
+
+    /**
+     * Filter out any items contained in reserved namespaces from the given {@link IdentityMap}.
+     * The list of reserved namespaces can be found at {@link #reservedNamespaces}.
+     *
+     * @param identityMap the {@code IdentityMap} to filter out items contained in reserved namespaces.
+     */
+    private void removeIdentitiesWithReservedNamespaces(final IdentityMap identityMap) {
+        for (final String namespace : reservedNamespaces) {
+            if (identityMap.removeAllIdentityItemsForNamespace(namespace)) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Updating/Removing identifiers in namespace %s is not allowed.", namespace));
+            }
+        }
     }
 
 }

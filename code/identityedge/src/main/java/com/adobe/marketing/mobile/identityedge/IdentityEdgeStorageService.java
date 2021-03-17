@@ -31,6 +31,7 @@ class IdentityEdgeStorageService {
 
     /**
      * Loads identity edge properties from local storage, returns null if not found.
+     *
      * @return properties stored in local storage if present, otherwise null.
      */
     static IdentityEdgeProperties loadPropertiesFromPersistence() {
@@ -50,8 +51,7 @@ class IdentityEdgeStorageService {
         try {
             final JSONObject jsonObject = new JSONObject(jsonString);
             final Map<String, Object> propertyMap = Utils.toMap(jsonObject);
-            final IdentityEdgeProperties loadedProperties = new IdentityEdgeProperties(propertyMap);
-            return loadedProperties;
+            return new IdentityEdgeProperties(propertyMap);
         } catch (JSONException exception) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Serialization error while reading properties jsonString from persistence. Unable to load saved identity properties from persistence.");
             return null;
@@ -60,6 +60,7 @@ class IdentityEdgeStorageService {
 
     /**
      * Saves the properties to local storage
+     *
      * @param properties properties to be stored
      */
     static void savePropertiesToPersistence(final IdentityEdgeProperties properties) {
