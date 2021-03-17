@@ -22,6 +22,7 @@ import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.List;
 
+
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
 
