@@ -31,7 +31,7 @@ public class ListenerIdentityRequestReset extends ExtensionListener {
 
 
     /**
-     * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
+     * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#GENERIC_IDENTITY}
      * and with event source {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}  is dispatched through eventHub.
      *
      * @param event the identity reset request {@link Event} to be processed
