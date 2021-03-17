@@ -234,8 +234,59 @@ public class IdentityEdgeExtensionTests {
     }
 
     // ========================================================================================
+    // handleIdentityRequest
+    // ========================================================================================
+    @Test
+    public void test_handleUpdateIdentities() throws Exception {
+        // setup
+        final String updatedIdentitiesJSON = "{\n" +
+                "      \"identityMap\": {\n" +
+                "        \"ECID\": [\n" +
+                "          {\n" +
+                "            \"id\":" + "randomECID" + ",\n" +
+                "            \"authenticatedState\": \"ambiguous\",\n" +
+                "            \"primary\": true\n" +
+                "          }\n" +
+                "        ],\n" +
+                "        \"USERID\": [\n" +
+                "          {\n" +
+                "            \"id\":" + "someUserID" + ",\n" +
+                "            \"authenticatedState\": \"authenticated\",\n" +
+                "            \"primary\": false\n" +
+                "          }\n" +
+                "        ]\n" +
+                "      }\n" +
+                "}";
+        final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+        final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+        // test
+        extension.handleIdentityRequest(buildUpdateIdentityRequest(updatedIdentitiesJSON));
+
+
+        // verify
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchResponseEvent(responseEventCaptor.capture(), requestEventCaptor.capture(), any(ExtensionErrorCallback.class));
+
+        // verify response event containing ECID is dispatched
+        Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
+        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
+
+        assertNotNull(ecid);
+        assertTrue(ecid.length() > 0);
+    }
+
+    // ========================================================================================
     // private helper methods
     // ========================================================================================
+
+    private Event buildUpdateIdentityRequest(final String jsonStr) throws Exception {
+        final JSONObject jsonObject = new JSONObject(jsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+        return new Event.Builder("Update Identity Event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(xdmData).build();
+    }
+
 
     private void setupExistingIdentityEdgeProps(final ECID ecid) {
         IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
