@@ -25,6 +25,7 @@ class IdentityEdgeConstants {
         static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
         static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
         static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
+        static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
         private EventSource() { }
     }
 
@@ -32,6 +33,7 @@ class IdentityEdgeConstants {
         static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
         static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
         static final String IDENTITY = "com.adobe.eventType.identity";
+        static final String HUB = "com.adobe.eventType.hub";
         private EventType() { }
     }
 
@@ -47,6 +49,7 @@ class IdentityEdgeConstants {
 
     final class EventDataKeys {
         static final String VISITOR_ID_ECID = "mid";
+        static final String STATE_OWNER = "stateowner";
         private EventDataKeys() { }
     }
 

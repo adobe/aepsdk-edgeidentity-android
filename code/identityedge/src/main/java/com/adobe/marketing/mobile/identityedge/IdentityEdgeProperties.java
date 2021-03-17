@@ -100,11 +100,12 @@ class IdentityEdgeProperties {
         if (ecid != null) {
             IdentityItem ecidItem = new IdentityItem(ecid.toString());
             identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
-        }
 
-        if (ecidSecondary != null) {
-            IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
+            // set second ECID only if primary exists
+            if (ecidSecondary != null) {
+                IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
+                identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
+            }
         }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();

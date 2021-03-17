@@ -41,9 +41,10 @@ class IdentityEdgeExtension extends Extension {
      *     and EventSource {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}</li>
      *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
-     *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
      *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}</li>
+     *     <li> Listener {@link ListenerHubSharedState} to listen for event with eventType {@link IdentityEdgeConstants.EventType#HUB}
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#SHARED_STATE}</li>
      * </ul>
      * <p>
      * Thread : Background thread created by MobileCore
@@ -65,6 +66,7 @@ class IdentityEdgeExtension extends Extension {
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.HUB, IdentityEdgeConstants.EventSource.SHARED_STATE, ListenerHubSharedState.class, listenerErrorCallback);
     }
 
     /**
@@ -97,6 +99,53 @@ class IdentityEdgeExtension extends Extension {
 
     void handleGenericIdentityRequest(final Event event) {
         // TODO
+    }
+
+    /**
+     * Handles events of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}.
+     * If the state change event is for the direct Identity extension, get the direct Identity shared state and attempt
+     * to update the legacy ECID with the direct Identity extension ECID.
+     * @param event an event of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}
+     */
+    void handleHubSharedState(final Event event) {
+        if (!canProcessEvents(event)) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process direct Identity shared state change event. canProcessEvents returned false.");
+            return;
+        }
+
+        if (event == null || event.getEventData() == null) {
+            return;
+        }
+
+        String stateOwner = (String) event.getEventData().get(IdentityEdgeConstants.EventDataKeys.STATE_OWNER);
+        if (!IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT.equals(stateOwner)) {
+            return;
+        }
+
+        ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
+            }
+        };
+        Map<String, Object> identityState = getApi().getSharedEventState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event, getSharedStateCallback);
+
+        if (identityState == null) {
+            return;
+        }
+
+        String legacyEcidString = (String) identityState.get(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID);
+        ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
+
+        if (state.updateLegacyExperienceCloudId(legacyEcid)) {
+            ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+                @Override
+                public void error(final ExtensionError extensionError) {
+                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to create XDM shared state. Error : %s.", extensionError.getErrorName()));
+                }
+            };
+            getApi().setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+        }
     }
 
     /**
