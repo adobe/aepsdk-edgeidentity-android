@@ -27,9 +27,6 @@ public final class IdentityItem {
     private boolean primary;
 
     private static final String LOG_TAG = "IdentityItem";
-    private static final String JSON_KEY_ID = "id";
-    private static final String JSON_KEY_AUTHENTICATION_STATE = "authenticatedState";
-    private static final String JSON_KEY_PRIMARY = "primary";
 
     /**
      * Creates a new {@link IdentityItem}
@@ -75,16 +72,16 @@ public final class IdentityItem {
     Map<String, Object> toObjectMap() {
         Map<String, Object> map = new HashMap<>();
         if (id != null) {
-            map.put(JSON_KEY_ID, id);
+            map.put(IdentityEdgeConstants.XDMKeys.ID, id);
         }
 
         if (authenticationState != null) {
-            map.put(JSON_KEY_AUTHENTICATION_STATE, authenticationState.toString());
+            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, authenticationState.toString());
         } else {
-            map.put(JSON_KEY_AUTHENTICATION_STATE, AuthenticationState.AMBIGUOUS.toString());
+            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, AuthenticationState.AMBIGUOUS.toString());
         }
 
-        map.put(JSON_KEY_PRIMARY, primary);
+        map.put(IdentityEdgeConstants.XDMKeys.PRIMARY, primary);
         return map;
     }
 
@@ -118,15 +115,15 @@ public final class IdentityItem {
         if (data == null) { return null; }
 
         try {
-            final String id = (String) data.get(JSON_KEY_ID);
-            AuthenticationState authenticationState = AuthenticationState.fromString((String) data.get(JSON_KEY_AUTHENTICATION_STATE));
+            final String id = (String) data.get(IdentityEdgeConstants.XDMKeys.ID);
+            AuthenticationState authenticationState = AuthenticationState.fromString((String) data.get(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE));
             if (authenticationState == null) {
                 authenticationState = AuthenticationState.AMBIGUOUS;
             }
 
             boolean primary = false;
-            if (data.get(JSON_KEY_PRIMARY) != null) {
-                primary = (boolean) data.get(JSON_KEY_PRIMARY);
+            if (data.get(IdentityEdgeConstants.XDMKeys.PRIMARY) != null) {
+                primary = (boolean) data.get(IdentityEdgeConstants.XDMKeys.PRIMARY);
             }
 
             return new IdentityItem(id, authenticationState, primary);

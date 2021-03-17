@@ -11,6 +11,7 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
+import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,19 +20,97 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+
+/**
+ * Util class used by both Functional and Unit tests
+ */
 class IdentityEdgeTestUtil {
+
+    /**
+     * Helper method to create IdentityXDM Map using {@link TestItem}s
+     */
+    static Map<String, Object> createXDMIdentityMap(TestItem... items) {
+        final Map<String, List<Map<String, Object>>> allItems = new HashMap<>();
+        for (TestItem item : items) {
+            final Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put(IdentityEdgeConstants.XDMKeys.ID, item.id);
+            itemMap.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, "ambiguous");
+            itemMap.put(IdentityEdgeConstants.XDMKeys.PRIMARY, false);
+            List<Map<String, Object>> nameSpaceItems = allItems.get(item.namespace);
+            if (nameSpaceItems == null) {
+                nameSpaceItems = new ArrayList<>();
+            }
+            nameSpaceItems.add(itemMap);
+            allItems.put(item.namespace, nameSpaceItems);
+        }
+
+        final Map<String, Object> identityMapDict = new HashMap<>();
+        identityMapDict.put(IdentityEdgeConstants.XDMKeys.IDENTITY_MAP, allItems);
+        return identityMapDict;
+    }
+
+    /**
+     * Helper method to build remove identity request event with XDM formatted Identity jsonString
+     */
+    static Event buildRemoveIdentityRequestWithJSONString(final String jsonStr) throws Exception {
+        final JSONObject jsonObject = new JSONObject(jsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+        return buildRemoveIdentityRequest(xdmData);
+    }
+
+    /**
+     * Helper method to build remove identity request event with XDM formatted Identity map
+     */
+    static Event buildRemoveIdentityRequest(final Map<String, Object> map) {
+        return new Event.Builder("Remove Identity Event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY).setEventData(map).build();
+    }
+
+    /**
+     * Helper method to build update identity request event with XDM formatted Identity jsonString
+     */
+    static Event buildUpdateIdentityRequestJSONString(final String jsonStr) throws Exception {
+        final JSONObject jsonObject = new JSONObject(jsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+        return buildUpdateIdentityRequest(xdmData);
+    }
+
+    /**
+     * Helper method to build update identity request event with XDM formatted Identity map
+     */
+    static Event buildUpdateIdentityRequest(final Map<String, Object> map) {
+        return new Event.Builder("Update Identity Event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY).setEventData(map).build();
+    }
+
+
+    /**
+     * Serialize the given {@code jsonString} to a JSON Object, then flattens to {@code Map<String, String>}.
+     * If the provided string is not in JSON structure an {@link JSONException} is thrown.
+     *
+     * @param jsonString the string in JSON structure to flatten
+     * @return new map with flattened structure
+     */
+    static Map<String, String> flattenJSONString(final String jsonString) throws JSONException {
+        JSONObject jsonObject = new JSONObject(jsonString);
+        Map<String, Object> persistenceValueMap = Utils.toMap(jsonObject);
+        return flattenMap(persistenceValueMap);
+    }
+
     /**
      * Serialize the given {@code map} to a JSON Object, then flattens to {@code Map<String, String>}.
      * For example, a JSON such as "{xdm: {stitchId: myID, eventType: myType}}" is flattened
      * to two map elements "xdm.stitchId" = "myID" and "xdm.eventType" = "myType".
+     *
      * @param map map with JSON structure to flatten
      * @return new map with flattened structure
      */
@@ -57,14 +136,13 @@ class IdentityEdgeTestUtil {
      * Deserialize {@code JsonNode} and flatten to provided {@code map}.
      * For example, a JSON such as "{xdm: {stitchId: myID, eventType: myType}}" is flattened
      * to two map elements "xdm.stitchId" = "myID" and "xdm.eventType" = "myType".
-     *
+     * <p>
      * Method is called recursively. To use, call with an empty path such as
      * {@code addKeys("", new ObjectMapper().readTree(JsonNodeAsString), map);}
      *
      * @param currentPath the path in {@code JsonNode} to process
-     * @param jsonNode {@link JsonNode} to deserialize
-     * @param map {@code Map<String, String>} instance to store flattened JSON result
-     *
+     * @param jsonNode    {@link JsonNode} to deserialize
+     * @param map         {@code Map<String, String>} instance to store flattened JSON result
      * @see <a href="https://stackoverflow.com/a/24150263">Stack Overflow post</a>
      */
     private static void addKeys(String currentPath, JsonNode jsonNode, Map<String, String> map) {
@@ -86,6 +164,21 @@ class IdentityEdgeTestUtil {
         } else if (jsonNode.isValueNode()) {
             ValueNode valueNode = (ValueNode) jsonNode;
             map.put(currentPath, valueNode.asText());
+        }
+    }
+
+
+    /**
+     * Class similar to {@link IdentityItem} for a specific namespace used for easier testing.
+     *  For simplicity this class does not involve authenticatedState and primary key
+     */
+    public static class TestItem {
+        private String namespace;
+        private String id;
+
+        public TestItem(String namespace, String id) {
+            this.namespace = namespace;
+            this.id = id;
         }
     }
 

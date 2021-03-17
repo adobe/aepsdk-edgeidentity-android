@@ -60,6 +60,8 @@ class IdentityEdgeConstants {
     final class XDMKeys {
         static final String IDENTITY_MAP = "identityMap";
         static final String ID = "id";
+        static final String AUTHENTICATED_STATE = "authenticatedState";
+        static final String PRIMARY = "primary";
         private XDMKeys() { }
     }
 

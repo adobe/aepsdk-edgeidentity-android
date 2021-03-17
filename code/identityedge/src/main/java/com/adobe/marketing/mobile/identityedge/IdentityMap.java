@@ -184,6 +184,10 @@ public class IdentityMap {
         return new HashMap<String, Object>(identityItems);
     }
 
+    boolean isEmpty() {
+        return identityItems.isEmpty();
+    }
+
     static IdentityMap fromData(Map<String, Object> data) {
         if (data == null) {
             return null;

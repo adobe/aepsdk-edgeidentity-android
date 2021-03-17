@@ -91,6 +91,10 @@ class IdentityEdgeExtension extends Extension {
      * @param event the edge update identity {@link Event}
      */
     void handleUpdateIdentities(final Event event) {
+        if (!canProcessEvents()) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process update identity event. canProcessEvents returned false.");
+            return;
+        }
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
         final IdentityMap map = IdentityMap.fromData(eventData);
         if (map == null) {
@@ -102,13 +106,16 @@ class IdentityEdgeExtension extends Extension {
         updateIdentityXDMSharedState(event);
     }
 
-
     /**
      * Handles remove identity requests to remove customer identifiers.
      *
      * @param event the edge remove identity request {@link Event}
      */
     void handleRemoveIdentity(final Event event) {
+        if (!canProcessEvents()) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process remove identity event. canProcessEvents returned false.");
+            return;
+        }
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
         final IdentityMap map = IdentityMap.fromData(eventData);
         if (map == null) {
@@ -129,7 +136,10 @@ class IdentityEdgeExtension extends Extension {
      * @param event the identity request event
      */
     void handleIdentityRequest(final Event event) {
-        if (!canProcessEvents(event)) { return; }
+        if (!canProcessEvents()) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
+            return;
+        }
 
         Map<String, Object> xdmData = state.getIdentityEdgeProperties().toXDMData(true);
         Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
@@ -154,7 +164,7 @@ class IdentityEdgeExtension extends Extension {
      * @param event the identity request reset event
      */
     void handleRequestReset(final Event event) {
-        if (!canProcessEvents(event)) {
+        if (!canProcessEvents()) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
             return;
         }
@@ -187,10 +197,10 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Determines if Identity Edge is ready to handle events, this is determined by if the Identity Edge extension has booted up
-     * @param event An {@link Event}
+     *
      * @return True if we can process events, false otherwise
      */
-    private boolean canProcessEvents(final Event event) {
+    private boolean canProcessEvents() {
         if (state.hasBooted()) { return true; } // we have booted, return true
 
         final ExtensionApi extensionApi = super.getApi();

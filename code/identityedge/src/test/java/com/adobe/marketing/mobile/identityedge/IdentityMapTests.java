@@ -29,7 +29,7 @@ public class IdentityMapTests {
     public void test_AddItem() {
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("location",  new  IdentityItem("California"));
+        map.addItem("location", new IdentityItem("California"));
 
         // verify
         assertEquals("California", map.toObjectMap().get("location").get(0).get("id"));
@@ -39,8 +39,8 @@ public class IdentityMapTests {
     public void test_AddItem_InvalidInputs() {
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("",  new  IdentityItem("California"));
-        map.addItem(null,  new  IdentityItem("California"));
+        map.addItem("", new IdentityItem("California"));
+        map.addItem(null, new IdentityItem("California"));
         map.addItem("namespace", null);
 
         // verify
@@ -72,15 +72,15 @@ public class IdentityMapTests {
 
         // test 1
         List<IdentityItem> items = sampleUserMap.getIdentityItemsForNamespace("");
-        assertEquals(0,items.size());
+        assertEquals(0, items.size());
 
         // test 2
         items = sampleUserMap.getIdentityItemsForNamespace(null);
-        assertEquals(0,items.size());
+        assertEquals(0, items.size());
 
         // test 3
         items = sampleUserMap.getIdentityItemsForNamespace("unavailable");
-        assertEquals(0,items.size());
+        assertEquals(0, items.size());
     }
 
 
@@ -113,13 +113,12 @@ public class IdentityMapTests {
         // test
         sampleUserMap.removeItem("", new IdentityItem("California"));
         sampleUserMap.removeItem(null, new IdentityItem("California"));
-        sampleUserMap.removeItem("location",null);
+        sampleUserMap.removeItem("location", null);
 
         // verify the existing identityMap is unchanged
         assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
         assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
     }
-
 
 
     @Test
@@ -129,7 +128,7 @@ public class IdentityMapTests {
 
         // test
         IdentityMap newMap = new IdentityMap();
-        newMap.addItem("location",  new IdentityItem("doorNumber:544"));
+        newMap.addItem("location", new IdentityItem("doorNumber:544"));
         sampleUserMap.merge(newMap);
 
         // verify the existing identityMap is unchanged
@@ -278,14 +277,50 @@ public class IdentityMapTests {
         // test
         IdentityMap map = IdentityMap.fromData(xdmData);
 
-        //Map<String, String> flattenedMap = IdentityEdgeTestUtil.flattenMap(map.asEventData());
-
-
-
+        // verify
+        Map<String, String> flattenedMap = IdentityEdgeTestUtil.flattenMap(map.asEventData());
+        assertEquals("randomECID", flattenedMap.get("ECID[0].id"));
+        assertEquals("AMBIGUOUS", flattenedMap.get("ECID[0].authenticationState"));
+        assertEquals("true", flattenedMap.get("ECID[0].primary"));
+        assertEquals("someUserID", flattenedMap.get("USERID[0].id"));
+        assertEquals("AUTHENTICATED", flattenedMap.get("USERID[0].authenticationState"));
+        assertEquals("false", flattenedMap.get("USERID[0].primary"));
     }
 
 
-    private IdentityMap buildSampleIdentityMap(){
+    @Test
+    public void test_FromData_NullAndEmptyData() {
+        assertNull(IdentityMap.fromData(null));
+        assertNull(IdentityMap.fromData(new HashMap<String, Object>()));
+    }
+
+
+    @Test
+    public void test_FromData_InvalidXDMData() throws Exception {
+        // setup
+        // ECID is map instead of list
+        final String invalidJsonStr = "{\n" +
+                "  \"identityMap\": {\n" +
+                "    \"ECID\": {\n" +
+                "        \"id\": \"randomECID\",\n" +
+                "        \"authenticatedState\": \"ambiguous\",\n" +
+                "        \"primary\": true\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+
+        final JSONObject jsonObject = new JSONObject(invalidJsonStr);
+        final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+
+        // test
+        IdentityMap map = IdentityMap.fromData(xdmData);
+
+        // verify
+        assertTrue(map.isEmpty());
+    }
+
+
+    private IdentityMap buildSampleIdentityMap() {
         // User Login Identity Items
         IdentityItem email = new IdentityItem("john@doe", AuthenticationState.AUTHENTICATED, true);
         IdentityItem userName = new IdentityItem("John Doe", AuthenticationState.AUTHENTICATED, false);

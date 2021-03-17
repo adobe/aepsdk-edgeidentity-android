@@ -64,6 +64,8 @@ class IdentityEdgeProperties {
      */
     void setECID(final ECID ecid) {
         this.ecid = ecid;
+        IdentityItem ecidItem = new IdentityItem(ecid.toString(), AuthenticationState.AMBIGUOUS, true);
+        identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID ,ecidItem);
     }
 
     /**
@@ -116,12 +118,6 @@ class IdentityEdgeProperties {
      */
     Map<String, Object> toXDMData(final boolean allowEmpty) {
         final Map<String, Object> map = new HashMap<>();
-        final IdentityMap identityMap = new IdentityMap();
-
-        if (ecid != null) {
-            IdentityItem ecidItem = new IdentityItem(ecid.toString());
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
-        }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
         if (dict != null && (!dict.isEmpty() || allowEmpty)) {
