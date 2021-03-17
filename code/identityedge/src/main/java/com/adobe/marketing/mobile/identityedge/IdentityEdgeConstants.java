@@ -25,6 +25,7 @@ class IdentityEdgeConstants {
         static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
         static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
         static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
+        static final String RESET_COMPLETE = "com.adobe.eventSource.resetComplete";
         private EventSource() { }
     }
 
@@ -41,7 +42,7 @@ class IdentityEdgeConstants {
         static final String UPDATE_IDENTITIES = "Identity Edge Update Identities";
         static final String REMOVE_IDENTITIES = "Identity Edge Remove Identities";
         static final String REQUEST_IDENTITIES = "Identity Edge Request Identities";
-        static final String RESET_IDENTITIES_RESPONSE = "Edge Identity Reset Identities Response";
+        static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
         private EventNames() { }
     }
 

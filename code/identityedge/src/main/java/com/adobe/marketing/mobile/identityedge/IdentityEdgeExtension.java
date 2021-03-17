@@ -152,7 +152,7 @@ class IdentityEdgeExtension extends Extension {
         extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
 
         // dispatch response event
-        final Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.RESET_IDENTITIES_RESPONSE,
+        final Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.RESET_IDENTITIES_COMPLETE,
                 IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).build();
 
