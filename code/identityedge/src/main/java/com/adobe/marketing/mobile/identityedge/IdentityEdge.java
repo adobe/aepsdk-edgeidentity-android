@@ -109,7 +109,7 @@ public class IdentityEdge {
      * @param identityMap The identifiers to add or update.
      */
     public static void updateIdentities(final IdentityMap identityMap) {
-        if (identityMap == null || identityMap.toObjectMap().isEmpty()) {
+        if (identityMap == null || identityMap.isEmpty()) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to updateIdentities, IdentityMap is null or empty");
             return;
         }
@@ -138,13 +138,13 @@ public class IdentityEdge {
      * @param namespace The namespace the identity to remove is under.
      */
     public static void removeIdentity(final IdentityItem item, final String namespace) {
-        if (namespace == null || namespace.isEmpty()) {
+        if (Utils.isNullOrEmpty(namespace)) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to removeIdentity, namespace is null or empty");
             return;
         }
 
         if (item == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to updateIdentities, IdentityItem is null");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to removeIdentity, IdentityItem is null");
             return;
         }
 
@@ -154,16 +154,16 @@ public class IdentityEdge {
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Update Identities API. Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("removeIdentity API. Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.REMOVE_IDENTITIES,
                         extensionError.getErrorName()));
             }
         };
 
 
-        final Event updateIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.REMOVE_IDENTITIES,
+        final Event removeIdentitiesEvent = new Event.Builder(IdentityEdgeConstants.EventNames.REMOVE_IDENTITIES,
                 IdentityEdgeConstants.EventType.EDGE_IDENTITY,
                 IdentityEdgeConstants.EventSource.REMOVE_IDENTITY).setEventData(identityMap.asEventData()).build();
-        MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
+        MobileCore.dispatchEvent(removeIdentitiesEvent, errorCallback);
     }
 
     /**

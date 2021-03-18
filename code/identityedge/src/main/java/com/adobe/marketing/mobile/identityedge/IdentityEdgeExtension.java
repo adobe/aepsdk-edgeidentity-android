@@ -23,7 +23,7 @@ import java.util.Map;
 
 
 class IdentityEdgeExtension extends Extension {
-    private final String LOG_TAG = "IdentityEdgeExtension";
+    private static final String LOG_TAG = "IdentityEdgeExtension";
     private IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
 
     /**
@@ -69,6 +69,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Required override. Each extension must have a unique name within the application.
+     *
      * @return unique name of this extension
      */
     @Override
@@ -78,6 +79,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Optional override.
+     *
      * @return the version of this extension
      */
     @Override
@@ -103,7 +105,7 @@ class IdentityEdgeExtension extends Extension {
         }
 
         state.updateCustomerIdentifiers(map);
-        updateIdentityXDMSharedState(event);
+        shareIdentityXDMSharedState(event);
     }
 
     /**
@@ -124,7 +126,7 @@ class IdentityEdgeExtension extends Extension {
         }
 
         state.removeCustomerIdentifiers(map);
-        updateIdentityXDMSharedState(event);
+        shareIdentityXDMSharedState(event);
     }
 
     void handleGenericIdentityRequest(final Event event) {
@@ -133,6 +135,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Handles events requesting for identifiers. Dispatches response event containing the identifiers. Called by listener registered with event hub.
+     *
      * @param event the identity request event
      */
     void handleIdentityRequest(final Event event) {
@@ -161,6 +164,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Handles IdentityEdge request reset events.
+     *
      * @param event the identity request reset event
      */
     void handleRequestReset(final Event event) {
@@ -169,7 +173,7 @@ class IdentityEdgeExtension extends Extension {
             return;
         }
         state.resetIdentifiers();
-        updateIdentityXDMSharedState(event);
+        shareIdentityXDMSharedState(event);
     }
 
     /**
@@ -177,9 +181,9 @@ class IdentityEdgeExtension extends Extension {
      *
      * @param event the {@link Event} that triggered the XDM shared state change
      */
-    void updateIdentityXDMSharedState(final Event event) {
+    void shareIdentityXDMSharedState(final Event event) {
         final ExtensionApi extensionApi = super.getApi();
-        if (extensionApi == null ) {
+        if (extensionApi == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
             return;
         }
@@ -201,10 +205,12 @@ class IdentityEdgeExtension extends Extension {
      * @return True if we can process events, false otherwise
      */
     private boolean canProcessEvents() {
-        if (state.hasBooted()) { return true; } // we have booted, return true
+        if (state.hasBooted()) {
+            return true;
+        } // we have booted, return true
 
         final ExtensionApi extensionApi = super.getApi();
-        if (extensionApi == null ) {
+        if (extensionApi == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process events");
             return false;
         }
