@@ -63,13 +63,13 @@ class IdentityEdgeStorageService {
      * @param properties properties to be stored
      */
     static void savePropertiesToPersistence(final IdentityEdgeProperties properties) {
-        SharedPreferences sharedPreferences = getSharedPreference(IdentityEdgeConstants.DataStoreKey.DATASTORE_NAME);
+        final SharedPreferences sharedPreferences = getSharedPreference(IdentityEdgeConstants.DataStoreKey.DATASTORE_NAME);
         if (sharedPreferences == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to write identity properties to persistence.");
             return;
         }
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
 
         if (editor == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference Editor is null. Unable to write identity properties to persistence.");
@@ -100,7 +100,7 @@ class IdentityEdgeStorageService {
             return null;
         }
 
-        String ecidString = sharedPreferences.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null);
+        final String ecidString = sharedPreferences.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null);
 
         if (ecidString == null || ecidString.isEmpty()) {
             return null;

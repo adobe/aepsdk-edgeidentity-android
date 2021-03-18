@@ -19,7 +19,7 @@ import com.adobe.marketing.mobile.MobileCore;
  * Manages the business logic of the Identity Edge extension
  */
 class IdentityEdgeState {
-    private String LOG_TAG = "IdentityEdgeState";
+    private static String LOG_TAG = "IdentityEdgeState";
     private boolean hasBooted = false;
     private IdentityEdgeProperties identityProperties;
 
@@ -60,7 +60,7 @@ class IdentityEdgeState {
 
         // Generate new ECID on first launch
         if (identityProperties.getECID() == null) {
-            ECID directIdentityEcid = IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence();
+            final ECID directIdentityEcid = IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence();
             if (directIdentityEcid == null) {
                 identityProperties.setECID(new ECID());
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Bootup - Generating new ECID '" + identityProperties.getECID().toString() + "'");

@@ -42,7 +42,7 @@ class IdentityEdgeProperties {
             return;
         }
 
-        IdentityMap identityMap = IdentityMap.fromData(xdmData);
+        final IdentityMap identityMap = IdentityMap.fromData(xdmData);
         if (identityMap != null) {
             final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
             if (ecidItems != null) {
@@ -98,12 +98,12 @@ class IdentityEdgeProperties {
         final IdentityMap identityMap = new IdentityMap();
 
         if (ecid != null) {
-            IdentityItem ecidItem = new IdentityItem(ecid.toString());
+            final IdentityItem ecidItem = new IdentityItem(ecid.toString());
             identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
 
             // set second ECID only if primary exists
             if (ecidSecondary != null) {
-                IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
+                final IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
                 identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
             }
         }
