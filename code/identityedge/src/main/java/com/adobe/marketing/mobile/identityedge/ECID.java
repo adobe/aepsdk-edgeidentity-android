@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * This class represents an ECID
  */
-class ECID {
+final class ECID {
     private final String ecidString;
 
     /**
