@@ -161,4 +161,29 @@ public class IdentityEdgeStorageServiceTests {
         verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
     }
 
+    @Test
+    public void testStorageService_loadECID() {
+        ECID ecid = new ECID();
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(ecid.toString());
+
+        assertEquals(ecid, IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence());
+    }
+
+    @Test
+    public void testStorageService_loadECID_nullECID() {
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(null);
+
+        assertNull(IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence());
+    }
+
+    @Test
+    public void testStorageService_loadECID_emptyECID() {
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn("");
+
+        assertNull(IdentityEdgeStorageService.loadEcidFromDirectIdentityPersistence());
+    }
+
 }

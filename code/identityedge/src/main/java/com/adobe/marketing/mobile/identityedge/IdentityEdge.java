@@ -22,6 +22,7 @@ import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.List;
 
+
 public class IdentityEdge {
     private static final String LOG_TAG = "IdentityEdge";
 
@@ -116,7 +117,7 @@ public class IdentityEdge {
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Consents.update() API. Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Update Identities API. Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.UPDATE_IDENTITIES,
                         extensionError.getErrorName()));
             }
         };

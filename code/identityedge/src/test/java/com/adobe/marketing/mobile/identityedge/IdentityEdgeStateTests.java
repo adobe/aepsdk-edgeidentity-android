@@ -79,6 +79,43 @@ public class IdentityEdgeStateTests {
     }
 
     @Test
+    public void testIdentityEdgeState_BootupIfReadyLoadsDirectIdentityECID() {
+        // setup
+        ECID ecid = new ECID();
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(ecid.toString());
+
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        assertNull(state.getIdentityEdgeProperties().getECID());
+
+        // test
+        boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
+
+        // verify
+        assertTrue(result);
+        assertEquals(ecid, state.getIdentityEdgeProperties().getECID());
+    }
+
+    @Test
+    public void testIdentityEdgeState_BootupIfReadyGenratesECIDWhenDirectECIDIsNull() {
+        // setup
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(null);
+
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        assertNull(state.getIdentityEdgeProperties().getECID());
+
+        // test
+        boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
+
+        // verify
+        assertTrue(result);
+        assertNotNull(state.getIdentityEdgeProperties().getECID());
+    }
+
+    @Test
     public void testIdentityEdgeState_BootupIfReadyLoadsFromPersistence() {
         // setup
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
@@ -99,18 +136,102 @@ public class IdentityEdgeStateTests {
     }
 
     @Test
+    public void testIdentityEdgeState_BootupIfReadyLoadsFromPersistenceWhenDirectECIDIsValid() {
+        // setup
+        ECID ecid = new ECID();
+        Mockito.when(mockContext.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(ecid.toString());
+
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+
+        IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
+        persistedProps.setECID(new ECID());
+        final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
+        final String propsJSON = jsonObject.toString();
+        Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
+
+        // test
+        boolean result = state.bootupIfReady();
+        verify(mockSharedPreferenceEditor, never()).apply();
+
+        // verify
+        assertTrue(result);
+        assertEquals(persistedProps.getECID(), state.getIdentityEdgeProperties().getECID());
+    }
+
+    @Test
     public void testIdentityEdgeState_resetIdentifiers() {
         // setup
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
         state.getIdentityEdgeProperties().setECID(new ECID());
+        state.getIdentityEdgeProperties().setECIDSecondary(new ECID());
         ECID existingEcid = state.getIdentityEdgeProperties().getECID();
 
         // test
         state.resetIdentifiers();
 
         // verify
-        assertNotEquals(existingEcid.toString(), state.getIdentityEdgeProperties().getECID().toString()); // ECID should be regenerated
+        assertNotEquals(existingEcid, state.getIdentityEdgeProperties().getECID()); // ECID should be regenerated
         assertFalse(state.getIdentityEdgeProperties().getECID().toString().isEmpty()); // ECID should not be empty
+        assertNull(state.getIdentityEdgeProperties().getECIDSecondary()); // should be cleared
         verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // should save to data store
+    }
+
+    @Test
+    public void testIdentityEdgeState_updateLegacyExperienceCloudId() {
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        ECID legacyEcid = new ECID();
+
+        state.updateLegacyExperienceCloudId(legacyEcid);
+
+        assertEquals(legacyEcid, state.getIdentityEdgeProperties().getECIDSecondary());
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+    }
+
+    @Test
+    public void testIdentityEdgeState_updateLegacyExperienceCloudId_notSetWhenECIDSame() {
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        ECID legacyEcid = new ECID();
+        state.getIdentityEdgeProperties().setECID(legacyEcid);
+
+        state.updateLegacyExperienceCloudId(legacyEcid);
+
+        assertNull(state.getIdentityEdgeProperties().getECIDSecondary());
+        verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
+    }
+
+    @Test
+    public void testIdentityEdgeState_updateLegacyExperienceCloudId_notSetWhenSecondaryECIDSame() {
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        ECID legacyEcid = new ECID();
+        state.getIdentityEdgeProperties().setECIDSecondary(legacyEcid);
+
+        state.updateLegacyExperienceCloudId(legacyEcid);
+
+        assertEquals(legacyEcid, state.getIdentityEdgeProperties().getECIDSecondary());
+        verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
+    }
+
+    @Test
+    public void testIdentityEdgeState_updateLegacyExperienceCloudId_clearsOnNull() {
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        state.getIdentityEdgeProperties().setECID(new ECID());
+        state.getIdentityEdgeProperties().setECIDSecondary(new ECID());
+
+        state.updateLegacyExperienceCloudId(null);
+
+        assertNull(state.getIdentityEdgeProperties().getECIDSecondary());
+        verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+    }
+
+    @Test
+    public void testIdentityEdgeState_updateLegacyExperienceCloudId_notSetWhenExistingIsNull() {
+        IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        state.getIdentityEdgeProperties().setECID(new ECID());
+
+        state.updateLegacyExperienceCloudId(null);
+
+        assertNull(state.getIdentityEdgeProperties().getECIDSecondary());
+        verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
     }
 }
