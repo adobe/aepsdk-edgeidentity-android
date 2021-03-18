@@ -35,7 +35,7 @@ class IdentityEdgeStorageService {
      * @return properties stored in local storage if present, otherwise null.
      */
     static IdentityEdgeProperties loadPropertiesFromPersistence() {
-        final SharedPreferences sharedPreferences = getSharedPreference();
+        final SharedPreferences sharedPreferences = getSharedPreference(IdentityEdgeConstants.DataStoreKey.DATASTORE_NAME);
         if (sharedPreferences == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to load saved identity properties from persistence.");
             return null;
@@ -64,13 +64,13 @@ class IdentityEdgeStorageService {
      * @param properties properties to be stored
      */
     static void savePropertiesToPersistence(final IdentityEdgeProperties properties) {
-        SharedPreferences sharedPreferences = getSharedPreference();
+        final SharedPreferences sharedPreferences = getSharedPreference(IdentityEdgeConstants.DataStoreKey.DATASTORE_NAME);
         if (sharedPreferences == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to write identity properties to persistence.");
             return;
         }
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
 
         if (editor == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference Editor is null. Unable to write identity properties to persistence.");
@@ -91,13 +91,35 @@ class IdentityEdgeStorageService {
     }
 
     /**
+     * Retrieves the direct Identity extension ECID value stored in persistence.
+     * @return {@link ECID} stored in direct Identity extension's persistence, or null if no ECID value is stored.
+     */
+    static ECID loadEcidFromDirectIdentityPersistence() {
+        final SharedPreferences sharedPreferences = getSharedPreference(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME);
+        if (sharedPreferences == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Shared Preference value is null. Unable to load saved direct identity ECID from persistence.");
+            return null;
+        }
+
+        final String ecidString = sharedPreferences.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null);
+
+        if (ecidString == null || ecidString.isEmpty()) {
+            return null;
+        }
+
+        return new ECID(ecidString);
+    }
+
+    /**
      * Getter for the applications {@link SharedPreferences}
      * <p>
      * Returns null if the app or app context is not available
      *
+     * @param datastoreName the name of the data store to get
+     *
      * @return a {@code SharedPreferences} instance
      */
-    private static SharedPreferences getSharedPreference() {
+    private static SharedPreferences getSharedPreference(final String datastoreName) {
         final Application application = MobileCore.getApplication();
         if (application == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Application value is null. Unable to read/write data from persistence.");
@@ -110,6 +132,6 @@ class IdentityEdgeStorageService {
             return null;
         }
 
-        return context.getSharedPreferences(IdentityEdgeConstants.DataStoreKey.DATASTORE_NAME, Context.MODE_PRIVATE);
+        return context.getSharedPreferences(datastoreName, Context.MODE_PRIVATE);
     }
 }

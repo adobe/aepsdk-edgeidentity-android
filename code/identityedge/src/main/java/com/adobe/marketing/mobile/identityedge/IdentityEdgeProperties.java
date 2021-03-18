@@ -35,6 +35,9 @@ class IdentityEdgeProperties {
     private ECID ecid;
     private IdentityMap identityMap = new IdentityMap();
 
+    // A secondary (non-primary) Experience Cloud ID
+    private ECID ecidSecondary;
+
     IdentityEdgeProperties() { }
 
     /**
@@ -50,9 +53,13 @@ class IdentityEdgeProperties {
         identityMap = IdentityMap.fromData(xdmData);
         if (identityMap != null) {
             final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-            boolean containsEcid = ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0).getId() != null;
-            if (containsEcid) {
-                ecid = new ECID(ecidItems.get(0).getId());
+            if (ecidItems != null) {
+                if (ecidItems.size() > 0 && ecidItems.get(0) != null && ecidItems.get(0).getId() != null) {
+                    ecid = new ECID(ecidItems.get(0).getId());
+                }
+                if (ecidItems.size() > 1 && ecidItems.get(1) != null && ecidItems.get(1).getId() != null) {
+                    ecidSecondary = new ECID(ecidItems.get(1).getId());
+                }
             }
         }
     }
@@ -75,6 +82,22 @@ class IdentityEdgeProperties {
      */
     ECID getECID() {
         return ecid;
+    }
+
+    /**
+     * Sets a secondary {@link ECID}
+     * @param ecid a new secondary {@code ECID}
+     */
+    void setECIDSecondary(final ECID ecid) {
+        this.ecidSecondary = ecid;
+    }
+
+    /**
+     * Retrieves the secondary {@link ECID}.
+     * @return secondary {@code ECID}
+     */
+    ECID getECIDSecondary() {
+        return ecidSecondary;
     }
 
     /**
@@ -118,6 +141,18 @@ class IdentityEdgeProperties {
      */
     Map<String, Object> toXDMData(final boolean allowEmpty) {
         final Map<String, Object> map = new HashMap<>();
+        final IdentityMap identityMap = new IdentityMap();
+
+        if (ecid != null) {
+            final IdentityItem ecidItem = new IdentityItem(ecid.toString());
+            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
+
+            // set second ECID only if primary exists
+            if (ecidSecondary != null) {
+                final IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
+                identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
+            }
+        }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
         if (dict != null && (!dict.isEmpty() || allowEmpty)) {

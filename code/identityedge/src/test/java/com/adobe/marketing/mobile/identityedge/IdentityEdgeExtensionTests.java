@@ -32,6 +32,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.adobe.marketing.mobile.identityedge.IdentityEdgeTestUtil.*;
@@ -46,6 +47,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Event.class, MobileCore.class, ExtensionApi.class, IdentityEdgeState.class})
@@ -91,7 +93,7 @@ public class IdentityEdgeExtensionTests {
         // constructor is called in the setup step()
 
         // verify 2 listeners are registered
-        verify(mockExtensionApi, times(5)).registerEventListener(anyString(),
+        verify(mockExtensionApi, times(6)).registerEventListener(anyString(),
                 anyString(), any(Class.class), any(ExtensionErrorCallback.class));
 
         // verify listeners are registered with correct event source and type
@@ -105,6 +107,8 @@ public class IdentityEdgeExtensionTests {
                 eq(IdentityEdgeConstants.EventSource.REMOVE_IDENTITY), eq(ListenerIdentityEdgeRemoveIdentity.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_RESET), eq(ListenerIdentityRequestReset.class), callbackCaptor.capture());
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.HUB),
+                                                                 eq(IdentityEdgeConstants.EventSource.SHARED_STATE), eq(ListenerHubSharedState.class), callbackCaptor.capture());
 
         // verify the callback
         ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
@@ -231,6 +235,128 @@ public class IdentityEdgeExtensionTests {
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
         assertTrue(sharedState.get("identityMap.ECID[0].id").length() > 0);
+    }
+
+    @Test
+    public void test_handleHubSharedState_updateLegacyEcidOnDirectIdentityStateChange() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(new HashMap<String, Object>() {{
+                    put(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID, "1234");
+                }});
+
+        Event event = new Event.Builder("Test event",
+                                        IdentityEdgeConstants.EventType.HUB,
+                                        IdentityEdgeConstants.EventSource.SHARED_STATE)
+                .setEventData(new HashMap<String, Object>(){{
+                    put(IdentityEdgeConstants.EventDataKeys.STATE_OWNER, IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT);
+                }}).build();
+
+        extension.handleHubSharedState(event);
+
+        final ArgumentCaptor<Map<String, Object>> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
+        Map<String, Object> sharedState = sharedStateCaptor.getValue();
+        assertEquals("1234", flattenMap(sharedState).get("identityMap.ECID[0].id"));
+    }
+
+    @Test
+    public void test_handleHubSharedState_noOpNullEvent() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(new HashMap<String, Object>() {{
+                    put(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID, "1234");
+                }});
+
+        extension.handleHubSharedState(null);
+
+        verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+    }
+
+    @Test
+    public void test_handleHubSharedState_noOpNullEventData() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(new HashMap<String, Object>() {{
+                    put(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID, "1234");
+                }});
+
+        Event event = new Event.Builder("Test event",
+                                        IdentityEdgeConstants.EventType.HUB,
+                                        IdentityEdgeConstants.EventSource.SHARED_STATE)
+                .build();
+
+        extension.handleHubSharedState(event);
+
+        verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+    }
+
+    @Test
+    public void test_handleHubSharedState_noOpNotDirectIdentityStateChange() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(new HashMap<String, Object>() {{
+                    put(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID, "1234");
+                }});
+
+        Event event = new Event.Builder("Test event",
+                                        IdentityEdgeConstants.EventType.HUB,
+                                        IdentityEdgeConstants.EventSource.SHARED_STATE)
+                .setEventData(new HashMap<String, Object>(){{
+                    put(IdentityEdgeConstants.EventDataKeys.STATE_OWNER, "com.adobe.module.configuration");
+                }}).build();
+
+        extension.handleHubSharedState(event);
+
+        verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+    }
+
+    @Test
+    public void test_handleHubSharedState_noOpNoDirectIdentitySharedState() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(null);
+
+        Event event = new Event.Builder("Test event",
+                                        IdentityEdgeConstants.EventType.HUB,
+                                        IdentityEdgeConstants.EventSource.SHARED_STATE)
+                .setEventData(new HashMap<String, Object>(){{
+                    put(IdentityEdgeConstants.EventDataKeys.STATE_OWNER, IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT);
+                }}).build();
+
+        extension.handleHubSharedState(event);
+
+        verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+    }
+
+    @Test
+    public void test_handleHubSharedState_doesNotShareStateIfLegacyECIDDoesNotChange() {
+        when(mockExtensionApi.getSharedEventState(eq(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT),
+                                                  any(Event.class),
+                                                  any(ExtensionErrorCallback.class)))
+                .thenReturn(new HashMap<String, Object>() {{
+                    put(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID, "1234");
+                }});
+
+        Event event = new Event.Builder("Test event",
+                                        IdentityEdgeConstants.EventType.HUB,
+                                        IdentityEdgeConstants.EventSource.SHARED_STATE)
+                .setEventData(new HashMap<String, Object>(){{
+                    put(IdentityEdgeConstants.EventDataKeys.STATE_OWNER, IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT);
+                }}).build();
+
+        // IdentityState.updateLegacyExperienceCloudId returns false if Legacy ECID was not updated
+        PowerMockito.stub(PowerMockito.method(IdentityEdgeState.class, "updateLegacyExperienceCloudId")).toReturn(false);
+
+        extension.handleHubSharedState(event);
+
+        final ArgumentCaptor<Map<String, Object>> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(mockExtensionApi, times(0)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
     }
 
     // ========================================================================================
@@ -409,6 +535,7 @@ public class IdentityEdgeExtensionTests {
     // ========================================================================================
     // private helper methods
     // ========================================================================================
+
     private void setupExistingIdentityEdgeProps(final ECID ecid) {
         IdentityEdgeProperties persistedProps = new IdentityEdgeProperties();
         persistedProps.setECID(ecid);
@@ -416,6 +543,5 @@ public class IdentityEdgeExtensionTests {
         final String propsJSON = jsonObject.toString();
         Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(propsJSON);
     }
-
 
 }

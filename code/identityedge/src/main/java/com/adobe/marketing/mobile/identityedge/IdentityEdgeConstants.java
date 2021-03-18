@@ -25,6 +25,7 @@ class IdentityEdgeConstants {
         static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
         static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
         static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
+        static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
         private EventSource() { }
     }
 
@@ -32,6 +33,7 @@ class IdentityEdgeConstants {
         static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
         static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
         static final String IDENTITY = "com.adobe.eventType.identity";
+        static final String HUB = "com.adobe.eventType.hub";
         private EventType() { }
     }
 
@@ -47,7 +49,13 @@ class IdentityEdgeConstants {
 
     final class EventDataKeys {
         static final String VISITOR_ID_ECID = "mid";
+        static final String STATE_OWNER = "stateowner";
         private EventDataKeys() { }
+    }
+
+    final class SharedStateKeys {
+        static final String IDENTITY_DIRECT = "com.adobe.module.identity";
+        private SharedStateKeys() { }
     }
 
     final class Namespaces {
@@ -68,6 +76,8 @@ class IdentityEdgeConstants {
     final class DataStoreKey {
         static final String DATASTORE_NAME = EXTENSION_NAME;
         static final String IDENTITY_PROPERTIES = "identity.properties";
+        static final String IDENTITY_DIRECT_DATASTORE_NAME = SharedStateKeys.IDENTITY_DIRECT;
+        static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
         private DataStoreKey() { }
     }
 

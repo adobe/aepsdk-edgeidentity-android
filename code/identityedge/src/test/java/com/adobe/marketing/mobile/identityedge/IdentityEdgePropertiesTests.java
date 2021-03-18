@@ -17,6 +17,7 @@ import java.util.Map;
 
 import static com.adobe.marketing.mobile.identityedge.IdentityEdgeTestUtil.flattenMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class IdentityEdgePropertiesTests {
@@ -38,12 +39,27 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
+        props.setECIDSecondary(new ECID());
 
         // test
         Map<String, Object> xdmData = props.toXDMData(false);
 
         // verify
         assertEquals(props.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
+        assertEquals(props.getECIDSecondary().toString(), flattenMap(xdmData).get("identityMap.ECID[1].id"));
+    }
+
+    @Test
+    public void testIdentityEdgeProperties_toXDMDataOnlyPrimaryECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+        props.setECID(new ECID());
+
+        // test
+        Map<String, Object> xdmMap = props.toXDMData(false);
+
+        // verify
+        assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
     }
 
     @Test
@@ -76,12 +92,15 @@ public class IdentityEdgePropertiesTests {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
+        props.setECIDSecondary(new ECID());
 
         // test
         Map<String, Object> xdmData = props.toXDMData(false);
         IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmData);
 
         // verify
+        assertEquals(flattenMap(xdmData).get("identityMap.ECID[0].id"), loadedProps.getECID().toString());
+        assertEquals(props.getECIDSecondary(), loadedProps.getECIDSecondary());
         assertEquals(loadedProps.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
     }
 
@@ -133,5 +152,6 @@ public class IdentityEdgePropertiesTests {
     // ======================================================================================================================
     // Tests for "removeCustomerIdentifiers" is already covered in handleRemoveRequest tests in IdentityEdgeExtensionTests
     // ======================================================================================================================
+
 
 }

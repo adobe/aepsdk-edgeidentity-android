@@ -24,7 +24,7 @@ import java.util.Map;
 
 class IdentityEdgeExtension extends Extension {
     private static final String LOG_TAG = "IdentityEdgeExtension";
-    private IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+    private final IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
 
     /**
      * Constructor.
@@ -41,9 +41,10 @@ class IdentityEdgeExtension extends Extension {
      *     and EventSource {@link IdentityEdgeConstants.EventSource#UPDATE_IDENTITY}</li>
      *     <li> Listener {@link ListenerIdentityEdgeRemoveIdentity} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REMOVE_IDENTITY}</li>
-     *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_CONTENT}</li>
      *     <li> Listener {@link ListenerIdentityRequestReset} to listen for event with eventType {@link IdentityEdgeConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityEdgeConstants.EventSource#REQUEST_RESET}</li>
+     *     <li> Listener {@link ListenerHubSharedState} to listen for event with eventType {@link IdentityEdgeConstants.EventType#HUB}
+     *     and EventSource {@link IdentityEdgeConstants.EventSource#SHARED_STATE}</li>
      * </ul>
      * <p>
      * Thread : Background thread created by MobileCore
@@ -65,11 +66,11 @@ class IdentityEdgeExtension extends Extension {
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.UPDATE_IDENTITY, ListenerIdentityEdgeUpdateIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REMOVE_IDENTITY, ListenerIdentityEdgeRemoveIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+        extensionApi.registerEventListener(IdentityEdgeConstants.EventType.HUB, IdentityEdgeConstants.EventSource.SHARED_STATE, ListenerHubSharedState.class, listenerErrorCallback);
     }
 
     /**
      * Required override. Each extension must have a unique name within the application.
-     *
      * @return unique name of this extension
      */
     @Override
@@ -79,7 +80,6 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Optional override.
-     *
      * @return the version of this extension
      */
     @Override
@@ -131,6 +131,69 @@ class IdentityEdgeExtension extends Extension {
 
     void handleGenericIdentityRequest(final Event event) {
         // TODO
+    }
+
+    /**
+     * Handles events of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}.
+     * If the state change event is for the direct Identity extension, get the direct Identity shared state and attempt
+     * to update the legacy ECID with the direct Identity extension ECID.
+     * @param event an event of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}
+     */
+    void handleHubSharedState(final Event event) {
+        if (!canProcessEvents()) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process direct Identity shared state change event. canProcessEvents returned false.");
+            return;
+        }
+
+        final ExtensionApi extensionApi = getApi();
+        if (extensionApi == null ) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process direct Identity shared state change event.");
+            return;
+        }
+
+        if (event == null || event.getEventData() == null) {
+            return;
+        }
+
+        try {
+            final String stateOwner = (String) event.getEventData().get(IdentityEdgeConstants.EventDataKeys.STATE_OWNER);
+            if (!IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT.equals(stateOwner)) {
+                return;
+            }
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse event state owner as String: " + e.getLocalizedMessage());
+            return;
+        }
+
+        final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
+            }
+        };
+
+        final Map<String, Object> identityState = extensionApi.getSharedEventState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event, getSharedStateCallback);
+
+        if (identityState == null) {
+            return;
+        }
+
+        try {
+            final String legacyEcidString = (String) identityState.get(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID);
+            final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
+
+            if (state.updateLegacyExperienceCloudId(legacyEcid)) {
+                final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+                    @Override
+                    public void error(final ExtensionError extensionError) {
+                        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to create XDM shared state. Error : %s.", extensionError.getErrorName()));
+                    }
+                };
+                extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+            }
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse stored ECID as String: " + e.getLocalizedMessage());
+        }
     }
 
     /**
