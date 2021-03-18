@@ -154,7 +154,7 @@ class IdentityEdgeExtension extends Extension {
         // dispatch response event
         final Event responseEvent = new Event.Builder(IdentityEdgeConstants.EventNames.RESET_IDENTITIES_COMPLETE,
                 IdentityEdgeConstants.EventType.EDGE_IDENTITY,
-                IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY).build();
+                IdentityEdgeConstants.EventSource.RESET_COMPLETE).build();
 
         MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
             @Override

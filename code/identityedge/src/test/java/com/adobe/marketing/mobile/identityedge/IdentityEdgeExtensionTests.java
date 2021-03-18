@@ -240,7 +240,7 @@ public class IdentityEdgeExtensionTests {
         final Event dispatchedEvent = eventCaptor.getAllValues().get(0);
         assertEquals(IdentityEdgeConstants.EventNames.RESET_IDENTITIES_COMPLETE, dispatchedEvent.getName());
         assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
-        assertEquals(IdentityEdgeConstants.EventSource.RESPONSE_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
+        assertEquals(IdentityEdgeConstants.EventSource.RESET_COMPLETE.toLowerCase(), dispatchedEvent.getSource());
     }
 
     // ========================================================================================
