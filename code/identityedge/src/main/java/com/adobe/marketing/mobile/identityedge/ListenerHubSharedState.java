@@ -32,9 +32,9 @@ class ListenerHubSharedState extends ExtensionListener {
 
     /**
      * Method that gets called when event with event type {@link IdentityEdgeConstants.EventType#HUB}
-     * and with event source {@link IdentityEdgeConstants.EventSource#SHARED_STATE}  is dispatched through eventHub.
+     * and with event source {@link IdentityEdgeConstants.EventSource#SHARED_STATE} is dispatched through eventHub.
      *
-     * @param event the identity reset request {@link Event} to be processed
+     * @param event the hub shared state change {@link Event} to be processed
      */
     @Override
     public void hear(final Event event) {
@@ -47,7 +47,7 @@ class ListenerHubSharedState extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityEdgeConstants.LOG_TAG,
-                           "The parent extension, associated with the ListenerHubSharedState is null, ignoring request identity reset event.");
+                           "The parent extension, associated with the ListenerHubSharedState is null, ignoring hub shared state event.");
             return;
         }
 
