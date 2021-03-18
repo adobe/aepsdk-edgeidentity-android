@@ -24,7 +24,7 @@ import java.util.Map;
 
 class IdentityEdgeExtension extends Extension {
     private final String LOG_TAG = "IdentityEdgeExtension";
-    private IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+    private final IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
 
     /**
      * Constructor.
@@ -113,38 +113,54 @@ class IdentityEdgeExtension extends Extension {
             return;
         }
 
+        final ExtensionApi extensionApi = getApi();
+        if (extensionApi == null ) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process direct Identity shared state change event.");
+            return;
+        }
+
         if (event == null || event.getEventData() == null) {
             return;
         }
 
-        String stateOwner = (String) event.getEventData().get(IdentityEdgeConstants.EventDataKeys.STATE_OWNER);
-        if (!IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT.equals(stateOwner)) {
+        try {
+            final String stateOwner = (String) event.getEventData().get(IdentityEdgeConstants.EventDataKeys.STATE_OWNER);
+            if (!IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT.equals(stateOwner)) {
+                return;
+            }
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse event state owner as String: " + e.getLocalizedMessage());
             return;
         }
 
-        ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
+        final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
             }
         };
-        Map<String, Object> identityState = getApi().getSharedEventState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event, getSharedStateCallback);
+
+        final Map<String, Object> identityState = extensionApi.getSharedEventState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event, getSharedStateCallback);
 
         if (identityState == null) {
             return;
         }
 
-        String legacyEcidString = (String) identityState.get(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID);
-        ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
+        try {
+            final String legacyEcidString = (String) identityState.get(IdentityEdgeConstants.EventDataKeys.VISITOR_ID_ECID);
+            final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
 
-        if (state.updateLegacyExperienceCloudId(legacyEcid)) {
-            ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-                @Override
-                public void error(final ExtensionError extensionError) {
-                    MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to create XDM shared state. Error : %s.", extensionError.getErrorName()));
-                }
-            };
-            getApi().setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+            if (state.updateLegacyExperienceCloudId(legacyEcid)) {
+                final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+                    @Override
+                    public void error(final ExtensionError extensionError) {
+                        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to create XDM shared state. Error : %s.", extensionError.getErrorName()));
+                    }
+                };
+                extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+            }
+        } catch (ClassCastException e) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse stored ECID as String: " + e.getLocalizedMessage());
         }
     }
 
