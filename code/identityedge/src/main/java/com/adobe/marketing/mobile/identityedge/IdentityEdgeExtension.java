@@ -71,6 +71,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Required override. Each extension must have a unique name within the application.
+     *
      * @return unique name of this extension
      */
     @Override
@@ -80,6 +81,7 @@ class IdentityEdgeExtension extends Extension {
 
     /**
      * Optional override.
+     *
      * @return the version of this extension
      */
     @Override
@@ -137,6 +139,7 @@ class IdentityEdgeExtension extends Extension {
      * Handles events of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}.
      * If the state change event is for the direct Identity extension, get the direct Identity shared state and attempt
      * to update the legacy ECID with the direct Identity extension ECID.
+     *
      * @param event an event of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}
      */
     void handleHubSharedState(final Event event) {
@@ -146,7 +149,7 @@ class IdentityEdgeExtension extends Extension {
         }
 
         final ExtensionApi extensionApi = getApi();
-        if (extensionApi == null ) {
+        if (extensionApi == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process direct Identity shared state change event.");
             return;
         }
@@ -183,13 +186,7 @@ class IdentityEdgeExtension extends Extension {
             final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
 
             if (state.updateLegacyExperienceCloudId(legacyEcid)) {
-                final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-                    @Override
-                    public void error(final ExtensionError extensionError) {
-                        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to create XDM shared state. Error : %s.", extensionError.getErrorName()));
-                    }
-                };
-                extensionApi.setXDMSharedEventState(state.getIdentityEdgeProperties().toXDMData(false), event, errorCallback);
+                shareIdentityXDMSharedState(event);
             }
         } catch (ClassCastException e) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse stored ECID as String: " + e.getLocalizedMessage());
@@ -199,7 +196,7 @@ class IdentityEdgeExtension extends Extension {
     /**
      * Handles events requesting for identifiers. Dispatches response event containing the identifiers. Called by listener registered with event hub.
      *
-     * @param event the identity request event
+     * @param event the identity request {@link Event}
      */
     void handleIdentityRequest(final Event event) {
         if (!canProcessEvents()) {
@@ -228,7 +225,7 @@ class IdentityEdgeExtension extends Extension {
     /**
      * Handles IdentityEdge request reset events.
      *
-     * @param event the identity request reset event
+     * @param event the identity request reset {@link Event}
      */
     void handleRequestReset(final Event event) {
         if (!canProcessEvents()) {

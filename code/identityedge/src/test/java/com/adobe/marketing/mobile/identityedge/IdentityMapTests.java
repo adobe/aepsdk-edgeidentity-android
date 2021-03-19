@@ -29,7 +29,7 @@ public class IdentityMapTests {
     public void test_AddItem() {
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("location", new IdentityItem("California"));
+        map.addItem(new IdentityItem("California"),"location");
 
         // verify
         assertEquals("California", map.toObjectMap().get("location").get(0).get("id"));
@@ -39,9 +39,9 @@ public class IdentityMapTests {
     public void test_AddItem_InvalidInputs() {
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("", new IdentityItem("California"));
-        map.addItem(null, new IdentityItem("California"));
-        map.addItem("namespace", null);
+        map.addItem( new IdentityItem("California"),"");
+        map.addItem(new IdentityItem("California"),null);
+        map.addItem( null,"namespace");
 
         // verify
         assertTrue(map.toObjectMap().isEmpty());
@@ -90,15 +90,15 @@ public class IdentityMapTests {
         IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
         // test
-        sampleUserMap.removeItem("location", new IdentityItem("California"));
+        sampleUserMap.removeItem( new IdentityItem("California"),"location");
 
         // verify
         assertEquals(1, sampleUserMap.toObjectMap().get("location").size());
         assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
 
         // test 2
-        sampleUserMap.removeItem("location", new IdentityItem("280 Highway Lane"));
-        sampleUserMap.removeItem("login", new IdentityItem("Student"));
+        sampleUserMap.removeItem(new IdentityItem("280 Highway Lane"),"location");
+        sampleUserMap.removeItem(new IdentityItem("Student"), "login");
 
         // verify
         assertNull(sampleUserMap.toObjectMap().get("location"));
@@ -111,9 +111,9 @@ public class IdentityMapTests {
         IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
         // test
-        sampleUserMap.removeItem("", new IdentityItem("California"));
-        sampleUserMap.removeItem(null, new IdentityItem("California"));
-        sampleUserMap.removeItem("location", null);
+        sampleUserMap.removeItem(new IdentityItem("California"),"");
+        sampleUserMap.removeItem(new IdentityItem("California"),null);
+        sampleUserMap.removeItem(null,"location");
 
         // verify the existing identityMap is unchanged
         assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
@@ -128,7 +128,7 @@ public class IdentityMapTests {
 
         // test
         IdentityMap newMap = new IdentityMap();
-        newMap.addItem("location", new IdentityItem("doorNumber:544"));
+        newMap.addItem(new IdentityItem("doorNumber:544"),"location");
         sampleUserMap.merge(newMap);
 
         // verify the existing identityMap is unchanged
@@ -207,8 +207,8 @@ public class IdentityMapTests {
         // setup
         IdentityMap sampleUserMap = buildSampleIdentityMap();  // 2 items with namespace "location", 3 items with namespace "login"
         IdentityMap tobeRemovedMap = new IdentityMap();
-        tobeRemovedMap.addItem("login", new IdentityItem("Student"));
-        tobeRemovedMap.addItem("location", new IdentityItem("California"));
+        tobeRemovedMap.addItem(new IdentityItem("Student"),"login");
+        tobeRemovedMap.addItem(new IdentityItem("California"),"location");
 
         // test
         sampleUserMap.remove(tobeRemovedMap);
@@ -237,8 +237,8 @@ public class IdentityMapTests {
         // setup
         IdentityMap sampleUserMap = buildSampleIdentityMap();  // 2 items with namespace "location", 3 items with namespace "login"
         IdentityMap tobeRemovedMap = new IdentityMap();
-        tobeRemovedMap.addItem("nonexistentNamespace", new IdentityItem("California"));
-        tobeRemovedMap.addItem("login", new IdentityItem("nonexistentID"));
+        tobeRemovedMap.addItem(new IdentityItem("California"),"nonexistentNamespace");
+        tobeRemovedMap.addItem(new IdentityItem("nonexistentID"),"login");
 
         // test
         sampleUserMap.remove(tobeRemovedMap);
@@ -331,12 +331,12 @@ public class IdentityMapTests {
         IdentityItem state = new IdentityItem("California", AuthenticationState.AMBIGUOUS, false);
 
         IdentityMap adobeIdentityMap = new IdentityMap();
-        adobeIdentityMap.addItem("login", email);
-        adobeIdentityMap.addItem("login", userName);
-        adobeIdentityMap.addItem("login", accountType);
+        adobeIdentityMap.addItem(email,"login");
+        adobeIdentityMap.addItem(userName, "login");
+        adobeIdentityMap.addItem(accountType, "login");
 
-        adobeIdentityMap.addItem("location", street);
-        adobeIdentityMap.addItem("location", state);
+        adobeIdentityMap.addItem(street, "location");
+        adobeIdentityMap.addItem(state,"location");
         return adobeIdentityMap;
     }
 

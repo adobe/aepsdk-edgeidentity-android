@@ -33,10 +33,11 @@ class IdentityEdgeProperties {
 
     // The current Experience Cloud ID
     private ECID ecid;
-    private IdentityMap identityMap = new IdentityMap();
 
     // A secondary (non-primary) Experience Cloud ID
     private ECID ecidSecondary;
+
+    private IdentityMap identityMap = new IdentityMap();
 
     IdentityEdgeProperties() { }
 
@@ -67,18 +68,28 @@ class IdentityEdgeProperties {
     /**
      * Sets the current {@link ECID}
      *
-     * @param ecid the new {@link ECID}
+     * @param newEcid the new {@code ECID}
      */
-    void setECID(final ECID ecid) {
-        this.ecid = ecid;
-        IdentityItem ecidItem = new IdentityItem(ecid.toString(), AuthenticationState.AMBIGUOUS, true);
-        identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID ,ecidItem);
+    void setECID(final ECID newEcid) {
+        // delete the previous ECID from the identity map if exist
+        if (ecid != null) {
+            final IdentityItem previousECIDItem = new IdentityItem(ecid.toString());
+            identityMap.removeItem(previousECIDItem, IdentityEdgeConstants.Namespaces.ECID);
+        }
+
+        // And add the new primary ECID to Identity map
+        if (newEcid != null) {
+            final IdentityItem newECIDItem = new IdentityItem(newEcid.toString(), AuthenticationState.AMBIGUOUS, false);
+            identityMap.addItem(newECIDItem, IdentityEdgeConstants.Namespaces.ECID, true);
+        }
+
+        this.ecid = newEcid; // keep the local variable up to date
     }
 
     /**
      * Retrieves the current {@link ECID}
      *
-     * @return current {@link ECID}
+     * @return current {@code ECID}
      */
     ECID getECID() {
         return ecid;
@@ -86,14 +97,28 @@ class IdentityEdgeProperties {
 
     /**
      * Sets a secondary {@link ECID}
-     * @param ecid a new secondary {@code ECID}
+     *
+     * @param newSecondaryEcid a new secondary {@code ECID}
      */
-    void setECIDSecondary(final ECID ecid) {
-        this.ecidSecondary = ecid;
+    void setECIDSecondary(final ECID newSecondaryEcid) {
+        // delete the previous secondary ECID from the identity map if exist
+        if (ecidSecondary != null) {
+            final IdentityItem previousECIDItem = new IdentityItem(ecidSecondary.toString());
+            identityMap.removeItem(previousECIDItem, IdentityEdgeConstants.Namespaces.ECID);
+        }
+
+        //  add the new secondary ECID to Identity map
+        if (newSecondaryEcid != null) {
+            final IdentityItem newSecondaryECIDItem = new IdentityItem(newSecondaryEcid.toString(), AuthenticationState.AMBIGUOUS, false);
+            identityMap.addItem(newSecondaryECIDItem, IdentityEdgeConstants.Namespaces.ECID);
+        }
+
+        this.ecidSecondary = newSecondaryEcid; // keep the local variable up to date
     }
 
     /**
      * Retrieves the secondary {@link ECID}.
+     *
      * @return secondary {@code ECID}
      */
     ECID getECIDSecondary() {
@@ -103,15 +128,15 @@ class IdentityEdgeProperties {
     /**
      * Update the customer identifiers by merging the passed in {@link IdentityMap} with the current identifiers.
      * <p>
-     * Any identifier in the passed in {@link IdentityMap} which has the same id in the same namespace will update the current identifier.
-     * Any new identifier in the passed in {@link IdentityMap} will be added to the current identifiers
+     * Any identifier in the passed in {@code IdentityMap} which has the same id in the same namespace will update the current identifier.
+     * Any new identifier in the passed in {@code IdentityMap} will be added to the current identifiers
      * Certain namespaces are not allowed to be modified and if exist in the given customer identifiers will be removed before the update operation is executed.
      * The namespaces which cannot be modified through this function call include:
      * - ECID
      * - IDFA
      * - GAID
      *
-     * @param map the {@link IdentityMap} containing customer identifiers to add or update with the current customer identifiers
+     * @param map the {@code IdentityMap} containing customer identifiers to add or update with the current customer identifiers
      */
     void updateCustomerIdentifiers(final IdentityMap map) {
         removeIdentitiesWithReservedNamespaces(map);
@@ -126,7 +151,7 @@ class IdentityEdgeProperties {
      * - IDFA
      * - GAID
      *
-     * @param map the {@link IdentityMap} with items to remove from current identifiers
+     * @param map the {@code IdentityMap} with items to remove from current identifiers
      */
     void removeCustomerIdentifiers(final IdentityMap map) {
         removeIdentitiesWithReservedNamespaces(map);
@@ -141,18 +166,6 @@ class IdentityEdgeProperties {
      */
     Map<String, Object> toXDMData(final boolean allowEmpty) {
         final Map<String, Object> map = new HashMap<>();
-        final IdentityMap identityMap = new IdentityMap();
-
-        if (ecid != null) {
-            final IdentityItem ecidItem = new IdentityItem(ecid.toString());
-            identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidItem);
-
-            // set second ECID only if primary exists
-            if (ecidSecondary != null) {
-                final IdentityItem ecidSecondaryItem = new IdentityItem(ecidSecondary.toString());
-                identityMap.addItem(IdentityEdgeConstants.Namespaces.ECID, ecidSecondaryItem);
-            }
-        }
 
         final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
         if (dict != null && (!dict.isEmpty() || allowEmpty)) {
@@ -169,9 +182,9 @@ class IdentityEdgeProperties {
      * @param identityMap the {@code IdentityMap} to filter out items contained in reserved namespaces.
      */
     private void removeIdentitiesWithReservedNamespaces(final IdentityMap identityMap) {
-        for (final String namespace : reservedNamespaces) {
-            if (identityMap.removeAllIdentityItemsForNamespace(namespace)) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Updating/Removing identifiers in namespace %s is not allowed.", namespace));
+        for (final String reservedNamespace : reservedNamespaces) {
+            if (identityMap.removeAllIdentityItemsForNamespace(reservedNamespace)) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Updating/Removing identifiers in namespace %s is not allowed.", reservedNamespace));
             }
         }
     }

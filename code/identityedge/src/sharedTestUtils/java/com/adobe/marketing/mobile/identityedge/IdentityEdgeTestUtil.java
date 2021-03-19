@@ -46,7 +46,7 @@ class IdentityEdgeTestUtil {
             final Map<String, Object> itemMap = new HashMap<>();
             itemMap.put(IdentityEdgeConstants.XDMKeys.ID, item.id);
             itemMap.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, "ambiguous");
-            itemMap.put(IdentityEdgeConstants.XDMKeys.PRIMARY, false);
+            itemMap.put(IdentityEdgeConstants.XDMKeys.PRIMARY, item.isPrimary);
             List<Map<String, Object>> nameSpaceItems = allItems.get(item.namespace);
             if (nameSpaceItems == null) {
                 nameSpaceItems = new ArrayList<>();
@@ -175,10 +175,25 @@ class IdentityEdgeTestUtil {
     public static class TestItem {
         private String namespace;
         private String id;
+        private boolean isPrimary = false;
 
         public TestItem(String namespace, String id) {
             this.namespace = namespace;
             this.id = id;
+        }
+    }
+
+    public static class TestPrimaryECIDItem extends TestItem {
+        public TestPrimaryECIDItem(final String ecid) {
+            super(IdentityEdgeConstants.Namespaces.ECID, ecid);
+            super.isPrimary = true;
+        }
+    }
+
+    public static class TestSecondaryECIDItem extends TestItem {
+        public TestSecondaryECIDItem(final String ecid) {
+            super(IdentityEdgeConstants.Namespaces.ECID, ecid);
+            super.isPrimary = false;
         }
     }
 

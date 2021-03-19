@@ -286,8 +286,8 @@ public class IdentityEdgeTests {
 
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem("mainspace", new IdentityItem("id", AuthenticationState.AUTHENTICATED, true));
-        map.addItem("secondspace", new IdentityItem("idtwo", AuthenticationState.LOGGED_OUT, false));
+        map.addItem(new IdentityItem("id", AuthenticationState.AUTHENTICATED, true),"mainspace");
+        map.addItem(new IdentityItem("idtwo", AuthenticationState.LOGGED_OUT, false),"secondspace");
         IdentityEdge.updateIdentities(map);
 
         // verify
@@ -338,7 +338,7 @@ public class IdentityEdgeTests {
         assertEquals(IdentityEdgeConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityEdgeConstants.EventSource.REMOVE_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
         IdentityMap sampleInputIdentitymap = new IdentityMap();
-        sampleInputIdentitymap.addItem("namespace", sampleItem);
+        sampleInputIdentitymap.addItem(sampleItem,"namespace");
         assertEquals(sampleInputIdentitymap.asEventData(), dispatchedEvent.getEventData());
 
         // TODO - enable when ExtensionError creation is available

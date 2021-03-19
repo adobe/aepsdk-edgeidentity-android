@@ -149,7 +149,7 @@ public class IdentityEdge {
         }
 
         IdentityMap identityMap = new IdentityMap();
-        identityMap.addItem(namespace, item);
+        identityMap.addItem(item,namespace);
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override

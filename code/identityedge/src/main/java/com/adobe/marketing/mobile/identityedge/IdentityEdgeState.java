@@ -94,7 +94,7 @@ class IdentityEdgeState {
     /**
      * Update the customer identifiers by merging the passed in {@link IdentityMap} with the current identifiers present in {@link #identityProperties}.
      *
-     * @param map the {@link IdentityMap} containing customer identifiers to add or update with the current customer identifiers
+     * @param map the {@code IdentityMap} containing customer identifiers to add or update with the current customer identifiers
      */
     void updateCustomerIdentifiers(final IdentityMap map) {
         identityProperties.updateCustomerIdentifiers(map);
@@ -104,7 +104,7 @@ class IdentityEdgeState {
     /**
      * Remove customer identifiers specified in passed in {@link IdentityMap} from the current identifiers present in {@link #identityProperties}.
      *
-     * @param map the {@link IdentityMap} with items to remove from current identifiers
+     * @param map the {@code IdentityMap} with items to remove from current identifiers
      */
     void removeCustomerIdentifiers(final IdentityMap map) {
         identityProperties.removeCustomerIdentifiers(map);

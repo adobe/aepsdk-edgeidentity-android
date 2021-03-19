@@ -15,9 +15,8 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static com.adobe.marketing.mobile.identityedge.IdentityEdgeTestUtil.flattenMap;
+import static com.adobe.marketing.mobile.identityedge.IdentityEdgeTestUtil.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class IdentityEdgePropertiesTests {
@@ -143,6 +142,146 @@ public class IdentityEdgePropertiesTests {
         // verify
         assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
     }
+
+
+    // ======================================================================================================================
+    // Tests for constructor : IdentityEdgeProperties(final Map<String, Object> xdmData)
+    // ======================================================================================================================
+
+    @Test
+    public void testConstruct_IdentityEdgeProperties_LoadingDataFromPersistence() {
+        // setup
+        Map<String,Object> persistedIdentifiers = createXDMIdentityMap(
+                new TestItem("UserId", "secretID"),
+                new TestItem("PushId", "token"),
+                new TestPrimaryECIDItem("primaryECID"),
+                new TestSecondaryECIDItem("secondaryECID")
+        );
+
+        // test
+        IdentityEdgeProperties props = new IdentityEdgeProperties(persistedIdentifiers);
+
+        // verify
+        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(12,flatMap.size()); // 4x3
+        assertEquals("primaryECID", props.getECID().toString());
+        assertEquals("secondaryECID", props.getECIDSecondary().toString());
+        assertEquals("secretID", flatMap.get("identityMap.UserId[0].id"));
+        assertEquals("token", flatMap.get("identityMap.PushId[0].id"));
+    }
+
+    @Test
+    public void testConstruct_IdentityEdgeProperties_NothingFromPersistence() {
+        // test
+        IdentityEdgeProperties props = new IdentityEdgeProperties(null);
+        Map<String, Object> xdmMap = props.toXDMData(false);
+
+        // verify
+        Map<String, String> flatMap = flattenMap(xdmMap);
+        assertEquals(0,flatMap.size());
+    }
+
+
+    // ======================================================================================================================
+    // Tests for method : setECID(final ECID newEcid)
+    // ======================================================================================================================
+
+    @Test
+    public void test_setECID_WillReplaceTheOldECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+
+        // test 1
+        props.setECID(new ECID("primary"));
+
+        // verify
+        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(3,flatMap.size());
+        assertEquals("primary", flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("true", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("primary", props.getECID().toString());
+
+        // test 2 - call setECID again to replace the old one
+        props.setECID(new ECID("primaryAgain"));
+
+        // verify
+        flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(3,flatMap.size());
+        assertEquals("primaryAgain", flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("true", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("primaryAgain", props.getECID().toString());
+    }
+
+    @Test
+    public void test_setECID_NullRemovesFromIdentityMap() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+
+        // test 1 - set a valid ECID and then to null
+        props.setECID(new ECID("primary"));
+        props.setECID(null);
+
+        // verify
+        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(0,flatMap.size());
+        assertNull(props.getECID());
+    }
+
+
+
+    // ======================================================================================================================
+    // Tests for method : setECIDSecondary(final ECID newEcid)
+    // ======================================================================================================================
+
+    @Test
+    public void test_setECIDSecondary_WillReplaceTheOldECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+
+        // test 1
+        props.setECIDSecondary(new ECID("secondary"));
+
+        // verify
+        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(3,flatMap.size());
+        assertEquals("secondary", flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("secondary", props.getECIDSecondary().toString());
+
+        // test 2 - call setECIDSecondary again to replace the old one
+        props.setECIDSecondary(new ECID("secondaryAgain"));
+
+        // verify
+        flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(3,flatMap.size());
+        assertEquals("secondaryAgain", flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("secondaryAgain", props.getECIDSecondary().toString());
+    }
+
+
+    @Test
+    public void test_setECIDSecondary_NullRemovesFromIdentityMap() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties(createXDMIdentityMap(
+                new TestSecondaryECIDItem("secondaryECID")
+        ));
+
+        // test - set secondary ECID to null
+        props.setECIDSecondary(null);
+
+        // verify
+        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(0,flatMap.size());
+        assertNull(props.getECIDSecondary());
+    }
+
+
+
+
+
+
+
 
     // ======================================================================================================================
     // Tests for "updateCustomerIdentifiers" is already covered in "handleUpdateRequest" tests in IdentityEdgeExtensionTests

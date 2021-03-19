@@ -399,6 +399,8 @@ public class IdentityEdgeExtensionTests {
                 new TestItem("ECID", "somevalue"),
                 new TestItem("GAID", "somevalue"),
                 new TestItem("IDFA", "somevalue"),
+                new TestItem("IdFA", "somevalue"),
+                new TestItem("gaid", "somevalue"),
                 new TestItem("UserId", "somevalue")
         );
 
@@ -413,14 +415,14 @@ public class IdentityEdgeExtensionTests {
         // verify shared state
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(updateIdentityEvent), any(ExtensionErrorCallback.class));
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
-        assertEquals(6, sharedState.size()); // 6 represents id, primary and authState of USERID identifier and generated ECID
+        assertEquals(3, sharedState.size()); // 6 represents id, primary and authState of USERID identifier and generated ECID
         assertEquals("somevalue", sharedState.get("identityMap.UserId[0].id"));
         assertNotEquals("somevalue", sharedState.get("identityMap.ECID[0].id"));
 
         // verify persistence
         verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
         Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
-        assertEquals(6, persistedData.size()); // 3 represents id, primary and authState of USERID identifier and generated ECID
+        assertEquals(3, persistedData.size()); // 3 represents id, primary and authState of USERID identifier and generated ECID
         assertEquals("somevalue", persistedData.get("identityMap.UserId[0].id"));
     }
 
