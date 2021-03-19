@@ -150,12 +150,6 @@ class IdentityEdgeExtension extends Extension {
             return;
         }
 
-        final ExtensionApi extensionApi = getApi();
-        if (extensionApi == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process direct Identity shared state change event.");
-            return;
-        }
-
         if (event == null || event.getEventData() == null) {
             return;
         }
@@ -170,16 +164,11 @@ class IdentityEdgeExtension extends Extension {
             return;
         }
 
-        final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
-            @Override
-            public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
-            }
-        };
 
-        final Map<String, Object> identityState = extensionApi.getSharedEventState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event, getSharedStateCallback);
+        final Map<String, Object> identityState = getSharedState(IdentityEdgeConstants.SharedStateKeys.IDENTITY_DIRECT, event);
 
         if (identityState == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, Identity shared state is null");
             return;
         }
 
@@ -239,11 +228,32 @@ class IdentityEdgeExtension extends Extension {
     }
 
     /**
+     * Retrieves the shared state for the given state owner
+     *
+     * @param stateOwner the state owner for the requested shared state
+     * @param event the {@link Event} for which is shared state is to be retrieved
+     */
+    private Map<String, Object> getSharedState(final String stateOwner, final Event event) {
+        final ExtensionApi extensionApi = getApi();
+        if (extensionApi == null) {
+            return null;
+        }
+        final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
+            }
+        };
+
+        return extensionApi.getSharedEventState(stateOwner, event, getSharedStateCallback);
+    }
+
+    /**
      * Fetches the latest Identity Edge properties and shares the EdgeIdentity's XDMSharedState.
      *
      * @param event the {@link Event} that triggered the XDM shared state change
      */
-    void shareIdentityXDMSharedState(final Event event) {
+    private void shareIdentityXDMSharedState(final Event event) {
         final ExtensionApi extensionApi = super.getApi();
         if (extensionApi == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");

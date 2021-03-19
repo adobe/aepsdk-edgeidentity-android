@@ -190,10 +190,13 @@ public class IdentityEdgeStateTests {
     @Test
     public void testIdentityEdgeState_updateLegacyExperienceCloudId() {
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        state.getIdentityEdgeProperties().setECID(new ECID());
         ECID legacyEcid = new ECID();
 
+        // test
         state.updateLegacyExperienceCloudId(legacyEcid);
 
+        // verify
         assertEquals(legacyEcid, state.getIdentityEdgeProperties().getECIDSecondary());
         verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
     }
@@ -206,6 +209,7 @@ public class IdentityEdgeStateTests {
 
         state.updateLegacyExperienceCloudId(legacyEcid);
 
+        // verify
         assertNull(state.getIdentityEdgeProperties().getECIDSecondary());
         verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
     }
@@ -213,6 +217,7 @@ public class IdentityEdgeStateTests {
     @Test
     public void testIdentityEdgeState_updateLegacyExperienceCloudId_notSetWhenSecondaryECIDSame() {
         IdentityEdgeState state = new IdentityEdgeState(new IdentityEdgeProperties());
+        state.getIdentityEdgeProperties().setECID(new ECID());
         ECID legacyEcid = new ECID();
         state.getIdentityEdgeProperties().setECIDSecondary(legacyEcid);
 

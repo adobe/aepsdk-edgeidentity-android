@@ -262,7 +262,7 @@ public class IdentityEdgeExtensionTests {
         final ArgumentCaptor<Map<String, Object>> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
         Map<String, Object> sharedState = sharedStateCaptor.getValue();
-        assertEquals("1234", flattenMap(sharedState).get("identityMap.ECID[0].id"));
+        assertEquals("1234", flattenMap(sharedState).get("identityMap.ECID[1].id")); // Legacy ECID is set as a secondary ECID
     }
 
     @Test
@@ -411,7 +411,6 @@ public class IdentityEdgeExtensionTests {
         final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
         final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
 
-
         // test
         Event updateIdentityEvent = buildUpdateIdentityRequest(identityXDM);
         extension.handleUpdateIdentities(updateIdentityEvent);
@@ -419,17 +418,37 @@ public class IdentityEdgeExtensionTests {
         // verify shared state
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(updateIdentityEvent), any(ExtensionErrorCallback.class));
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
-        assertEquals(3, sharedState.size()); // 6 represents id, primary and authState of USERID identifier and generated ECID
+        assertEquals(6, sharedState.size()); // 6 represents id, primary and authState of USERID identifier and generated ECID
         assertEquals("somevalue", sharedState.get("identityMap.UserId[0].id"));
-        assertNotEquals("somevalue", sharedState.get("identityMap.ECID[0].id"));
+        assertNotEquals("somevalue", sharedState.get("identityMap.ECID[0].id")); // verify that the ECID is not disturbed
 
         // verify persistence
         verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
         Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
-        assertEquals(3, persistedData.size()); // 3 represents id, primary and authState of USERID identifier and generated ECID
+        assertEquals(6, persistedData.size()); // 3 represents id, primary and authState of USERID identifier and generated ECID
         assertEquals("somevalue", persistedData.get("identityMap.UserId[0].id"));
+        assertNotEquals("somevalue", persistedData.get("identityMap.ECID[0].id")); // verify that the ECID is not disturbed
     }
 
+
+    @Test
+    public void test_handleUpdateIdentities_CaseSensitiveNamespace_OnCustomIdentifiers() throws Exception {
+        // setup
+        Map<String, Object> identityXDM = createXDMIdentityMap(
+                new TestItem("pushToken", "somevalue"),
+                new TestItem("PUSHTOKEN", "SOMEVALUE")
+        );
+        Event updateIdentityEvent = buildUpdateIdentityRequest(identityXDM);
+        extension.handleUpdateIdentities(updateIdentityEvent);
+
+        final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+
+        // verify shared state
+        verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(updateIdentityEvent), any(ExtensionErrorCallback.class));
+        Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
+        assertEquals("somevalue", sharedState.get("identityMap.pushToken[0].id"));
+        assertEquals("SOMEVALUE", sharedState.get("identityMap.PUSHTOKEN[0].id"));
+    }
 
     @Test
     public void test_handleUpdateIdentities_nullEventData() {
@@ -487,7 +506,9 @@ public class IdentityEdgeExtensionTests {
     public void test_handleRemoveIdentity_DoNotRemoveReservedNamespace() throws Exception {
         // setup
         Map<String,Object> identityXDM = createXDMIdentityMap(
-                new TestItem("GAID", "someGAID")
+                new TestItem("GAID", "someGAID"),
+                new TestItem("ECID", "someECID"),
+                new TestItem("IDFA", "someIDFA")
         );
         JSONObject identityXDMJSON = new JSONObject(identityXDM);
         Mockito.when(mockSharedPreference.getString(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(identityXDMJSON.toString());
@@ -498,7 +519,9 @@ public class IdentityEdgeExtensionTests {
 
         // test
         Map<String,Object> removedIdentityXDM = createXDMIdentityMap(
-                new TestItem("GAID", "someGAID")
+                new TestItem("GAID", "someGAID"),
+                new TestItem("ecid", "someECID"),
+                new TestItem("Idfa", "someIDFA")
         );
         Event removeIdentityEvent = buildRemoveIdentityRequest(removedIdentityXDM);
         extension.handleRemoveIdentity(removeIdentityEvent);
@@ -507,12 +530,16 @@ public class IdentityEdgeExtensionTests {
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(removeIdentityEvent), any(ExtensionErrorCallback.class));
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
         assertEquals("someGAID", sharedState.get("identityMap.GAID[0].id"));
+        assertEquals("someECID", sharedState.get("identityMap.ECID[0].id"));
+        assertEquals("someIDFA", sharedState.get("identityMap.IDFA[0].id"));
 
 
         // verify persistence
-        verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
-        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
-        assertEquals("someGAID", sharedState.get("identityMap.GAID[0].id"));
+        verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
+        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getValue());
+        assertEquals("someGAID", persistedData.get("identityMap.GAID[0].id"));
+        assertEquals("someECID", persistedData.get("identityMap.ECID[0].id"));
+        assertEquals("someIDFA", persistedData.get("identityMap.IDFA[0].id"));
     }
 
 

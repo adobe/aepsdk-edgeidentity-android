@@ -170,7 +170,7 @@ public class IdentityMapTests {
         IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
         // test
-        sampleUserMap.removeAllIdentityItemsForNamespace("location");
+        sampleUserMap.clearItemsForNamespace("location");
 
         // verify the existing identityMap is unchanged
         assertNull(sampleUserMap.toObjectMap().get("location"));
@@ -184,8 +184,8 @@ public class IdentityMapTests {
         IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
         // test
-        sampleUserMap.removeAllIdentityItemsForNamespace(null);
-        sampleUserMap.removeAllIdentityItemsForNamespace("");
+        sampleUserMap.clearItemsForNamespace(null);
+        sampleUserMap.clearItemsForNamespace("");
 
         // verify
         assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
@@ -198,7 +198,7 @@ public class IdentityMapTests {
         IdentityMap emptyMap = new IdentityMap();
 
         // test
-        emptyMap.removeAllIdentityItemsForNamespace("location");
+        emptyMap.clearItemsForNamespace("location");
         assertTrue(emptyMap.toObjectMap().isEmpty());
     }
 

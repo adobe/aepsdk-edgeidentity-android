@@ -79,10 +79,10 @@ class IdentityEdgeProperties {
             identityMap.removeItem(previousECIDItem, IdentityEdgeConstants.Namespaces.ECID);
         }
 
-
+        // if primary ecid is null, clear off all the existing ECID's
         if (newEcid == null) {
-            setECIDSecondary(newEcid);
-            identityMap.removeAllIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+            setECIDSecondary(null);
+            identityMap.clearItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
         } else {
             // And add the new primary Ecid as a first element of Identity map
             final IdentityItem newECIDItem = new IdentityItem(newEcid.toString(), AuthenticationState.AMBIGUOUS, false);
@@ -196,7 +196,7 @@ class IdentityEdgeProperties {
      */
     private void removeIdentitiesWithReservedNamespaces(final IdentityMap identityMap) {
         for (final String reservedNamespace : reservedNamespaces) {
-            if (identityMap.removeAllIdentityItemsForNamespace(reservedNamespace)) {
+            if (identityMap.clearItemsForNamespace(reservedNamespace)) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Updating/Removing identifiers in namespace %s is not allowed.", reservedNamespace));
             }
         }

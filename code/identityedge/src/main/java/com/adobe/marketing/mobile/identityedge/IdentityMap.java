@@ -31,7 +31,7 @@ import java.util.TreeMap;
 @SuppressWarnings("unused")
 public class IdentityMap {
     private static final String LOG_TAG = "IdentityMap";
-    private final Map<String, List<IdentityItem>> identityItems = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final Map<String, List<IdentityItem>> identityItems = new HashMap<>();
 
     /**
      * Gets the {@link IdentityItem}s for the namespace
@@ -187,15 +187,29 @@ public class IdentityMap {
     }
 
     /**
-     * Removes all the {@link IdentityItem} on this {@link IdentityMap} linked to the specified namespace
+     * Removes all the {@link IdentityItem} on this {@link IdentityMap} linked to the specified namespace (case insensitive)
      *
      * @return a {@code boolean} representing a successful removal of all {@code IdentityItem} in a provided namespace
      */
-    boolean removeAllIdentityItemsForNamespace(final String namespace) {
+    boolean clearItemsForNamespace(final String namespace) {
         if(namespace == null){
             return false;
         }
-        return (identityItems.remove(namespace) != null) ;
+
+        boolean isRemoved = false;
+        final List<String> filteredNamespaces = new ArrayList<>();
+        for(final String eachNamespace : identityItems.keySet()) {
+            if (namespace.equalsIgnoreCase(eachNamespace)) {
+                isRemoved = true;
+                filteredNamespaces.add(eachNamespace);
+            }
+        }
+
+        for (final String eachNamespace : filteredNamespaces) {
+            identityItems.remove(eachNamespace);
+        }
+
+        return isRemoved;
     }
 
     /**
