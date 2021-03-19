@@ -14,14 +14,14 @@ package com.adobe.marketing.mobile.identityedge;
 /**
  * Represents the authentication state for an {@link IdentityItem}
  */
-public enum AuthenticationState {
+public enum AuthenticatedState {
     AMBIGUOUS("ambiguous"),
     AUTHENTICATED("authenticated"),
     LOGGED_OUT("loggedOut");
 
     private String name;
 
-    private AuthenticationState(final String name) {
+    private AuthenticatedState(final String name) {
         this.name = name;
     }
 
@@ -29,7 +29,7 @@ public enum AuthenticationState {
         return name;
     }
 
-    public static AuthenticationState fromString(final String state) {
+    public static AuthenticatedState fromString(final String state) {
         if ("authenticated".equalsIgnoreCase(state)) {
             return AUTHENTICATED;
         } else if ("loggedOut".equalsIgnoreCase(state)) {
