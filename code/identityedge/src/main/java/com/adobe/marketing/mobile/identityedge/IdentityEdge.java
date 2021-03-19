@@ -149,7 +149,7 @@ public class IdentityEdge {
         }
 
         IdentityMap identityMap = new IdentityMap();
-        identityMap.addItem(item,namespace);
+        identityMap.addItem(item, namespace);
 
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
@@ -168,6 +168,7 @@ public class IdentityEdge {
 
     /**
      * Returns all identifiers, including customer identifiers which were previously added.
+     *
      * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
      *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
      *                 eventuality of any error that occurred while getting the stored identities.

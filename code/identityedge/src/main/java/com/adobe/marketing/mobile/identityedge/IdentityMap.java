@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Defines a map containing a set of end user identities, keyed on either namespace integration
@@ -72,32 +71,6 @@ public class IdentityMap {
     }
 
     /**
-     * Add an identity item which is used to clearly distinguish entities that are interacting
-     * with digital experiences.
-     *
-     * @param item      {@link IdentityItem} to be added to the namespace
-     * @param namespace the namespace integration code or namespace ID of the identity
-     * @param isFirstItem on {@code true} keeps the provided {@code IdentityItem} as the first element of the identity list for this namespace
-     * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
-     */
-    public void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
-        if (item == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
-            return;
-        }
-
-        if (Utils.isNullOrEmpty(namespace)) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                    "IdentityMap add item ignored as must contain a non-null/non-empty namespace.");
-            return;
-        }
-
-        addItemToMap(item, namespace, isFirstItem);
-    }
-
-
-
-    /**
      * Remove a single {@link IdentityItem} from this map.
      *
      * @param item      {@link IdentityItem} to be added to the namespace
@@ -130,6 +103,31 @@ public class IdentityMap {
     // ========================================================================================
     // protected methods
     // ========================================================================================
+
+    /**
+     * Add an identity item which is used to clearly distinguish entities that are interacting
+     * with digital experiences.
+     *
+     * @param item      {@link IdentityItem} to be added to the namespace
+     * @param namespace the namespace integration code or namespace ID of the identity
+     * @param isFirstItem on {@code true} keeps the provided {@code IdentityItem} as the first element of the identity list for this namespace
+     * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
+     */
+    void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
+        if (item == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
+            return;
+        }
+
+        if (Utils.isNullOrEmpty(namespace)) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+                    "IdentityMap add item ignored as must contain a non-null/non-empty namespace.");
+            return;
+        }
+
+        addItemToMap(item, namespace, isFirstItem);
+    }
+
 
     /**
      * @return a {@link Map} representing this {@link IdentityMap} object
@@ -258,7 +256,7 @@ public class IdentityMap {
     // ========================================================================================
     // private methods
     // ========================================================================================
-    private void addItemToMap(final IdentityItem item, final String namespace, final boolean keepAsFirstItem) {
+    private void addItemToMap(final IdentityItem item, final String namespace, final boolean isFirstItem) {
         // check if namespace exists
         final List<IdentityItem> itemList;
 
@@ -268,7 +266,7 @@ public class IdentityMap {
             itemList = new ArrayList<>();
         }
 
-        if ((keepAsFirstItem)) {
+        if (isFirstItem) {
             itemList.add(0, item);
         } else {
             itemList.add(item);

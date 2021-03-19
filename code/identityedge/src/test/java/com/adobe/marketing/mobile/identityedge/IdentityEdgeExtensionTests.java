@@ -238,7 +238,7 @@ public class IdentityEdgeExtensionTests {
         MobileCore.dispatchEvent(eventCaptor.capture(), any(ExtensionErrorCallback.class));
 
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
-        Assert.assertTrue(sharedState.get("identityMap.ECID[0].id").length() > 0);
+        assertTrue(sharedState.get("identityMap.ECID[0].id").length() > 0);
     }
 
     @Test

@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
-import android.util.Log;
-
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
