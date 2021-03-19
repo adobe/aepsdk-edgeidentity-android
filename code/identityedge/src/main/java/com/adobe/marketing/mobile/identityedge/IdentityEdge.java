@@ -212,25 +212,6 @@ public class IdentityEdge {
     }
 
     /**
-     * Clears all Identity Edge identifiers and generates a new Experience Cloud ID (ECID).
-     */
-    public static void resetIdentities() {
-        final Event event = new Event.Builder(IdentityEdgeConstants.EventNames.REQUEST_RESET,
-                IdentityEdgeConstants.EventType.EDGE_IDENTITY,
-                IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
-
-        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-            @Override
-            public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to dispatch %s event: Error : %s.", IdentityEdgeConstants.EventNames.REQUEST_RESET,
-                        extensionError.getErrorName()));
-            }
-        };
-
-        MobileCore.dispatchEvent(event, errorCallback);
-    }
-
-    /**
      * When an {@link AdobeCallbackWithError} is provided, the fail method will be called with provided {@link AdobeError}.
      *
      * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}

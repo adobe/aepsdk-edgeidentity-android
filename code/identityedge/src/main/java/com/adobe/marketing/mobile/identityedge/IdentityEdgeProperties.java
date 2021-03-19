@@ -11,6 +11,8 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
+import android.util.Log;
+
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
@@ -77,8 +79,12 @@ class IdentityEdgeProperties {
             identityMap.removeItem(previousECIDItem, IdentityEdgeConstants.Namespaces.ECID);
         }
 
-        // And add the new primary ECID to Identity map
-        if (newEcid != null) {
+
+        if (newEcid == null) {
+            setECIDSecondary(newEcid);
+            identityMap.removeAllIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
+        } else {
+            // And add the new primary Ecid as a first element of Identity map
             final IdentityItem newECIDItem = new IdentityItem(newEcid.toString(), AuthenticationState.AMBIGUOUS, false);
             identityMap.addItem(newECIDItem, IdentityEdgeConstants.Namespaces.ECID, true);
         }
@@ -107,7 +113,14 @@ class IdentityEdgeProperties {
             identityMap.removeItem(previousECIDItem, IdentityEdgeConstants.Namespaces.ECID);
         }
 
-        //  add the new secondary ECID to Identity map
+        // do not set secondary ECID if primary ECID is not set
+        if (ecid == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Cannot set secondary ECID value as no primary ECID exists.");
+            this.ecidSecondary = null;
+            return;
+        }
+
+        // add the new secondary ECID to Identity map
         if (newSecondaryEcid != null) {
             final IdentityItem newSecondaryECIDItem = new IdentityItem(newSecondaryEcid.toString(), AuthenticationState.AMBIGUOUS, false);
             identityMap.addItem(newSecondaryECIDItem, IdentityEdgeConstants.Namespaces.ECID);

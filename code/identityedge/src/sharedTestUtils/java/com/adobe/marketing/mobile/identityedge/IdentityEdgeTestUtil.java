@@ -183,18 +183,11 @@ class IdentityEdgeTestUtil {
         }
     }
 
-    public static class TestPrimaryECIDItem extends TestItem {
-        public TestPrimaryECIDItem(final String ecid) {
+    public static class TestECIDItem extends TestItem {
+        public TestECIDItem(final String ecid) {
             super(IdentityEdgeConstants.Namespaces.ECID, ecid);
-            super.isPrimary = true;
         }
     }
 
-    public static class TestSecondaryECIDItem extends TestItem {
-        public TestSecondaryECIDItem(final String ecid) {
-            super(IdentityEdgeConstants.Namespaces.ECID, ecid);
-            super.isPrimary = false;
-        }
-    }
 
 }

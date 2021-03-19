@@ -31,11 +31,7 @@ import java.util.TreeMap;
 @SuppressWarnings("unused")
 public class IdentityMap {
     private static final String LOG_TAG = "IdentityMap";
-    private Map<String, List<IdentityItem>> identityItems;
-
-    IdentityMap() {
-        identityItems = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    }
+    private final Map<String, List<IdentityItem>> identityItems = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     /**
      * Gets the {@link IdentityItem}s for the namespace

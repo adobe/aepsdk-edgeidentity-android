@@ -21,8 +21,12 @@ import static org.junit.Assert.assertNull;
 
 public class IdentityEdgePropertiesTests {
 
+    // ======================================================================================================================
+    // Tests for method : toXDMData(final boolean allowEmpty)
+    // ======================================================================================================================
+
     @Test
-    public void testIdentityEdgeProperties_toXDMDataEmpty() {
+    public void test_toXDMData_Empty() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
 
@@ -33,8 +37,9 @@ public class IdentityEdgePropertiesTests {
         assertNull(xdmMap.get(IdentityEdgeConstants.XDMKeys.IDENTITY_MAP));
     }
 
+
     @Test
-    public void testIdentityEdgeProperties_toXDMDataFull() {
+    public void test_toXDMData_Full() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
@@ -42,14 +47,21 @@ public class IdentityEdgePropertiesTests {
 
         // test
         Map<String, Object> xdmData = props.toXDMData(false);
+        Map<String, String> flatMap = flattenMap(xdmData);
 
-        // verify
-        assertEquals(props.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
-        assertEquals(props.getECIDSecondary().toString(), flattenMap(xdmData).get("identityMap.ECID[1].id"));
+        // verify primary ECID
+        assertEquals(props.getECID().toString(), flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("AMBIGUOUS", flatMap.get("identityMap.ECID[0].authenticatedState"));
+        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
+
+        // verify secondary ECID
+        assertEquals(props.getECIDSecondary().toString(), flatMap.get("identityMap.ECID[1].id"));
+        assertEquals("AMBIGUOUS", flatMap.get("identityMap.ECID[1].authenticatedState"));
+        assertEquals("false", flatMap.get("identityMap.ECID[1].primary"));
     }
 
     @Test
-    public void testIdentityEdgeProperties_toXDMDataOnlyPrimaryECID() {
+    public void test_toXDMData_OnlyPrimaryECID() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
         props.setECID(new ECID());
@@ -62,85 +74,14 @@ public class IdentityEdgePropertiesTests {
     }
 
     @Test
-    public void testIdentityEdgeProperties_toXDMDataMissingECID() {
+    public void test_toXDMData_OnlySecondaryECID() {
+        // should not set secondary ECID if primary not set
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties();
-
-        // test
-        Map<String, Object> xdmData = props.toXDMData(false);
-
-        // verify
-        assertNull(flattenMap(xdmData).get("identityMap.ECID[0].id"));
-    }
-
-    @Test
-    public void testIdentityEdgeProperties_toXDMDataMissingPrivacy() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setECID(new ECID());
-
-        // test
-        Map<String, Object> xdmData = props.toXDMData(false);
-
-        // verify
-        assertEquals(props.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
-    }
-
-    @Test
-    public void testIdentityEdgeProperties_fromXDMDataFull() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setECID(new ECID());
         props.setECIDSecondary(new ECID());
 
-        // test
-        Map<String, Object> xdmData = props.toXDMData(false);
-        IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmData);
-
-        // verify
-        assertEquals(flattenMap(xdmData).get("identityMap.ECID[0].id"), loadedProps.getECID().toString());
-        assertEquals(props.getECIDSecondary(), loadedProps.getECIDSecondary());
-        assertEquals(loadedProps.getECID().toString(), flattenMap(xdmData).get("identityMap.ECID[0].id"));
-    }
-
-    @Test
-    public void testIdentityEdgeProperties_fromXDMDataMissingECID() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-
-        // test
-        Map<String, Object> map = props.toXDMData(false);
-        IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(map);
-
-        // verify
-        assertNull(loadedProps.getECID());
-    }
-
-    @Test
-    public void testIdentityEdgeProperties_fromXDMDataMissingPrivacy() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setECID(new ECID());
-
-        // test
-        Map<String, Object> xdmMap = props.toXDMData(false);
-        IdentityEdgeProperties loadedProps = new IdentityEdgeProperties(xdmMap);
-
-        // verify
-        assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
-    }
-
-    @Test
-    public void testIdentityEdgeProperties_toXDMDataWithECID() {
-        // setup
-        IdentityEdgeProperties props = new IdentityEdgeProperties();
-        props.setECID(new ECID());
-
-        // test
-        Map<String, Object> xdmMap = props.toXDMData(false);
-
-        // verify
-        assertEquals(props.getECID().toString(), flattenMap(xdmMap).get("identityMap.ECID[0].id"));
+        // test and verify, can't have secondary ECID without primary ECID
+        assertEquals(0,flattenMap(props.toXDMData(false)).size());
     }
 
 
@@ -149,13 +90,13 @@ public class IdentityEdgePropertiesTests {
     // ======================================================================================================================
 
     @Test
-    public void testConstruct_IdentityEdgeProperties_LoadingDataFromPersistence() {
+    public void testConstruct_FromXDMData_LoadingDataFromPersistence() {
         // setup
         Map<String,Object> persistedIdentifiers = createXDMIdentityMap(
                 new TestItem("UserId", "secretID"),
                 new TestItem("PushId", "token"),
-                new TestPrimaryECIDItem("primaryECID"),
-                new TestSecondaryECIDItem("secondaryECID")
+                new TestECIDItem("primaryECID"),
+                new TestECIDItem("secondaryECID")
         );
 
         // test
@@ -171,14 +112,12 @@ public class IdentityEdgePropertiesTests {
     }
 
     @Test
-    public void testConstruct_IdentityEdgeProperties_NothingFromPersistence() {
+    public void testConstruct_FromXDMData_NothingFromPersistence() {
         // test
         IdentityEdgeProperties props = new IdentityEdgeProperties(null);
-        Map<String, Object> xdmMap = props.toXDMData(false);
 
         // verify
-        Map<String, String> flatMap = flattenMap(xdmMap);
-        assertEquals(0,flatMap.size());
+        assertEquals(0,flattenMap(props.toXDMData(false)).size());
     }
 
 
@@ -198,7 +137,7 @@ public class IdentityEdgePropertiesTests {
         Map<String, String> flatMap = flattenMap(props.toXDMData(false));
         assertEquals(3,flatMap.size());
         assertEquals("primary", flatMap.get("identityMap.ECID[0].id"));
-        assertEquals("true", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
         assertEquals("primary", props.getECID().toString());
 
         // test 2 - call setECID again to replace the old one
@@ -208,7 +147,7 @@ public class IdentityEdgePropertiesTests {
         flatMap = flattenMap(props.toXDMData(false));
         assertEquals(3,flatMap.size());
         assertEquals("primaryAgain", flatMap.get("identityMap.ECID[0].id"));
-        assertEquals("true", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
         assertEquals("primaryAgain", props.getECID().toString());
     }
 
@@ -222,11 +161,9 @@ public class IdentityEdgePropertiesTests {
         props.setECID(null);
 
         // verify
-        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
-        assertEquals(0,flatMap.size());
+        assertEquals(0,flattenMap(props.toXDMData(false)).size());
         assertNull(props.getECID());
     }
-
 
 
     // ======================================================================================================================
@@ -239,13 +176,14 @@ public class IdentityEdgePropertiesTests {
         IdentityEdgeProperties props = new IdentityEdgeProperties();
 
         // test 1
+        props.setECID(new ECID("primary"));
         props.setECIDSecondary(new ECID("secondary"));
 
         // verify
         Map<String, String> flatMap = flattenMap(props.toXDMData(false));
-        assertEquals(3,flatMap.size());
-        assertEquals("secondary", flatMap.get("identityMap.ECID[0].id"));
-        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals(6,flatMap.size());
+        assertEquals("secondary", flatMap.get("identityMap.ECID[1].id"));
+        assertEquals("false", flatMap.get("identityMap.ECID[1].primary"));
         assertEquals("secondary", props.getECIDSecondary().toString());
 
         // test 2 - call setECIDSecondary again to replace the old one
@@ -253,35 +191,83 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         flatMap = flattenMap(props.toXDMData(false));
-        assertEquals(3,flatMap.size());
-        assertEquals("secondaryAgain", flatMap.get("identityMap.ECID[0].id"));
-        assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
+        assertEquals(6,flatMap.size());
+        assertEquals("secondaryAgain", flatMap.get("identityMap.ECID[1].id"));
+        assertEquals("false", flatMap.get("identityMap.ECID[1].primary"));
         assertEquals("secondaryAgain", props.getECIDSecondary().toString());
     }
-
 
     @Test
     public void test_setECIDSecondary_NullRemovesFromIdentityMap() {
         // setup
         IdentityEdgeProperties props = new IdentityEdgeProperties(createXDMIdentityMap(
-                new TestSecondaryECIDItem("secondaryECID")
+                new TestECIDItem("primary"),
+                new TestECIDItem("secondary")
         ));
+        assertEquals(6, flattenMap(props.toXDMData(false)).size());
 
-        // test - set secondary ECID to null
+        // test
         props.setECIDSecondary(null);
 
         // verify
-        Map<String, String> flatMap = flattenMap(props.toXDMData(false));
-        assertEquals(0,flatMap.size());
+        assertEquals(3, flattenMap(props.toXDMData(false)).size());
         assertNull(props.getECIDSecondary());
     }
 
 
+    @Test
+    public void test_clearPrimaryECID_alsoClearsSecondaryECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties(createXDMIdentityMap(
+                new TestECIDItem("primary"),
+                new TestECIDItem("secondary")
+        ));
+
+        // test
+        props.setECID(null);
+
+        // verify
+        assertEquals(0, flattenMap(props.toXDMData(false)).size());
+        assertNull(props.getECIDSecondary());
+        assertNull(props.getECID());
+    }
 
 
+    @Test
+    public void test_setPrimaryECIDPreservesSecondaryECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties(createXDMIdentityMap(
+                new TestECIDItem("primary"),
+                new TestECIDItem("secondary")
+        ));
 
+        // test
+        props.setECID(new ECID("primaryAgain"));
 
+        // verify
+        assertEquals(6, flattenMap(props.toXDMData(false)).size());
+        assertEquals("secondary",props.getECIDSecondary().toString());
+        assertEquals("primaryAgain",props.getECID().toString());
+    }
 
+    @Test
+    public void test_primaryECIDIsAlwaysTheFirstElement() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+
+        // test
+        props.setECID(new ECID("primary"));
+        props.setECIDSecondary(new ECID("secondary"));
+        props.setECID(new ECID("primaryAgain"));
+
+        // verify
+        Map<String,String> flatMap = flattenMap(props.toXDMData(false));
+        assertEquals(6, flatMap.size());
+        assertEquals("primaryAgain", flatMap.get("identityMap.ECID[0].id"));
+        assertEquals("secondary", flatMap.get("identityMap.ECID[1].id"));
+
+    }
+    
 
     // ======================================================================================================================
     // Tests for "updateCustomerIdentifiers" is already covered in "handleUpdateRequest" tests in IdentityEdgeExtensionTests

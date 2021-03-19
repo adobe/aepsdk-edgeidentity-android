@@ -105,7 +105,7 @@ public class IdentityEdgeExtensionTests {
                 eq(IdentityEdgeConstants.EventSource.UPDATE_IDENTITY), eq(ListenerIdentityEdgeUpdateIdentity.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REMOVE_IDENTITY), eq(ListenerIdentityEdgeRemoveIdentity.class), callbackCaptor.capture());
-        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.EDGE_IDENTITY),
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.GENERIC_IDENTITY),
                 eq(IdentityEdgeConstants.EventSource.REQUEST_RESET), eq(ListenerIdentityRequestReset.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityEdgeConstants.EventType.HUB),
                                                                  eq(IdentityEdgeConstants.EventSource.SHARED_STATE), eq(ListenerHubSharedState.class), callbackCaptor.capture());
@@ -202,7 +202,7 @@ public class IdentityEdgeExtensionTests {
         // setup
         IdentityEdgeProperties emptyProps = new IdentityEdgeProperties();
         PowerMockito.stub(PowerMockito.method(IdentityEdgeState.class, "getIdentityEdgeProperties")).toReturn(emptyProps);
-        
+
         Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_IDENTITY).build();
         final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
@@ -225,16 +225,20 @@ public class IdentityEdgeExtensionTests {
     @Test
     public void test_handleIdentityResetRequest() {
         // setup
-        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.EDGE_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
+        Event event = new Event.Builder("Test event", IdentityEdgeConstants.EventType.GENERIC_IDENTITY, IdentityEdgeConstants.EventSource.REQUEST_RESET).build();
         final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         // test
         extension.handleRequestReset(event);
 
         // verify
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+        MobileCore.dispatchEvent(eventCaptor.capture(), any(ExtensionErrorCallback.class));
+
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
-        assertTrue(sharedState.get("identityMap.ECID[0].id").length() > 0);
+        Assert.assertTrue(sharedState.get("identityMap.ECID[0].id").length() > 0);
     }
 
     @Test
