@@ -24,7 +24,8 @@ class IdentityEdgeState {
     private IdentityEdgeProperties identityProperties;
 
     /**
-     *  Creates a new {@link IdentityEdgeState} with the given {@link IdentityEdgeProperties}
+     * Creates a new {@link IdentityEdgeState} with the given {@link IdentityEdgeProperties}
+     *
      * @param identityProperties identity edge properties
      */
     IdentityEdgeState(final IdentityEdgeProperties identityProperties) {
@@ -47,10 +48,13 @@ class IdentityEdgeState {
 
     /**
      * Completes init for the Identity Edge extension.
+     *
      * @return True if we should share state after bootup, false otherwise
      */
     boolean bootupIfReady() {
-        if (hasBooted) { return true; }
+        if (hasBooted) {
+            return true;
+        }
         // Load properties from local storage
         identityProperties = IdentityEdgeStorageService.loadPropertiesFromPersistence();
 
@@ -114,17 +118,23 @@ class IdentityEdgeState {
     /**
      * Update the legacy ECID property with {@code legacyEcid} provided it does not equal the primary or secondary ECIDs
      * currently in {@code IdentityEdgePoperties}.
+     *
      * @param legacyEcid the current ECID from the direct Identity extension
      * @return true if the legacy ECID was updated in {@code IdentityEdgeProperties}
      */
     boolean updateLegacyExperienceCloudId(final ECID legacyEcid) {
-        if (legacyEcid == identityProperties.getECID() || legacyEcid == identityProperties.getECIDSecondary()) {
+        if ((legacyEcid != null) && (legacyEcid.equals(identityProperties.getECID()) || legacyEcid.equals(identityProperties.getECIDSecondary()))) {
+            return false;
+        }
+
+        // no need to clear secondaryECID if its already null
+        if (legacyEcid == null && identityProperties.getECIDSecondary() == null){
             return false;
         }
 
         identityProperties.setECIDSecondary(legacyEcid);
         IdentityEdgeStorageService.savePropertiesToPersistence(identityProperties);
-        MobileCore.log(LoggingMode.DEBUG, LOG_TAG,"Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
+        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
         return true;
     }
 
