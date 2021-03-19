@@ -83,7 +83,7 @@ class IdentityEdgeProperties {
             identityMap.clearItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
         } else {
             // And add the new primary Ecid as a first element of Identity map
-            final IdentityItem newECIDItem = new IdentityItem(newEcid.toString(), AuthenticationState.AMBIGUOUS, false);
+            final IdentityItem newECIDItem = new IdentityItem(newEcid.toString(), AuthenticatedState.AMBIGUOUS, false);
             identityMap.addItem(newECIDItem, IdentityEdgeConstants.Namespaces.ECID, true);
         }
 
@@ -120,7 +120,7 @@ class IdentityEdgeProperties {
 
         // add the new secondary ECID to Identity map
         if (newSecondaryEcid != null) {
-            final IdentityItem newSecondaryECIDItem = new IdentityItem(newSecondaryEcid.toString(), AuthenticationState.AMBIGUOUS, false);
+            final IdentityItem newSecondaryECIDItem = new IdentityItem(newSecondaryEcid.toString(), AuthenticatedState.AMBIGUOUS, false);
             identityMap.addItem(newSecondaryECIDItem, IdentityEdgeConstants.Namespaces.ECID);
         }
 

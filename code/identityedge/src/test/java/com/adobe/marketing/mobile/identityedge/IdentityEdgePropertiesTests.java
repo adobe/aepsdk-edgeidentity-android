@@ -51,12 +51,12 @@ public class IdentityEdgePropertiesTests {
 
         // verify primary ECID
         assertEquals(props.getECID().toString(), flatMap.get("identityMap.ECID[0].id"));
-        assertEquals("AMBIGUOUS", flatMap.get("identityMap.ECID[0].authenticatedState"));
+        assertEquals("ambiguous", flatMap.get("identityMap.ECID[0].authenticatedState"));
         assertEquals("false", flatMap.get("identityMap.ECID[0].primary"));
 
         // verify secondary ECID
         assertEquals(props.getECIDSecondary().toString(), flatMap.get("identityMap.ECID[1].id"));
-        assertEquals("AMBIGUOUS", flatMap.get("identityMap.ECID[1].authenticatedState"));
+        assertEquals("ambiguous", flatMap.get("identityMap.ECID[1].authenticatedState"));
         assertEquals("false", flatMap.get("identityMap.ECID[1].primary"));
     }
 

@@ -23,7 +23,7 @@ import java.util.Objects;
  */
 public final class IdentityItem {
     private final String id;
-    private final AuthenticationState authenticationState;
+    private final AuthenticatedState authenticatedState;
     private final boolean primary;
 
     private static final String LOG_TAG = "IdentityItem";
@@ -31,27 +31,27 @@ public final class IdentityItem {
     /**
      * Creates a new {@link IdentityItem}
      * @param id id for the item
-     * @param authenticationState {@link AuthenticationState} for the item
+     * @param authenticatedState {@link AuthenticatedState} for the item
      * @param primary primary flag for the item
      * @throws IllegalArgumentException if id is null
      */
-    public IdentityItem(final String id, final AuthenticationState authenticationState, final boolean primary) {
+    public IdentityItem(final String id, final AuthenticatedState authenticatedState, final boolean primary) {
         if (id == null) {
             throw new IllegalArgumentException("id must be non-null");
         }
         this.id = id;
-        this.authenticationState = authenticationState != null ? authenticationState : AuthenticationState.AMBIGUOUS;
+        this.authenticatedState = authenticatedState != null ? authenticatedState : AuthenticatedState.AMBIGUOUS;
         this.primary = primary;
     }
 
     /**
      * Creates a new {@link IdentityItem} with default values
-     * authenticationState is set to AMBIGUOUS
+     * authenticatedState is set to AMBIGUOUS
      * primary is set to false
      * @param id the id for this {@link IdentityItem}
      */
     public IdentityItem(final String id) {
-        this(id, AuthenticationState.AMBIGUOUS, false);
+        this(id, AuthenticatedState.AMBIGUOUS, false);
     }
 
     /**
@@ -59,7 +59,7 @@ public final class IdentityItem {
      * @param item A {@link IdentityItem} to be copied
      */
     public IdentityItem(final IdentityItem item) {
-        this(item.id, item.authenticationState, item.primary);
+        this(item.id, item.authenticatedState, item.primary);
     }
 
     /**
@@ -72,10 +72,10 @@ public final class IdentityItem {
             map.put(IdentityEdgeConstants.XDMKeys.ID, id);
         }
 
-        if (authenticationState != null) {
-            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, authenticationState.toString());
+        if (authenticatedState != null) {
+            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, authenticatedState.getName());
         } else {
-            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, AuthenticationState.AMBIGUOUS.toString());
+            map.put(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE, AuthenticatedState.AMBIGUOUS.getName());
         }
 
         map.put(IdentityEdgeConstants.XDMKeys.PRIMARY, primary);
@@ -90,10 +90,10 @@ public final class IdentityItem {
     }
 
     /**
-     * @return Current {@link AuthenticationState} for this item
+     * @return Current {@link AuthenticatedState} for this item
      */
-    public AuthenticationState getAuthenticationState() {
-        return authenticationState;
+    public AuthenticatedState getAuthenticatedState() {
+        return authenticatedState;
     }
 
     /**
@@ -113,9 +113,9 @@ public final class IdentityItem {
 
         try {
             final String id = (String) data.get(IdentityEdgeConstants.XDMKeys.ID);
-            AuthenticationState authenticationState = AuthenticationState.fromString((String) data.get(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE));
-            if (authenticationState == null) {
-                authenticationState = AuthenticationState.AMBIGUOUS;
+            AuthenticatedState authenticatedState = AuthenticatedState.fromString((String) data.get(IdentityEdgeConstants.XDMKeys.AUTHENTICATED_STATE));
+            if (authenticatedState == null) {
+                authenticatedState = AuthenticatedState.AMBIGUOUS;
             }
 
             boolean primary = false;
@@ -123,7 +123,7 @@ public final class IdentityItem {
                 primary = (boolean) data.get(IdentityEdgeConstants.XDMKeys.PRIMARY);
             }
 
-            return new IdentityItem(id, authenticationState, primary);
+            return new IdentityItem(id, authenticatedState, primary);
         } catch (ClassCastException e) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityItem from data.");
             return null;

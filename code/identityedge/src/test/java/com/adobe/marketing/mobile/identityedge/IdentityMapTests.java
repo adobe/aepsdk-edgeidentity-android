@@ -280,10 +280,10 @@ public class IdentityMapTests {
         // verify
         Map<String, String> flattenedMap = IdentityEdgeTestUtil.flattenMap(map.asEventData());
         assertEquals("randomECID", flattenedMap.get("ECID[0].id"));
-        assertEquals("AMBIGUOUS", flattenedMap.get("ECID[0].authenticationState"));
+        assertEquals("AMBIGUOUS", flattenedMap.get("ECID[0].authenticatedState"));
         assertEquals("true", flattenedMap.get("ECID[0].primary"));
         assertEquals("someUserID", flattenedMap.get("USERID[0].id"));
-        assertEquals("AUTHENTICATED", flattenedMap.get("USERID[0].authenticationState"));
+        assertEquals("AUTHENTICATED", flattenedMap.get("USERID[0].authenticatedState"));
         assertEquals("false", flattenedMap.get("USERID[0].primary"));
     }
 
@@ -322,13 +322,13 @@ public class IdentityMapTests {
 
     private IdentityMap buildSampleIdentityMap() {
         // User Login Identity Items
-        IdentityItem email = new IdentityItem("john@doe", AuthenticationState.AUTHENTICATED, true);
-        IdentityItem userName = new IdentityItem("John Doe", AuthenticationState.AUTHENTICATED, false);
-        IdentityItem accountType = new IdentityItem("Student", AuthenticationState.AUTHENTICATED, false);
+        IdentityItem email = new IdentityItem("john@doe", AuthenticatedState.AUTHENTICATED, true);
+        IdentityItem userName = new IdentityItem("John Doe", AuthenticatedState.AUTHENTICATED, false);
+        IdentityItem accountType = new IdentityItem("Student", AuthenticatedState.AUTHENTICATED, false);
 
         // User Location Address Identity Items
-        IdentityItem street = new IdentityItem("280 Highway Lane", AuthenticationState.AMBIGUOUS, false);
-        IdentityItem state = new IdentityItem("California", AuthenticationState.AMBIGUOUS, false);
+        IdentityItem street = new IdentityItem("280 Highway Lane", AuthenticatedState.AMBIGUOUS, false);
+        IdentityItem state = new IdentityItem("California", AuthenticatedState.AMBIGUOUS, false);
 
         IdentityMap adobeIdentityMap = new IdentityMap();
         adobeIdentityMap.addItem(email,"login");

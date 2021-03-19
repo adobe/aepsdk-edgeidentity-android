@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.identityedge;
 
-import android.provider.ContactsContract;
-
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
@@ -260,8 +258,8 @@ public class IdentityEdgeTests {
 
         // test
         IdentityMap map = new IdentityMap();
-        map.addItem(new IdentityItem("id", AuthenticationState.AUTHENTICATED, true),"mainspace");
-        map.addItem(new IdentityItem("idtwo", AuthenticationState.LOGGED_OUT, false),"secondspace");
+        map.addItem(new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true),"mainspace");
+        map.addItem(new IdentityItem("idtwo", AuthenticatedState.LOGGED_OUT, false),"secondspace");
         IdentityEdge.updateIdentities(map);
 
         // verify
@@ -298,7 +296,7 @@ public class IdentityEdgeTests {
         // setup
         final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
-        IdentityItem sampleItem = new IdentityItem("sample", AuthenticationState.AMBIGUOUS, false);
+        IdentityItem sampleItem = new IdentityItem("sample", AuthenticatedState.AMBIGUOUS, false);
 
         // test
         IdentityEdge.removeIdentity(sampleItem, "namespace");
@@ -323,7 +321,7 @@ public class IdentityEdgeTests {
     @Test
     public void testRemoveIdentity_WithInvalidInputs() {
         // setup
-        IdentityItem sampleItem = new IdentityItem("sample", AuthenticationState.AMBIGUOUS, false);
+        IdentityItem sampleItem = new IdentityItem("sample", AuthenticatedState.AMBIGUOUS, false);
 
         // test
         IdentityEdge.removeIdentity(null, "namespace");
@@ -396,11 +394,11 @@ public class IdentityEdgeTests {
         IdentityItem coreItem = callbackReturnValues.get(0).getIdentityItemsForNamespace("CORE").get(0);
 
         assertEquals(ecid.toString(), ecidItem.getId());
-        assertEquals(AuthenticationState.AMBIGUOUS, ecidItem.getAuthenticationState());
+        assertEquals(AuthenticatedState.AMBIGUOUS, ecidItem.getAuthenticatedState());
         assertEquals(true, ecidItem.isPrimary());
 
         assertEquals(coreId, coreItem.getId());
-        assertEquals(AuthenticationState.AUTHENTICATED, coreItem.getAuthenticationState());
+        assertEquals(AuthenticatedState.AUTHENTICATED, coreItem.getAuthenticatedState());
         assertEquals(false, coreItem.isPrimary());
 
         // TODO - enable when ExtensionError creation is available

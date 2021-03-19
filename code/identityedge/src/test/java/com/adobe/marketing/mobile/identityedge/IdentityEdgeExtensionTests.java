@@ -384,14 +384,14 @@ public class IdentityEdgeExtensionTests {
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(updateIdentityEvent), any(ExtensionErrorCallback.class));
         Map<String, String> sharedState = flattenMap(sharedStateCaptor.getValue());
         assertEquals("secretID", sharedState.get("identityMap.UserId[0].id"));
-        assertEquals("AMBIGUOUS", sharedState.get("identityMap.UserId[0].authenticatedState"));
+        assertEquals("ambiguous", sharedState.get("identityMap.UserId[0].authenticatedState"));
         assertEquals("false", sharedState.get("identityMap.UserId[0].primary"));
 
         // verify persistence
         verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityEdgeConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
         Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
         assertEquals("secretID", persistedData.get("identityMap.UserId[0].id"));
-        assertEquals("AMBIGUOUS", persistedData.get("identityMap.UserId[0].authenticatedState"));
+        assertEquals("ambiguous", persistedData.get("identityMap.UserId[0].authenticatedState"));
         assertEquals("false", persistedData.get("identityMap.UserId[0].primary"));
     }
 

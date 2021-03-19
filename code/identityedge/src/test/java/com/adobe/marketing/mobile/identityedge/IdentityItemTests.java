@@ -26,21 +26,21 @@ public class IdentityItemTests {
     @Test
     public void testIdentityItem_toObjectMap_full() {
         // setup
-        IdentityItem item = new IdentityItem("id", AuthenticationState.AUTHENTICATED, true);
+        IdentityItem item = new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true);
 
         // test
         Map<String, Object> data = item.toObjectMap();
 
         // verify
         assertEquals("id", (String) data.get("id"));
-        assertEquals("AUTHENTICATED", (String) data.get("authenticatedState"));
+        assertEquals("authenticated", (String) data.get("authenticatedState"));
         assertEquals(true, (boolean) data.get("primary"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIdentityItem_toObjectMap_missingId() {
         // setup
-        IdentityItem item = new IdentityItem(null, AuthenticationState.AUTHENTICATED, true);
+        IdentityItem item = new IdentityItem(null, AuthenticatedState.AUTHENTICATED, true);
 
         // test
         Map<String, Object> data = item.toObjectMap();
@@ -56,7 +56,7 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("id", (String) data.get("id"));
-        assertEquals("AMBIGUOUS", (String) data.get("authenticatedState"));
+        assertEquals("ambiguous", (String) data.get("authenticatedState"));
         assertEquals(true, (boolean) data.get("primary"));
     }
 
@@ -73,7 +73,7 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("test-id", item.getId());
-        assertEquals("LOGGED_OUT", item.getAuthenticationState().toString());
+        assertEquals("loggedOut", item.getAuthenticatedState().getName());
         assertEquals(true, item.isPrimary());
     }
 
@@ -89,7 +89,7 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("test-id", item.getId());
-        assertEquals("AMBIGUOUS", item.getAuthenticationState().toString());
+        assertEquals("ambiguous", item.getAuthenticatedState().getName());
         assertEquals(true, item.isPrimary());
     }
 
@@ -105,22 +105,22 @@ public class IdentityItemTests {
 
         // verify
         assertEquals("test-id", item.getId());
-        assertEquals("LOGGED_OUT", item.getAuthenticationState().toString());
+        assertEquals("loggedOut", item.getAuthenticatedState().getName());
         assertEquals(false, item.isPrimary());
     }
 
     @Test
     public void testIdentityItem_isEqualShouldReturnTrue() {
-        IdentityItem item1 = new IdentityItem("id", AuthenticationState.AMBIGUOUS , false);
-        IdentityItem item2 = new IdentityItem("id", AuthenticationState.AUTHENTICATED , true);
+        IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS , false);
+        IdentityItem item2 = new IdentityItem("id", AuthenticatedState.AUTHENTICATED , true);
 
         assertTrue(item1.equals(item2));
     }
 
     @Test
     public void testIdentityItem_isEqualShouldReturnFalse() {
-        IdentityItem item1 = new IdentityItem("id", AuthenticationState.AMBIGUOUS , false);
-        IdentityItem item2 = new IdentityItem("id2", AuthenticationState.AUTHENTICATED , true);
+        IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS , false);
+        IdentityItem item2 = new IdentityItem("id2", AuthenticatedState.AUTHENTICATED , true);
 
         assertFalse(item1.equals(item2));
     }
