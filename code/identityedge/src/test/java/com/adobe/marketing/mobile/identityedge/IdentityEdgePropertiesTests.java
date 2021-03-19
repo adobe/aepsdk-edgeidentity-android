@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -51,9 +52,14 @@ public class IdentityEdgePropertiesTests {
         Map<String, Object> ecidSecondaryItem = getItemFromIdentityMap(xdmData, "ECID", 1);
 
         assertNotNull(ecidItem);
-        assertNotNull(ecidSecondaryItem);
         assertEquals(props.getECID().toString(), (String)ecidItem.get("id"));
+        assertFalse((boolean)ecidItem.get("primary"));
+        assertEquals(AuthenticationState.AMBIGUOUS.name(), (String)ecidItem.get("authenticatedState"));
+
+        assertNotNull(ecidSecondaryItem);
         assertEquals(props.getECIDSecondary().toString(), (String)ecidSecondaryItem.get("id"));
+        assertFalse((boolean)ecidSecondaryItem.get("primary"));
+        assertEquals(AuthenticationState.AMBIGUOUS.name(), (String)ecidSecondaryItem.get("authenticatedState"));
     }
 
     @Test
@@ -67,6 +73,19 @@ public class IdentityEdgePropertiesTests {
 
         // verify
         assertEquals(props.getECID().toString(), ecidFromIdentityMap(xdmMap));
+    }
+
+    @Test
+    public void testIdentityEdgeProperties_toXDMDataOnlySecondaryECID() {
+        // setup
+        IdentityEdgeProperties props = new IdentityEdgeProperties();
+        props.setECIDSecondary(new ECID());
+
+        // test
+        Map<String, Object> xdmMap = props.toXDMData(false);
+
+        // verify, can't have secondary ECID without primary ECID
+        assertNull(ecidFromIdentityMap(xdmMap));
     }
 
     @Test
