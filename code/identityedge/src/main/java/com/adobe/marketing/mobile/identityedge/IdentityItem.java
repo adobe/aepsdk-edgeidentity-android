@@ -22,9 +22,9 @@ import java.util.Objects;
  * Represents an identity item
  */
 public final class IdentityItem {
-    private String id;
-    private AuthenticationState authenticationState;
-    private boolean primary;
+    private final String id;
+    private final AuthenticationState authenticationState;
+    private final boolean primary;
 
     private static final String LOG_TAG = "IdentityItem";
     private static final String JSON_KEY_ID = "id";
@@ -43,10 +43,7 @@ public final class IdentityItem {
             throw new IllegalArgumentException("id must be non-null");
         }
         this.id = id;
-        this.authenticationState = authenticationState;
-        if (authenticationState == null) {
-            this.authenticationState = AuthenticationState.AMBIGUOUS;
-        }
+        this.authenticationState = authenticationState != null ? authenticationState : AuthenticationState.AMBIGUOUS;
         this.primary = primary;
     }
 
