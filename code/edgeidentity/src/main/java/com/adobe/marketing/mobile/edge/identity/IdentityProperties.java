@@ -116,7 +116,7 @@ class IdentityProperties {
      * @return secondary {@code ECID}
      */
     ECID getECIDSecondary() {
-        final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(EdgeConstants.Namespaces.ECID);
+        final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityConstants.Namespaces.ECID);
         if (ecidItems != null && ecidItems.size() > 1 && ecidItems.get(1) != null && !Utils.isNullOrEmpty(ecidItems.get(1).getId())) {
             return new ECID(ecidItems.get(1).getId());
         }

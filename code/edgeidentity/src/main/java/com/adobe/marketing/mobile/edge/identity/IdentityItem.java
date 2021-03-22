@@ -112,7 +112,7 @@ public final class IdentityItem {
         if (data == null) { return null; }
 
         try {
-            final String id = (String) data.get(IdentityEdgeConstants.XDMKeys.ID);
+            final String id = (String) data.get(IdentityConstants.XDMKeys.ID);
             AuthenticatedState authenticatedState = AuthenticatedState.fromString((String) data.get(IdentityConstants.XDMKeys.AUTHENTICATED_STATE));
             if (authenticatedState == null) {
                 authenticatedState = AuthenticatedState.AMBIGUOUS;

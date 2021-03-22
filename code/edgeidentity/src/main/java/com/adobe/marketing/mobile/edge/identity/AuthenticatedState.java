@@ -30,9 +30,9 @@ public enum AuthenticatedState {
     }
 
     public static AuthenticatedState fromString(final String state) {
-        if ("authenticated".equalsIgnoreCase(state)) {
+        if (AUTHENTICATED.getName().equalsIgnoreCase(state)) {
             return AUTHENTICATED;
-        } else if ("loggedOut".equalsIgnoreCase(state)) {
+        } else if (LOGGED_OUT.getName().equalsIgnoreCase(state)) {
             return LOGGED_OUT;
         } else {
             return AMBIGUOUS;
