@@ -81,5 +81,5 @@ jobs:
       - checkout
       - run:
           name: Bintray Upload
-          command: code/gradlew -p code/identityedge bintrayUpload -PapiKey=$bintrayAPIKey -PgpgPassphrase=$gpgPassphrase            
+          command: code/gradlew -p code/edgeidentity bintrayUpload -PapiKey=$bintrayAPIKey -PgpgPassphrase=$gpgPassphrase            
     
