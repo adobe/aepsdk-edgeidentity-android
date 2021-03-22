@@ -123,12 +123,15 @@ class IdentityEdgeState {
      * @return true if the legacy ECID was updated in {@code IdentityEdgeProperties}
      */
     boolean updateLegacyExperienceCloudId(final ECID legacyEcid) {
-        if ((legacyEcid != null) && (legacyEcid.equals(identityProperties.getECID()) || legacyEcid.equals(identityProperties.getECIDSecondary()))) {
+        final ECID ecid = identityProperties.getECID();
+        final ECID ecidSecondary = identityProperties.getECIDSecondary();
+
+        if ((legacyEcid != null) && (legacyEcid.equals(ecid) || legacyEcid.equals(ecidSecondary))) {
             return false;
         }
 
         // no need to clear secondaryECID if its already null
-        if (legacyEcid == null && identityProperties.getECIDSecondary() == null){
+         if (legacyEcid == null && ecidSecondary == null){
             return false;
         }
 

@@ -31,9 +31,11 @@ class IdentityEdgeProperties {
         add(IdentityEdgeConstants.Namespaces.IDFA);
     }};
 
-    private IdentityMap identityMap = new IdentityMap();
+    private final IdentityMap identityMap;
 
-    IdentityEdgeProperties() {}
+    IdentityEdgeProperties() {
+        this.identityMap = new IdentityMap();
+    }
 
     /**
      * Creates a identity edge properties instance based on the map
@@ -41,14 +43,8 @@ class IdentityEdgeProperties {
      * @param xdmData a map representing an identity edge properties instance
      */
     IdentityEdgeProperties(final Map<String, Object> xdmData) {
-        if (Utils.isNullOrEmpty(xdmData)) {
-            return;
-        }
-
-        identityMap = IdentityMap.fromData(xdmData);
-        if (identityMap == null) {
-            identityMap = new IdentityMap(); // always keep an empty identity map so there is no need for null check
-        }
+        IdentityMap map = IdentityMap.fromData(xdmData);
+        this.identityMap = map == null ? new IdentityMap() : map; // always keep an empty identity map so there is no need for null check
     }
 
     /**
@@ -82,10 +78,8 @@ class IdentityEdgeProperties {
      */
     ECID getECID() {
         final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-        if (ecidItems != null) {
-            if (ecidItems.size() > 0 && ecidItems.get(0) != null && ecidItems.get(0).getId() != null) {
-                return new ECID(ecidItems.get(0).getId());
-            }
+        if (ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0) != null && !Utils.isNullOrEmpty(ecidItems.get(0).getId())) {
+            return new ECID(ecidItems.get(0).getId());
         }
         return null;
     }
@@ -123,11 +117,8 @@ class IdentityEdgeProperties {
      */
     ECID getECIDSecondary() {
         final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityEdgeConstants.Namespaces.ECID);
-        if (ecidItems != null) {
-            if (ecidItems.size() > 1 && ecidItems.get(1) != null && ecidItems.get(1).getId() != null) {
-                return new ECID(ecidItems.get(1).getId());
-
-            }
+        if (ecidItems != null && ecidItems.size() > 1 && ecidItems.get(1) != null && !Utils.isNullOrEmpty(ecidItems.get(1).getId())) {
+            return new ECID(ecidItems.get(1).getId());
         }
         return null;
     }
