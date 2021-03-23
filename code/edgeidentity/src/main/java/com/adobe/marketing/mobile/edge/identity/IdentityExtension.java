@@ -191,7 +191,7 @@ class IdentityExtension extends Extension {
      */
     void handleIdentityRequest(final Event event) {
         if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request identities event. canProcessEvents returned false.");
             return;
         }
 
@@ -225,6 +225,21 @@ class IdentityExtension extends Extension {
         }
         state.resetIdentifiers();
         shareIdentityXDMSharedState(event);
+
+        // dispatch reset complete event
+        final Event responseEvent = new Event.Builder(IdentityConstants.EventNames.RESET_IDENTITIES_COMPLETE,
+                IdentityConstants.EventType.EDGE_IDENTITY,
+                IdentityConstants.EventSource.RESET_COMPLETE).build();
+
+        MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(ExtensionError extensionError) {
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Edge Identity reset response event for event " +
+                        event.getUniqueIdentifier() +
+                        " with error " +
+                        extensionError.getErrorName());
+            }
+        });
     }
 
     /**
@@ -269,21 +284,6 @@ class IdentityExtension extends Extension {
         };
 
         extensionApi.setXDMSharedEventState(state.getIdentityProperties().toXDMData(false), event, errorCallback);
-
-        // dispatch response event
-        final Event responseEvent = new Event.Builder(IdentityConstants.EventNames.RESET_IDENTITIES_COMPLETE,
-                IdentityConstants.EventType.EDGE_IDENTITY,
-                IdentityConstants.EventSource.RESET_COMPLETE).build();
-
-        MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
-            @Override
-            public void error(ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Edge Identity reset response event for event " +
-                        event.getUniqueIdentifier() +
-                        " with error " +
-                        extensionError.getErrorName());
-            }
-        });
     }
 
     /**

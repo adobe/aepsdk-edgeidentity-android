@@ -263,6 +263,12 @@ public class IdentityExtensionTests {
         verify(mockExtensionApi, times(1)).setXDMSharedEventState(sharedStateCaptor.capture(), eq(event), any(ExtensionErrorCallback.class));
         Map<String, Object> sharedState = sharedStateCaptor.getValue();
         assertEquals("1234", flattenMap(sharedState).get("identityMap.ECID[1].id")); // Legacy ECID is set as a secondary ECID
+
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        // verify no event dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+        MobileCore.dispatchEvent(eventCaptor.capture(), any(ExtensionErrorCallback.class));
+        assertTrue(eventCaptor.getAllValues().isEmpty());
     }
 
     @Test
@@ -374,7 +380,7 @@ public class IdentityExtensionTests {
         );
         final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
         final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
-
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         // test
         Event updateIdentityEvent = buildUpdateIdentityRequest(identityXDM);
@@ -386,6 +392,11 @@ public class IdentityExtensionTests {
         assertEquals("secretID", sharedState.get("identityMap.UserId[0].id"));
         assertEquals("ambiguous", sharedState.get("identityMap.UserId[0].authenticatedState"));
         assertEquals("false", sharedState.get("identityMap.UserId[0].primary"));
+
+        // verify no event dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+        MobileCore.dispatchEvent(eventCaptor.capture(), any(ExtensionErrorCallback.class));
+        assertTrue(eventCaptor.getAllValues().isEmpty());
 
         // verify persistence
         verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
@@ -479,6 +490,8 @@ public class IdentityExtensionTests {
 
         final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
         final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
         extension = new IdentityExtension(mockExtensionApi);
 
         // test
@@ -494,6 +507,10 @@ public class IdentityExtensionTests {
         assertNull(sharedState.get("identityMap.UserId[0].id"));
         assertEquals("token", sharedState.get("identityMap.PushId[0].id"));
 
+        // verify no event dispatched
+        PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+        MobileCore.dispatchEvent(eventCaptor.capture(), any(ExtensionErrorCallback.class));
+        assertTrue(eventCaptor.getAllValues().isEmpty());
 
         // verify persistence
         verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
