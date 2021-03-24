@@ -40,4 +40,7 @@
     <string name="btn_privacy_optin">Privacy OptIn</string>
     <string name="btn_privacy_optout">Privacy OptOut</string>
     <string name="get_identities_view">Get Identities</string>
+    <string name="label_session_url">Copy Assurance Session URL to here</string>
+    <string name="btn_connect">Connect</string>
+    <string name="menu_assurance">Assurance</string>
 </resources>
