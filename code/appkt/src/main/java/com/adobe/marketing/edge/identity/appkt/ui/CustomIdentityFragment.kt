@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt.ui.gallery
+package com.adobe.marketing.edge.identity.appkt.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -35,7 +35,7 @@ class CustomIdentityFragment : Fragment() {
     ): View? {
         val sharedViewModel by activityViewModels<SharedViewModel>()
 
-        val root = inflater.inflate(R.layout.fragment_gallery, container, false)
+        val root = inflater.inflate(R.layout.fragment_custom_identity, container, false)
 
         val identifierEditText = root.findViewById<EditText>(R.id.text_identifier)
         identifierEditText.doAfterTextChanged {

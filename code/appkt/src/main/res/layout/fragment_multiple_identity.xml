@@ -17,21 +17,6 @@
     android:layout_height="match_parent"
     tools:context=".ui.MultipleIdentityFragment">
 
-    <TextView
-        android:id="@+id/text_slideshow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        android:text="@string/test_multiple_identities"
-        app:layout_constraintBottom_toBottomOf="@id/layout_edge_identity"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <LinearLayout
         android:id="@+id/layout_edge_identity"
         android:layout_width="match_parent"
@@ -39,8 +24,9 @@
         android:orientation="vertical"
         android:layout_margin="8dp"
         android:background="@drawable/border"
-        app:layout_constraintTop_toBottomOf="@id/text_slideshow"
-        app:layout_constraintHorizontal_bias="0.52"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         >
 
         <RadioButton

@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt.ui.slideshow
+package com.adobe.marketing.edge.identity.appkt.ui
 
 import android.content.Context
 import android.os.Bundle
@@ -28,7 +28,7 @@ import com.adobe.marketing.mobile.MobilePrivacyStatus
 import com.adobe.marketing.mobile.VisitorID
 import kotlin.random.Random
 
-class SlideshowFragment : Fragment() {
+class MultipleIdentityFragment : Fragment() {
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -37,7 +37,7 @@ class SlideshowFragment : Fragment() {
     ): View? {
         val sharedViewModel by activityViewModels<SharedViewModel>()
 
-        val root = inflater.inflate(R.layout.fragment_slideshow, container, false)
+        val root = inflater.inflate(R.layout.fragment_multiple_identity, container, false)
 
         // Setup radio button for Edge Identity which attaches observes to change click and text label
         val edgeRegisteredRadioButton = root.findViewById<RadioButton>(R.id.radio_edge_identity_registered)

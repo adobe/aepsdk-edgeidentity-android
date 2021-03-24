@@ -1,25 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2021 Adobe. All rights reserved.
+  This file is licensed to you under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may obtain a copy
+  of the License at http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software distributed under
+  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+  OF ANY KIND, either express or implied. See the License for the specific language
+  governing permissions and limitations under the License.
+  -->
+
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_get_identity">
 
     <fragment
-        android:id="@+id/nav_home"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/nav_get_identity"
+        android:name="com.adobe.marketing.edge.identity.appkt.ui.GetIdentityFragment"
+        android:label="@string/menu_get_identity"
+        tools:layout="@layout/fragment_get_identity" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_custom_identity"
+        android:name="com.adobe.marketing.edge.identity.appkt.ui.CustomIdentityFragment"
+        android:label="@string/menu_custom_identity"
+        tools:layout="@layout/fragment_custom_identity" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_multiple_identity"
+        android:name="com.adobe.marketing.edge.identity.appkt.ui.MultipleIdentityFragment"
+        android:label="@string/menu_multiple_identity"
+        tools:layout="@layout/fragment_multiple_identity" />
 </navigation>

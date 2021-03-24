@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt.ui.home
+package com.adobe.marketing.edge.identity.appkt.ui
 
 import android.os.Bundle
 import android.util.Log
@@ -35,7 +35,7 @@ class GetIdentityFragment : Fragment() {
             savedInstanceState: Bundle?
     ): View? {
         val sharedViewModel by activityViewModels<SharedViewModel>()
-        val root = inflater.inflate(R.layout.fragment_home, container, false)
+        val root = inflater.inflate(R.layout.fragment_get_identity, container, false)
 
         val ecidTextView = root.findViewById<TextView>(R.id.text_ecid)
         sharedViewModel.ecidText.observe(viewLifecycleOwner, Observer {

@@ -1,3 +1,4 @@
+include ':appkt'
 include ':edgeidentity'
 include ':app'
 rootProject.name = "edgeidentity-sdk"
