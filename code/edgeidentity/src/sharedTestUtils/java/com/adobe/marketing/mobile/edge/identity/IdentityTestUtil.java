@@ -11,6 +11,8 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import com.adobe.marketing.mobile.AdobeCallbackWithError;
+import com.adobe.marketing.mobile.AdobeError;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
@@ -20,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,12 +33,106 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 
 /**
  * Util class used by both Functional and Unit tests
  */
 class IdentityTestUtil {
+
+    /**
+     * Method to serialize jsonObject to Map.
+     *
+     * @param jsonObject the {@link JSONObject} to be serialized
+     * @return a {@link Map} representing the serialized JSONObject
+     */
+
+    static Map<String, Object> toMap(final JSONObject jsonObject) {
+        if (jsonObject == null) {
+            return null;
+        }
+
+        Map<String, Object> jsonAsMap = new HashMap<String, Object>();
+        Iterator<String> keysIterator = jsonObject.keys();
+
+        while (keysIterator.hasNext()) {
+            String nextKey  = keysIterator.next();
+            Object value = null;
+            Object returnValue;
+
+            try {
+                value = jsonObject.get(nextKey);
+            } catch (JSONException e) {
+                MobileCore.log(LoggingMode.DEBUG, "Functional Test",
+                        "toMap - Unable to convert jsonObject to Map for key " + nextKey + ", skipping.");
+            }
+
+            if (value == null) {
+                continue;
+            }
+
+            if (value instanceof JSONObject) {
+                returnValue = toMap((JSONObject)value);
+            } else if (value instanceof JSONArray) {
+                returnValue = toList((JSONArray) value);
+            } else {
+                returnValue = value;
+            }
+
+            jsonAsMap.put(nextKey, returnValue);
+        }
+
+        return jsonAsMap;
+    }
+
+    /**
+     * Converts provided {@link JSONArray} into {@link List} for any number of levels which can be used as event data
+     * This method is recursive.
+     * The elements for which the conversion fails will be skipped.
+     *
+     * @param jsonArray to be converted
+     * @return {@link List} containing the elements from the provided json, null if {@code jsonArray} is null
+     */
+    static List<Object> toList(final JSONArray jsonArray) {
+        if (jsonArray == null) {
+            return null;
+        }
+
+        List<Object> jsonArrayAsList = new ArrayList<Object>();
+        int size = jsonArray.length();
+
+        for (int i = 0; i < size; i++) {
+            Object value = null;
+            Object returnValue = null;
+
+            try {
+                value = jsonArray.get(i);
+            } catch (JSONException e) {
+                MobileCore.log(LoggingMode.DEBUG, "Functional Test",
+                        "toList - Unable to convert jsonObject to List for index " + i + ", skipping.");
+            }
+
+            if (value == null) {
+                continue;
+            }
+
+            if (value instanceof JSONObject) {
+                returnValue = toMap((JSONObject)value);
+            } else if (value instanceof JSONArray) {
+                returnValue = toList((JSONArray) value);
+            } else {
+                returnValue = value;
+            }
+
+            jsonArrayAsList.add(returnValue);
+        }
+
+        return jsonArrayAsList;
+    }
 
     /**
      * Helper method to create IdentityXDM Map using {@link TestItem}s
@@ -187,6 +284,69 @@ class IdentityTestUtil {
         public TestECIDItem(final String ecid) {
             super(IdentityConstants.Namespaces.ECID, ecid);
         }
+    }
+
+
+    static Map<String, Object> getIdentitiesSync() {
+        try {
+            final HashMap<String,Object> getIdentityResponse = new HashMap<>();
+            final CountDownLatch latch = new CountDownLatch(1);
+            Identity.getIdentities(new AdobeCallbackWithError<IdentityMap>() {
+                @Override
+                public void call(final IdentityMap identities) {
+                    getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, identities);
+                    latch.countDown();
+                }
+
+                @Override
+                public void fail(final AdobeError adobeError) {
+                    getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.ERROR, adobeError);
+                    latch.countDown();
+                }
+            });
+            latch.await();
+
+            return  getIdentityResponse;
+        } catch (Exception exp) {
+            return null;
+        }
+    }
+
+
+    static Map<String, Object> getExperienceCloudIdSync() {
+        try {
+            final HashMap<String,Object> getExperienceCloudIdResponse = new HashMap<>();
+            final CountDownLatch latch = new CountDownLatch(1);
+            Identity.getExperienceCloudId(new AdobeCallbackWithError<String>() {
+                @Override
+                public void call(final String ecid) {
+                    getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
+                    latch.countDown();
+                }
+
+                @Override
+                public void fail(final AdobeError adobeError) {
+                    getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.ERROR, adobeError);
+                    latch.countDown();
+                }
+            });
+            latch.await();
+
+            return  getExperienceCloudIdResponse;
+        } catch (Exception exp) {
+            return null;
+        }
+    }
+
+    static IdentityMap CreateIdentityMap (final String namespace, final String id) {
+        return CreateIdentityMap(namespace, id, AuthenticatedState.AMBIGUOUS, false);
+    }
+
+    static IdentityMap CreateIdentityMap (final String namespace, final String id , final AuthenticatedState state, final boolean isPrimary) {
+        IdentityMap map = new IdentityMap();
+        IdentityItem item = new IdentityItem(id, state, isPrimary);
+        map.addItem(item, namespace);
+        return map;
     }
 
 

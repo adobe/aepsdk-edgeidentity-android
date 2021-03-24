@@ -25,10 +25,10 @@ public class IdentityTestConstants {
         private SharedStateName() { }
     }
 
-    public final class GetConsentHelper {
+    public final class GetIdentitiesHelper {
         public static final String VALUE = "getConsentValue";
         public static final String ERROR = "getConsentError";
-        private GetConsentHelper() { }
+        private GetIdentitiesHelper() { }
     }
 
 

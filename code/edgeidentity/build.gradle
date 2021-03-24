@@ -261,7 +261,7 @@ dependencies {
     // where Objenesis 2 requires minimum Android API 26
     androidTestImplementation 'org.powermock:powermock-module-junit4:1+'
     androidTestImplementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
-
+    androidTestImplementation "com.adobe.marketing.mobile:identity:1.+"
 }
 
 tasks.withType(Test) {

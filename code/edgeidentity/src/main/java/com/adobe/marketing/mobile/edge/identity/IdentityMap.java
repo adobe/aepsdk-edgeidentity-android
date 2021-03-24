@@ -57,6 +57,9 @@ public class IdentityMap {
         return copyItems;
     }
 
+    public List<String> getNamespaces() {
+        return new ArrayList<>(identityItems.keySet());
+    }
 
     /**
      * Add an identity item which is used to clearly distinguish entities that are interacting
