@@ -110,10 +110,14 @@ public class IdentityMap {
             for (IdentityItem item : me.getValue()) {
                 b.append(item).append(",");
             }
-            b.deleteCharAt(b.length()-1);
+            if (!me.getValue().isEmpty()) {
+                b.deleteCharAt(b.length() - 1);
+            }
             b.append("],");
         }
-        b.deleteCharAt(b.length()-1);
+        if (!identityItems.isEmpty()) {
+            b.deleteCharAt(b.length() - 1);
+        }
 
         b.append("}}");
 
