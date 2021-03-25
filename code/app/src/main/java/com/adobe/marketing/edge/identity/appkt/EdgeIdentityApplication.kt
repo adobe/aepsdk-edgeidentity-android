@@ -19,7 +19,8 @@ import com.adobe.marketing.mobile.MobileCore
 import com.adobe.marketing.mobile.edge.identity.Identity
 
 class EdgeIdentityApplication : Application() {
-    private var LAUNCH_ENVIRONMENT_ID: String = "3805cb8645dd/5036e8617f7b/launch-98923b00a584-development"
+    // Add your Launch Environment ID to configure the SDK from your Launch property
+    private var LAUNCH_ENVIRONMENT_ID: String = ""
 
     override fun onCreate() {
         super.onCreate()
