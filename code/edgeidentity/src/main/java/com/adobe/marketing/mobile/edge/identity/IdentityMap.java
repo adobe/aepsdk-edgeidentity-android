@@ -102,7 +102,7 @@ public class IdentityMap {
 
     @Override
     public String toString() {
-        StringBuilder b = new StringBuilder();
+        final StringBuilder b = new StringBuilder();
         b.append("{\"").append(IdentityConstants.XDMKeys.IDENTITY_MAP).append("\": {");
 
         for (Map.Entry<String, List<IdentityItem>> me : identityItems.entrySet()) {
