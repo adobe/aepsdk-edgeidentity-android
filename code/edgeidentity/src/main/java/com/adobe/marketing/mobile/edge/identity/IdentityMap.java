@@ -103,6 +103,30 @@ public class IdentityMap {
         return identityItems.isEmpty();
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder b = new StringBuilder();
+        b.append("{\"").append(IdentityConstants.XDMKeys.IDENTITY_MAP).append("\": {");
+
+        for (Map.Entry<String, List<IdentityItem>> me : identityItems.entrySet()) {
+            b.append("\"").append(me.getKey()).append("\": [");
+            for (IdentityItem item : me.getValue()) {
+                b.append(item).append(",");
+            }
+            if (!me.getValue().isEmpty()) {
+                b.deleteCharAt(b.length() - 1);
+            }
+            b.append("],");
+        }
+        if (!identityItems.isEmpty()) {
+            b.deleteCharAt(b.length() - 1);
+        }
+
+        b.append("}}");
+
+        return b.toString();
+    }
+
     // ========================================================================================
     // protected methods
     // ========================================================================================

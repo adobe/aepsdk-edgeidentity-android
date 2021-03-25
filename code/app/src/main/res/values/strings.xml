@@ -1,3 +1,36 @@
+
 <resources>
-    <string name="app_name">Edge Identity Test Application</string>
+    <string name="app_name">App</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Edge Identity Test App</string>
+    <string name="nav_header_subtitle">Adobe Experience Platform</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_get_identity">View Identities</string>
+    <string name="menu_custom_identity">Set Custom Identity</string>
+    <string name="menu_multiple_identity">Test Multiple Identities</string>
+    <string name="btn_get_ecid">Get ECID</string>
+    <string name="btn_get_identities">Get Identities</string>
+    <string name="btn_reset_identities">Reset Identities</string>
+    <string name="label_identifier">Identifier: </string>
+    <string name="label_namespace">"Namespace: "</string>
+    <string name="checkbox_is_primary">Is Primary</string>
+    <string name="authentication_ambiguous">ambiguous</string>
+    <string name="authentication_authenticated">authenticated</string>
+    <string name="authentication_logged_out">loggedOut</string>
+    <string name="btn_update_identities">Update Identity</string>
+    <string name="btn_remove_identities">Remove Identity</string>
+    <string name="title_update_custom_identifiers">Update Custom Identifiers</string>
+    <string name="test_multiple_identities">Test with Multiple Extensions</string>
+    <string name="btn_send_event">Send Event</string>
+    <string name="btn_clear_persistence">Clear Persistence</string>
+    <string name="btn_trigger_state_change">Trigger State Change</string>
+    <string name="btn_privacy_optin">Privacy OptIn</string>
+    <string name="btn_privacy_optout">Privacy OptOut</string>
+    <string name="get_identities_view">Get Identities</string>
+    <string name="label_session_url">Copy Assurance Session URL to here</string>
+    <string name="btn_connect">Connect</string>
+    <string name="menu_assurance">Assurance</string>
 </resources>

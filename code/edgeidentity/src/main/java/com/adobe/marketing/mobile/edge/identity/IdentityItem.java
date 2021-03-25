@@ -131,6 +131,15 @@ public final class IdentityItem {
     }
 
     @Override
+    public String toString() {
+        return "{"
+                + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
+                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + authenticatedState + "\", "
+                + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
+                + "}";
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

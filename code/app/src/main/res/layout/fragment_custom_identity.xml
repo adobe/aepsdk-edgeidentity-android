@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.CustomIdentityFragment">
+
+    <LinearLayout
+        android:id="@+id/layout_identifier"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+
+        <TextView
+            android:id="@+id/label_identifier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:textSize="18sp"
+            android:text="@string/label_identifier"
+            />
+        
+        <EditText
+            android:id="@+id/text_identifier"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="end|center_vertical"
+            android:singleLine="true"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_namespace"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layout_identifier"
+        app:layout_constraintHorizontal_bias="0.52"
+        >
+
+        <TextView
+            android:id="@+id/label_namespace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center_vertical"
+            android:textSize="18sp"
+            android:text="@string/label_namespace"
+            />
+
+        <EditText
+            android:id="@+id/text_namespace"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="end|center_vertical"
+            android:singleLine="true"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_primary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layout_namespace"
+        app:layout_constraintHorizontal_bias="0.52"
+        >
+
+        <CheckBox
+            android:id="@+id/checkbox_is_primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/checkbox_is_primary"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_authenticated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layout_primary"
+        app:layout_constraintHorizontal_bias="0.52"
+        >
+
+        <RadioGroup
+            android:id="@+id/radio_group_authenticated"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+            <RadioButton android:id="@+id/radio_ambiguous"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/authentication_ambiguous"
+                android:layout_weight="1"
+                android:checked="true"
+                />
+            <RadioButton android:id="@+id/radio_authenticated"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/authentication_authenticated"
+                android:layout_weight="1"
+                />
+            <RadioButton android:id="@+id/radio_logged_out"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/authentication_logged_out"
+                android:layout_weight="1"
+                />
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/layout_authenticated"
+        app:layout_constraintHorizontal_bias="0.52"
+        >
+
+        <Button
+            android:id="@+id/btn_update_identities"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_update_identities"
+            android:layout_weight="1"
+            />
+
+        <Button
+            android:id="@+id/btn_remove_identities"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_remove_identities"
+            android:layout_weight="1"
+            />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
