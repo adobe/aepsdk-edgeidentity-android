@@ -29,7 +29,7 @@
     <string name="checkbox_is_primary">Is Primary</string>
     <string name="authentication_ambiguous">ambiguous</string>
     <string name="authentication_authenticated">authenticated</string>
-    <string name="authentication_logged_out">logged out</string>
+    <string name="authentication_logged_out">loggedOut</string>
     <string name="btn_update_identities">Update Identity</string>
     <string name="btn_remove_identities">Remove Identity</string>
     <string name="title_update_custom_identifiers">Update Custom Identifiers</string>
