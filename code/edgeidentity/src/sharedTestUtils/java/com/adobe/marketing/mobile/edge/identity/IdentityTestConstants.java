@@ -16,6 +16,7 @@ public class IdentityTestConstants {
     public final class DataStoreKey {
         public static final String CONFIG_DATASTORE = "AdobeMobile_ConfigState";
         public static final String IDENTITY_DATASTORE = "com.adobe.edge.identity";
+        public static final String IDENTITY_DIRECT_DATASTORE = "visitorIDServiceDataStore";
         private DataStoreKey() { }
     }
 

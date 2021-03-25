@@ -11,6 +11,7 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
 import com.adobe.marketing.mobile.Event;
@@ -56,11 +57,11 @@ class IdentityTestUtil {
             return null;
         }
 
-        Map<String, Object> jsonAsMap = new HashMap<String, Object>();
+        Map<String, Object> jsonAsMap = new HashMap();
         Iterator<String> keysIterator = jsonObject.keys();
 
         while (keysIterator.hasNext()) {
-            String nextKey  = keysIterator.next();
+            String nextKey = keysIterator.next();
             Object value = null;
             Object returnValue;
 
@@ -76,7 +77,7 @@ class IdentityTestUtil {
             }
 
             if (value instanceof JSONObject) {
-                returnValue = toMap((JSONObject)value);
+                returnValue = toMap((JSONObject) value);
             } else if (value instanceof JSONArray) {
                 returnValue = toList((JSONArray) value);
             } else {
@@ -107,7 +108,7 @@ class IdentityTestUtil {
 
         for (int i = 0; i < size; i++) {
             Object value = null;
-            Object returnValue = null;
+            Object returnValue;
 
             try {
                 value = jsonArray.get(i);
@@ -121,7 +122,7 @@ class IdentityTestUtil {
             }
 
             if (value instanceof JSONObject) {
-                returnValue = toMap((JSONObject)value);
+                returnValue = toMap((JSONObject) value);
             } else if (value instanceof JSONArray) {
                 returnValue = toList((JSONArray) value);
             } else {
@@ -213,7 +214,7 @@ class IdentityTestUtil {
      */
     static Map<String, String> flattenMap(final Map<String, Object> map) {
         if (map == null || map.isEmpty()) {
-            return Collections.<String, String>emptyMap();
+            return Collections.emptyMap();
         }
 
         try {
@@ -225,7 +226,7 @@ class IdentityTestUtil {
             MobileCore.log(LoggingMode.ERROR, "FunctionalTestUtils", "Failed to parse JSON object to tree structure.");
         }
 
-        return Collections.<String, String>emptyMap();
+        return Collections.emptyMap();
     }
 
 
@@ -267,7 +268,7 @@ class IdentityTestUtil {
 
     /**
      * Class similar to {@link IdentityItem} for a specific namespace used for easier testing.
-     *  For simplicity this class does not involve authenticatedState and primary key
+     * For simplicity this class does not involve authenticatedState and primary key
      */
     public static class TestItem {
         private String namespace;
@@ -289,7 +290,7 @@ class IdentityTestUtil {
 
     static Map<String, Object> getIdentitiesSync() {
         try {
-            final HashMap<String,Object> getIdentityResponse = new HashMap<>();
+            final HashMap<String, Object> getIdentityResponse = new HashMap<>();
             final CountDownLatch latch = new CountDownLatch(1);
             Identity.getIdentities(new AdobeCallbackWithError<IdentityMap>() {
                 @Override
@@ -306,48 +307,44 @@ class IdentityTestUtil {
             });
             latch.await();
 
-            return  getIdentityResponse;
+            return getIdentityResponse;
         } catch (Exception exp) {
             return null;
         }
     }
 
-
-    static Map<String, Object> getExperienceCloudIdSync() {
+    static String getExperienceCloudIdSync() {
         try {
-            final HashMap<String,Object> getExperienceCloudIdResponse = new HashMap<>();
+            final HashMap<String, String> getExperienceCloudIdResponse = new HashMap<>();
             final CountDownLatch latch = new CountDownLatch(1);
-            Identity.getExperienceCloudId(new AdobeCallbackWithError<String>() {
+            Identity.getExperienceCloudId(new AdobeCallback<String>() {
                 @Override
                 public void call(final String ecid) {
                     getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
                     latch.countDown();
                 }
-
-                @Override
-                public void fail(final AdobeError adobeError) {
-                    getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.ERROR, adobeError);
-                    latch.countDown();
-                }
             });
             latch.await();
 
-            return  getExperienceCloudIdResponse;
+            return getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
         } catch (Exception exp) {
             return null;
         }
     }
 
-    static IdentityMap CreateIdentityMap (final String namespace, final String id) {
+    static IdentityMap CreateIdentityMap(final String namespace, final String id) {
         return CreateIdentityMap(namespace, id, AuthenticatedState.AMBIGUOUS, false);
     }
 
-    static IdentityMap CreateIdentityMap (final String namespace, final String id , final AuthenticatedState state, final boolean isPrimary) {
+    static IdentityMap CreateIdentityMap(final String namespace, final String id, final AuthenticatedState state, final boolean isPrimary) {
         IdentityMap map = new IdentityMap();
         IdentityItem item = new IdentityItem(id, state, isPrimary);
         map.addItem(item, namespace);
         return map;
     }
 
+    static void dispatchRequestResetEvent() {
+        MobileCore.dispatchEvent(new Event.Builder("Request Reset", IdentityConstants.EventType.GENERIC_IDENTITY, IdentityConstants.EventSource.REQUEST_RESET).build(), null);
+    }
 
 }

@@ -30,14 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import static com.adobe.marketing.mobile.TestHelper.getDispatchedEventsWith;
-import static com.adobe.marketing.mobile.TestHelper.getSharedStateFor;
-import static com.adobe.marketing.mobile.TestHelper.getXDMSharedStateFor;
-import static com.adobe.marketing.mobile.TestHelper.resetTestExpectations;
+import static com.adobe.marketing.mobile.TestHelper.*;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class IdentityPublicAPITest {
@@ -45,7 +40,6 @@ public class IdentityPublicAPITest {
     @Rule
     public RuleChain rule = RuleChain.outerRule(new TestHelper.SetupCoreRule())
             .around(new TestHelper.RegisterMonitorExtensionRule());
-
 
     // --------------------------------------------------------------------------------------------
     // Setup
@@ -71,6 +65,7 @@ public class IdentityPublicAPITest {
     // --------------------------------------------------------------------------------------------
     // Tests for GetExtensionVersion API
     // --------------------------------------------------------------------------------------------
+
     @Test
     public void testGetExtensionVersionAPI() {
         assertEquals(IdentityConstants.EXTENSION_VERSION, Identity.extensionVersion());
@@ -79,6 +74,7 @@ public class IdentityPublicAPITest {
     // --------------------------------------------------------------------------------------------
     // Tests for Register extension API
     // --------------------------------------------------------------------------------------------
+
     @Test
     public void testRegisterExtensionAPI() throws InterruptedException {
         // test
@@ -89,10 +85,10 @@ public class IdentityPublicAPITest {
         assertEquals(IdentityConstants.EXTENSION_VERSION, sharedStateMap.get("extensions.com.adobe.edge.identity.version"));
     }
 
-
     // --------------------------------------------------------------------------------------------
     // Tests for UpdateIdentities API
     // --------------------------------------------------------------------------------------------
+
     @Test
     public void testUpdateIdentitiesAPI() throws Exception {
         // test
@@ -115,7 +111,6 @@ public class IdentityPublicAPITest {
         assertEquals("ambiguous", persistedMap.get("identityMap.ECID[0].authenticatedState"));
     }
 
-
     @Test
     public void testUpdateAPI_nullData() throws Exception {
         // test
@@ -132,7 +127,6 @@ public class IdentityPublicAPITest {
         assertNotNull(xdmSharedState.get("identityMap.ECID[0].id"));
     }
 
-
     @Test
     public void testUpdateAPI_emptyData() throws Exception {
         // test
@@ -148,8 +142,6 @@ public class IdentityPublicAPITest {
         assertEquals(3, xdmSharedState.size());  // 3 for ECID still exists
         assertNotNull(xdmSharedState.get("identityMap.ECID[0].id"));
     }
-
-
 
     @Test
     public void testUpdateAPI_shouldReplaceExistingIdentities() throws Exception {
@@ -174,7 +166,6 @@ public class IdentityPublicAPITest {
         assertEquals("false", persistedMap.get("identityMap.Email[0].primary"));
         assertEquals("loggedOut", persistedMap.get("identityMap.Email[0].authenticatedState"));
     }
-
 
     @Test
     public void testUpdateAPI_withReservedNamespaces() throws Exception {
@@ -227,7 +218,6 @@ public class IdentityPublicAPITest {
         assertEquals("John Doe", persistedMap.get("identityMap.UserName[0].id"));
     }
 
-
     @Test
     public void testUpdateAPI_caseSensitiveNamespacesForCustomIdentifiers() throws Exception {
         // test
@@ -256,21 +246,23 @@ public class IdentityPublicAPITest {
     // --------------------------------------------------------------------------------------------
 
     @Test
-    public void testGetECID(){
+    public void testGetECID() {
         // test
-        Map<String, Object> getExperienceCloudIdResponse = getExperienceCloudIdSync();
+        String ecid = getExperienceCloudIdSync();
 
         // returns an ecid string
-        String ecid = (String) getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
         assertNotNull(ecid); // verify that ecid is always generated and returned
     }
 
     @Test
     public void testGetExperienceCloudId_nullCallback() {
         // test
-        Identity.getExperienceCloudId(null); // should not crash
+        try {
+            Identity.getExperienceCloudId(null); // should not crash
+        } catch (Exception e) {
+            fail();
+        }
     }
-
 
     // --------------------------------------------------------------------------------------------
     // Tests for getIdentities API
@@ -300,18 +292,20 @@ public class IdentityPublicAPITest {
         assertEquals(1, responseMap.getIdentityItemsForNamespace("ECID").size());
     }
 
-
     @Test
     public void testGetIdentities_nullCallback() {
         // test
-        Identity.getExperienceCloudId(null); // should not crash
+        try {
+            Identity.getIdentities(null); // should not crash
+        } catch (Exception e) {
+            fail();
+        }
     }
-
-
 
     // --------------------------------------------------------------------------------------------
     // Tests for RemoveIdentity API
     // --------------------------------------------------------------------------------------------
+
     @Test
     public void testRemoveIdentity() throws Exception {
         // setup
@@ -407,8 +401,7 @@ public class IdentityPublicAPITest {
     @Test
     public void testRemoveIdentity_doesNotRemoveECID() throws Exception {
         // test
-        Map<String, Object> getExperienceCloudIdResponse = getExperienceCloudIdSync();
-        String currentECID = (String) getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
+        String currentECID = getExperienceCloudIdSync();
 
         // attempt to remove ECID
         Identity.removeIdentity(new IdentityItem(currentECID), "ECID");

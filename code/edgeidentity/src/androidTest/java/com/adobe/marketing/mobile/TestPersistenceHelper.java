@@ -30,6 +30,7 @@ public class TestPersistenceHelper {
     private static ArrayList<String> knownDatastoreName = new ArrayList<String>() {{
         add(IdentityTestConstants.DataStoreKey.IDENTITY_DATASTORE);
         add(IdentityTestConstants.DataStoreKey.CONFIG_DATASTORE);
+        add(IdentityTestConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE);
     }};
 
     /**

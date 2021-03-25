@@ -27,6 +27,7 @@ dependencies {
 
     implementation project(':edgeidentity')
     implementation 'com.adobe.marketing.mobile:core:1+'
+    implementation 'com.adobe.marketing.mobile:identity:1+'
     implementation 'com.adobe.marketing.mobile:signal:1+'
     implementation 'com.adobe.marketing.mobile:edge:1+'
     implementation 'com.adobe.marketing.mobile:assurance:1+'

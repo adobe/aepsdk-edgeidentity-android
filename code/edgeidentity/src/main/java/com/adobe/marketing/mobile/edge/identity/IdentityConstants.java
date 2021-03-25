@@ -78,7 +78,7 @@ class IdentityConstants {
     final class DataStoreKey {
         static final String DATASTORE_NAME = EXTENSION_NAME;
         static final String IDENTITY_PROPERTIES = "identity.properties";
-        static final String IDENTITY_DIRECT_DATASTORE_NAME = SharedStateKeys.IDENTITY_DIRECT;
+        static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
         static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
         private DataStoreKey() { }
     }
