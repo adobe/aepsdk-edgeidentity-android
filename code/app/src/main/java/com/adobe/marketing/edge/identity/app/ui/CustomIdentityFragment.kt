@@ -38,25 +38,32 @@ class CustomIdentityFragment : Fragment() {
         val root = inflater.inflate(R.layout.fragment_custom_identity, container, false)
 
         val identifierEditText = root.findViewById<EditText>(R.id.text_identifier)
+        identifierEditText.setText(sharedViewModel.identifier.value)
         identifierEditText.doAfterTextChanged {
             sharedViewModel.setIdentifier(it.toString())
         }
 
         val namespaceEditText = root.findViewById<EditText>(R.id.text_namespace)
+        namespaceEditText.setText(sharedViewModel.namespace.value)
         namespaceEditText.doAfterTextChanged {
             sharedViewModel.setNamespace(it.toString())
         }
 
         val isPrimaryCheckbox = root.findViewById<CheckBox>(R.id.checkbox_is_primary)
+        isPrimaryCheckbox.isChecked = sharedViewModel.isPrimary.value ?: false
         isPrimaryCheckbox.setOnCheckedChangeListener { _, isChecked ->
             sharedViewModel.setIsPrimary(isChecked)
         }
 
         val authenticatedRadioGroup = root.findViewById<RadioGroup>(R.id.radio_group_authenticated)
+        sharedViewModel.authenticatedStateId.value?.let { checkedId ->
+            authenticatedRadioGroup.findViewById<RadioButton>(checkedId).isChecked = true
+        }
         authenticatedRadioGroup.setOnCheckedChangeListener { group, checkedId ->
             val changedRadioButton: RadioButton = group.findViewById(checkedId)
             if (changedRadioButton.isChecked) {
                 sharedViewModel.setAuthenticatedState(AuthenticatedState.fromString(changedRadioButton.text.toString()))
+                sharedViewModel.setAuthenticatedStateId(checkedId)
             }
         }
 

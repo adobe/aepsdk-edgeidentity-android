@@ -61,6 +61,9 @@ class SharedViewModel : ViewModel() {
     private val _authenticatedState = MutableLiveData<AuthenticatedState>(AuthenticatedState.AMBIGUOUS)
     val authenticatedState: LiveData<AuthenticatedState> = _authenticatedState
 
+    private val _authenticatedStateId = MutableLiveData<Int>(null)
+    val authenticatedStateId: LiveData<Int> = _authenticatedStateId
+
     fun setIdentifier(value: String) {
         if (_identifier.value == value) {
             return
@@ -87,6 +90,13 @@ class SharedViewModel : ViewModel() {
             return
         }
         _authenticatedState.value = value
+    }
+
+    fun setAuthenticatedStateId(value: Int) {
+        if (_authenticatedStateId.value == value) {
+            return
+        }
+        _authenticatedStateId.value = value
     }
 
     // Models for Multiple Identities View
