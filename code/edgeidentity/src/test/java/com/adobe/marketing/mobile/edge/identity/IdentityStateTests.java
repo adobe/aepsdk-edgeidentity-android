@@ -64,7 +64,7 @@ public class IdentityStateTests {
 
 
     @Test
-    public void testIdentityState_BootupIfReadyGeneratesECID() {
+    public void testBootUp_GeneratesECID() {
         // setup
         IdentityState state = new IdentityState(new IdentityProperties());
         assertNull(state.getIdentityProperties().getECID());
@@ -78,7 +78,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_BootupIfReadyLoadsDirectIdentityECID() {
+    public void testBootUp_LoadsDirectIdentityECID() {
         // setup
         ECID ecid = new ECID();
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
@@ -96,7 +96,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_BootupIfReadyGenratesECIDWhenDirectECIDIsNull() {
+    public void testBootUp_GeneratesECIDWhenDirectECIDIsNull() {
         // setup
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(null);
@@ -113,7 +113,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_BootupIfReadyLoadsFromPersistence() {
+    public void testBootUp_LoadsFromPersistence() {
         // setup
         IdentityState state = new IdentityState(new IdentityProperties());
 
@@ -132,7 +132,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_BootupIfReadyLoadsFromPersistenceWhenDirectECIDIsValid() {
+    public void testBootUp_IfReadyLoadsFromPersistenceWhenDirectECIDIsValid() {
         // setup
         ECID ecid = new ECID();
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
@@ -155,7 +155,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_resetIdentifiers() {
+    public void testResetIdentifiers() {
         // setup
         IdentityState state = new IdentityState(new IdentityProperties());
         state.getIdentityProperties().setECID(new ECID());
@@ -183,7 +183,7 @@ public class IdentityStateTests {
     // ======================================================================================================================
 
     @Test
-    public void testIdentityState_updateLegacyExperienceCloudId() {
+    public void testUpdateLegacyExperienceCloudId() {
         IdentityState state = new IdentityState(new IdentityProperties());
         state.getIdentityProperties().setECID(new ECID());
         ECID legacyEcid = new ECID();
@@ -197,7 +197,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_updateLegacyExperienceCloudId_notSetWhenECIDSame() {
+    public void testUpdateLegacyExperienceCloudId_notSetWhenECIDSame() {
         IdentityState state = new IdentityState(new IdentityProperties());
         ECID legacyEcid = new ECID();
         state.getIdentityProperties().setECID(legacyEcid);
@@ -210,7 +210,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_updateLegacyExperienceCloudId_notSetWhenSecondaryECIDSame() {
+    public void testUpdateLegacyExperienceCloudId_notSetWhenSecondaryECIDSame() {
         IdentityState state = new IdentityState(new IdentityProperties());
         state.getIdentityProperties().setECID(new ECID());
         ECID legacyEcid = new ECID();
@@ -223,7 +223,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_updateLegacyExperienceCloudId_clearsOnNull() {
+    public void testUpdateLegacyExperienceCloudId_clearsOnNull() {
         IdentityState state = new IdentityState(new IdentityProperties());
         state.getIdentityProperties().setECID(new ECID());
         state.getIdentityProperties().setECIDSecondary(new ECID());
@@ -235,7 +235,7 @@ public class IdentityStateTests {
     }
 
     @Test
-    public void testIdentityState_updateLegacyExperienceCloudId_notSetWhenExistingIsNull() {
+    public void testUpdateLegacyExperienceCloudId_notSetWhenExistingIsNull() {
         IdentityState state = new IdentityState(new IdentityProperties());
         state.getIdentityProperties().setECID(new ECID());
 

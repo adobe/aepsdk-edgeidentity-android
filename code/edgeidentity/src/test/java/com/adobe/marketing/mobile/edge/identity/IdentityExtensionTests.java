@@ -167,7 +167,7 @@ public class IdentityExtensionTests {
 
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
-        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final IdentityMap identityMap = IdentityMap.fromXDMMap(ecidResponseEvent.getEventData());
         final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
         assertNotNull(ecid);
@@ -194,14 +194,14 @@ public class IdentityExtensionTests {
 
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
-        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final IdentityMap identityMap = IdentityMap.fromXDMMap(ecidResponseEvent.getEventData());
         final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
         assertEquals(existingECID.toString(), ecid);
     }
 
     @Test
-    public void test_handleIdentityRequest_noIdentifiers_emptyIdentityMap() {
+    public void test_handleIdentityRequest_noIdentifiers_emptyXDMIdentityMap() {
         // setup
         IdentityProperties emptyProps = new IdentityProperties();
         PowerMockito.stub(PowerMockito.method(IdentityState.class, "getIdentityProperties")).toReturn(emptyProps);

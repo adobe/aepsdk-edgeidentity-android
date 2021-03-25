@@ -108,7 +108,7 @@ class IdentityExtension extends Extension {
         // share the initial XDMSharedState on bootUp
         final Map currentIdentities = state.getIdentityProperties().toXDMData(false);
         if (currentIdentities == null || currentIdentities.isEmpty()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Nothing loaded from persistence for initial Identity XDM shared state on boot");
+            MobileCore.log(LoggingMode.WARNING, LOG_TAG, "Nothing loaded from persistence for initial Identity XDM shared state on boot");
             return;
         }
 
@@ -122,7 +122,7 @@ class IdentityExtension extends Extension {
      */
     void handleUpdateIdentities(final Event event) {
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
-        final IdentityMap map = IdentityMap.fromData(eventData);
+        final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to update identifiers as no identifiers were found in the event data.");
             return;
@@ -139,7 +139,7 @@ class IdentityExtension extends Extension {
      */
     void handleRemoveIdentity(final Event event) {
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
-        final IdentityMap map = IdentityMap.fromData(eventData);
+        final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to remove identifiers as no identifiers were found in the event data.");
             return;
@@ -201,8 +201,7 @@ class IdentityExtension extends Extension {
      * @param event the identity request {@link Event}
      */
     void handleIdentityRequest(final Event event) {
-
-        Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(true);
+        Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
         Event responseEvent = new Event.Builder(IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
                 IdentityConstants.EventType.EDGE_IDENTITY,
                 IdentityConstants.EventSource.RESPONSE_IDENTITY)

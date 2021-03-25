@@ -41,6 +41,9 @@ class IdentityState {
 
     /**
      * Completes init for the Identity extension.
+     * Attempts to load the already persisted identities from persistence into {@link #identityProperties}
+     * If no ECID is loaded from persistence (ideally meaning first launch), then we attempt to read ECID for the direct Identity Extension.
+     * If there is no ECID loaded from the persistence of direct Identity Extension, then and new ECID is generated and persisted finishing the bootUp sequence.
      */
     void bootUp() {
         // Load properties from local storage

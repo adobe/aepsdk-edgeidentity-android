@@ -17,7 +17,7 @@ import com.adobe.marketing.mobile.ExtensionListener;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-public class ListenerEventHubBoot extends ExtensionListener {
+class ListenerEventHubBoot extends ExtensionListener {
     /**
      * Constructor.
      *

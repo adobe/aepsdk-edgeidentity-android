@@ -133,26 +133,6 @@ public class IdentityMap {
 
 
     /**
-     * @return a {@link Map} representing this {@link IdentityMap} object
-     */
-    Map<String, List<Map<String, Object>>> toObjectMap() {
-
-        final Map<String, List<Map<String, Object>>> map = new HashMap<>();
-
-        for (String namespace : identityItems.keySet()) {
-            final List<Map<String, Object>> namespaceIds = new ArrayList<>();
-
-            for (IdentityItem identityItem : identityItems.get(namespace)) {
-                namespaceIds.add(identityItem.toObjectMap());
-            }
-
-            map.put(namespace, namespaceIds);
-        }
-
-        return map;
-    }
-
-    /**
      * Merge the given map on to this {@link IdentityMap}. Any {@link IdentityItem} in map which shares the same
      * namespace and id as an item in this {@code IdentityMap} will replace that {@code IdentityItem}.
      *
@@ -215,32 +195,54 @@ public class IdentityMap {
     }
 
     /**
-     * Use this method to cast the {@code IdentityMap} as eventData for an SDK Event.
+     * Use this method to cast the {@link IdentityMap} as {@link Map<String,Object>} to be passed as EventData for an SDK Event.
+     * This method returns an empty map if the {@code IdentityMap} contains no data
      *
-     * @return {@link Map<String,Object>} representation of IdentityMap
+     * @return {@code Map} representation of xdm formatted IdentityMap
      */
     Map<String, Object> asXDMMap() {
-        final Map<String, Object> xdmData = new HashMap<>();
-
-        final Map<String, List<Map<String, Object>>> identityMap = this.toObjectMap();
-        if (identityMap != null || !identityMap.isEmpty() ) {
-            xdmData.put(IdentityConstants.XDMKeys.IDENTITY_MAP, identityMap);
-        }
-
-        return xdmData;
+        return asXDMMap(true);
     }
 
+    /**
+     * Use this method to cast the {@link IdentityMap} as {@link Map<String,Object>} to be passed as EventData for an SDK Event.
+     *
+     * @param allowEmpty If false and if this {@code IdentityMap} contains no data, then returns a map with empty xdmFormatted Identity Map.
+     *                   If true and if this {@code IdentityMap} contains no data, then returns an empty map
+     * @return {@code Map} representation of xdm formatted IdentityMap
+     */
+    Map<String, Object> asXDMMap(final boolean allowEmpty) {
+        final Map<String, Object> xdmMap = new HashMap<>();
+        final Map<String, List<Map<String, Object>>> identityMap = new HashMap<>();
+
+        for (String namespace : identityItems.keySet()) {
+            final List<Map<String, Object>> namespaceIds = new ArrayList<>();
+
+            for (IdentityItem identityItem : identityItems.get(namespace)) {
+                namespaceIds.add(identityItem.toObjectMap());
+            }
+
+            identityMap.put(namespace, namespaceIds);
+        }
+
+        if (!identityMap.isEmpty() || !allowEmpty) {
+            xdmMap.put(IdentityConstants.XDMKeys.IDENTITY_MAP, identityMap);
+        }
+        return xdmMap;
+    }
 
     /**
-     * Creates an {@link IdentityMap} from the
+     * Creates an {@link IdentityMap} from the given xdm formatted {@link Map}
+     * Returns null if the provided map is null/empty.
+     * Return null if the provided map is not in Identity Map's XDM format.
      *
-     * @return {@link Map<String,Object>} representation of IdentityMap
+     * @return {@link Map<String,Object>} XDM format representation of IdentityMap
      */
-    static IdentityMap fromData(Map<String, Object> data) {
-        if (data == null) {
+    static IdentityMap fromXDMMap(final Map<String, Object> map) {
+        if (Utils.isNullOrEmpty(map)) {
             return null;
         }
-        final Map<String, Object> identityMapDict = (HashMap<String, Object>) data.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
+        final Map<String, Object> identityMapDict = (HashMap<String, Object>) map.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
         if (identityMapDict == null) {
             return null;
         }

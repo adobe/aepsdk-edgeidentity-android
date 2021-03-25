@@ -59,7 +59,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_load_nullSharedPrefs() {
+    public void testLoadPropertiesFromPersistence_nullSharedPrefs() {
         // setup
         Mockito.when(mockApplication.getApplicationContext()).thenReturn(null);
 
@@ -71,7 +71,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_load_emptyPrefs() {
+    public void testLoadPropertiesFromPersistence_emptyPrefs() {
         // setup
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(null);
 
@@ -83,7 +83,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_load_invalidJSON() {
+    public void testLoadPropertiesFromPersistence_invalidJSON() {
         // setup
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn("{");
 
@@ -95,7 +95,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_load_validJSON() {
+    public void testLoadPropertiesFromPersistence_validJSON() {
         // setup
         IdentityProperties persistedProps = new IdentityProperties();
         persistedProps.setECID(new ECID());
@@ -111,7 +111,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_save_nullSharedPrefs() {
+    public void testSavePropertiesToPersistence_nullSharedPrefs() {
         // setup
         Mockito.when(mockApplication.getApplicationContext()).thenReturn(null);
 
@@ -124,7 +124,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_save_nullEditor() {
+    public void testSavePropertiesToPersistence_nullEditor() {
         // setup
         Mockito.when(mockSharedPreference.edit()).thenReturn(null);
 
@@ -137,7 +137,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_save_nullProps() {
+    public void testSavePropertiesToPersistence_nullProps() {
         // test
         IdentityStorageService.savePropertiesToPersistence(null);
 
@@ -147,7 +147,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_save_validProps() {
+    public void testSavePropertiesToPersistence_validProps() {
         // test
         IdentityProperties props = new IdentityProperties();
         props.setECID(new ECID());
@@ -161,7 +161,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_loadECID() {
+    public void testLoadEcidFromDirectIdentityPersistence_loadECID() {
         ECID ecid = new ECID();
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(ecid.toString());
@@ -170,7 +170,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_loadECID_nullECID() {
+    public void testLoadEcidFromDirectIdentityPersistence_whenNullECID() {
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn(null);
 
@@ -178,7 +178,7 @@ public class IdentityStorageServiceTests {
     }
 
     @Test
-    public void testStorageService_loadECID_emptyECID() {
+    public void testLoadEcidFromDirectIdentityPersistence_whenEmptyECID() {
         Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0)).thenReturn(mockSharedPreference);
         Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null)).thenReturn("");
 
