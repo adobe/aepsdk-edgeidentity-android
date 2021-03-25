@@ -52,10 +52,9 @@ public class IdentityECIDHandlingTest {
     @Test
     public void testECID_loadedFromPersistence() throws Exception {
         // setup
-        //Map<String,Object> removedIdentityXDM =
         registerExtensionWithPersistenceData(createXDMIdentityMap(
-                new IdentityTestUtil.TestItem("ECID", "primaryECID"),
-                new IdentityTestUtil.TestItem("ECID", "secondaryECID")
+                new TestItem("ECID", "primaryECID"),
+                new TestItem("ECID", "secondaryECID")
         ));
 
         // verify
@@ -76,7 +75,7 @@ public class IdentityECIDHandlingTest {
 
     @Test
     public void testECID_loadsIdentityDirectECID() throws Exception {
-        // This will happen when
+        // This will happen when EdgeIdentity extension is installed after Identity direct extension
         // setup
         setIdentityDirectPersistedECID("legacyECID");
         registerIdentityExtension();
@@ -102,8 +101,8 @@ public class IdentityECIDHandlingTest {
     public void testECID_onResetClearsOldECID() throws Exception {
         // setup
         registerExtensionWithPersistenceData(createXDMIdentityMap(
-                new IdentityTestUtil.TestItem("ECID", "primaryECID"),
-                new IdentityTestUtil.TestItem("ECID", "secondaryECID")
+                new TestItem("ECID", "primaryECID"),
+                new TestItem("ECID", "secondaryECID")
         ));
 
         // test

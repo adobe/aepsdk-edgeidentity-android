@@ -80,8 +80,7 @@ public class IdentityResetHandlingTest {
         String newECID = getExperienceCloudIdSync();
         assertNotEquals(beforeResetECID, newECID);
 
-
-        // verify consent response event dispatched
+        // verify edge reset complete event dispatched
         List<Event> resetCompleteEvent = getDispatchedEventsWith(IdentityConstants.EventType.EDGE_IDENTITY, IdentityConstants.EventSource.RESET_COMPLETE);
         assertEquals(1, resetCompleteEvent.size());
 

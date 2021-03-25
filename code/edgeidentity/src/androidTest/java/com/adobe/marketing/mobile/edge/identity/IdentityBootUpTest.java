@@ -49,7 +49,7 @@ public class IdentityBootUpTest {
 
         // verify xdm shared state
         Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-        assertEquals(12, xdmSharedState.size());  // 3 for ECID and 3 secondaryECID + 6
+        assertEquals(12, xdmSharedState.size());  // 3 for ECID and 3 for secondaryECID + 6
         assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
         assertEquals("secondaryECID", xdmSharedState.get("identityMap.ECID[1].id"));
         assertEquals("example@email.com", xdmSharedState.get("identityMap.Email[0].id"));
@@ -59,11 +59,11 @@ public class IdentityBootUpTest {
         //verify persisted data
         final String persistedJson = TestPersistenceHelper.readPersistedData(IdentityConstants.DataStoreKey.DATASTORE_NAME, IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
         Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
-        assertEquals(12, persistedMap.size());  // 3 for ECID and 3 secondaryECID + 6
+        assertEquals(12, persistedMap.size());  // 3 for ECID and 3 for secondaryECID + 6
     }
 
     // --------------------------------------------------------------------------------------------
-    // All the other bootup tests with to ECID is coded in IdentityECIDHandling
+    // All the other bootUp tests with to ECID is coded in IdentityECIDHandling
     // --------------------------------------------------------------------------------------------
 
 }
