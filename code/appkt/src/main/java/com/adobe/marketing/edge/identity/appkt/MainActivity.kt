@@ -33,25 +33,12 @@ import com.adobe.marketing.mobile.edge.identity.Identity
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private var LAUNCH_ENVIRONMENT_ID: String = "3805cb8645dd/5036e8617f7b/launch-98923b00a584-development"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
-
-        // register AEP SDK extensions
-        MobileCore.setApplication(this.application)
-        MobileCore.setLogLevel(LoggingMode.VERBOSE)
-
-        Identity.registerExtension()
-        Edge.registerExtension()
-        Assurance.registerExtension()
-
-        MobileCore.start {
-            MobileCore.configureWithAppID(LAUNCH_ENVIRONMENT_ID)
-        }
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
