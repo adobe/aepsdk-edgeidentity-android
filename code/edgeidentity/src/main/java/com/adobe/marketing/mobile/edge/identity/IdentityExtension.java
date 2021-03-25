@@ -33,6 +33,8 @@ class IdentityExtension extends Extension {
      * Called during the Identity extension's registration.
      * The following listeners are registered during this extension's registration.
      * <ul>
+     *     <li> Listener {@link ListenerEventHubBoot} to listen for event with eventType {@link IdentityConstants.EventType#HUB}
+     *      and EventSource {@link IdentityConstants.EventSource#BOOTED}</li>
      *     <li> Listener {@link ListenerEdgeIdentityRequestIdentity} to listen for event with eventType {@link IdentityConstants.EventType#EDGE_IDENTITY}
      *     and EventSource {@link IdentityConstants.EventSource#REQUEST_IDENTITY}</li>
      *     <li> Listener {@link ListenerGenericIdentityRequestContent} to listen for event with eventType {@link IdentityConstants.EventType#GENERIC_IDENTITY}
@@ -63,12 +65,14 @@ class IdentityExtension extends Extension {
             }
         };
 
+        extensionApi.registerEventListener(IdentityConstants.EventType.HUB, IdentityConstants.EventSource.BOOTED, ListenerEventHubBoot.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY, IdentityConstants.EventSource.REQUEST_IDENTITY, ListenerEdgeIdentityRequestIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.GENERIC_IDENTITY, IdentityConstants.EventSource.REQUEST_CONTENT, ListenerGenericIdentityRequestContent.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY, IdentityConstants.EventSource.UPDATE_IDENTITY, ListenerEdgeIdentityUpdateIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY, IdentityConstants.EventSource.REMOVE_IDENTITY, ListenerEdgeIdentityRemoveIdentity.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.HUB, IdentityConstants.EventSource.SHARED_STATE, ListenerHubSharedState.class, listenerErrorCallback);
         extensionApi.registerEventListener(IdentityConstants.EventType.GENERIC_IDENTITY, IdentityConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+        state.bootUp();
     }
 
     /**
@@ -91,18 +95,34 @@ class IdentityExtension extends Extension {
         return IdentityConstants.EXTENSION_VERSION;
     }
 
+
+    /**
+     * Call this method with the EventHub's Boot event to handle the boot operation of the {@code Identity} Extension.
+     * <p>
+     * On boot share the initial identities loaded from persistence to XDM shared state.
+     *
+     * @param event the boot {@link Event}
+     */
+    void handleEventHubBoot(final Event event) {
+
+        // share the initial XDMSharedState on bootUp
+        final Map currentIdentities = state.getIdentityProperties().toXDMData(false);
+        if (currentIdentities == null || currentIdentities.isEmpty()) {
+            MobileCore.log(LoggingMode.WARNING, LOG_TAG, "Nothing loaded from persistence for initial Identity XDM shared state on boot");
+            return;
+        }
+
+        shareIdentityXDMSharedState(event);
+    }
+
     /**
      * Handles update identity requests to add/update customer identifiers.
      *
      * @param event the edge update identity {@link Event}
      */
     void handleUpdateIdentities(final Event event) {
-        if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process update identity event. canProcessEvents returned false.");
-            return;
-        }
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
-        final IdentityMap map = IdentityMap.fromData(eventData);
+        final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to update identifiers as no identifiers were found in the event data.");
             return;
@@ -118,12 +138,8 @@ class IdentityExtension extends Extension {
      * @param event the edge remove identity request {@link Event}
      */
     void handleRemoveIdentity(final Event event) {
-        if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process remove identity event. canProcessEvents returned false.");
-            return;
-        }
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
-        final IdentityMap map = IdentityMap.fromData(eventData);
+        final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to remove identifiers as no identifiers were found in the event data.");
             return;
@@ -145,11 +161,6 @@ class IdentityExtension extends Extension {
      * @param event an event of type {@code com.adobe.eventType.hub} and source {@code com.adobe.eventSource.sharedState}
      */
     void handleHubSharedState(final Event event) {
-        if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process direct Identity shared state change event. canProcessEvents returned false.");
-            return;
-        }
-
         if (event == null || event.getEventData() == null) {
             return;
         }
@@ -190,12 +201,7 @@ class IdentityExtension extends Extension {
      * @param event the identity request {@link Event}
      */
     void handleIdentityRequest(final Event event) {
-        if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request identities event. canProcessEvents returned false.");
-            return;
-        }
-
-        Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(true);
+        Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
         Event responseEvent = new Event.Builder(IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
                 IdentityConstants.EventType.EDGE_IDENTITY,
                 IdentityConstants.EventSource.RESPONSE_IDENTITY)
@@ -219,10 +225,6 @@ class IdentityExtension extends Extension {
      * @param event the identity request reset {@link Event}
      */
     void handleRequestReset(final Event event) {
-        if (!canProcessEvents()) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Unable to process request reset event. canProcessEvents returned false.");
-            return;
-        }
         state.resetIdentifiers();
         shareIdentityXDMSharedState(event);
 
@@ -286,27 +288,4 @@ class IdentityExtension extends Extension {
         extensionApi.setXDMSharedEventState(state.getIdentityProperties().toXDMData(false), event, errorCallback);
     }
 
-    /**
-     * Determines if this Identity is ready to handle events, this is determined by if the extension has booted up
-     *
-     * @return True if we can process events, false otherwise
-     */
-    private boolean canProcessEvents() {
-        if (state.hasBooted()) {
-            return true;
-        } // we have booted, return true
-
-        final ExtensionApi extensionApi = super.getApi();
-        if (extensionApi == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to process events");
-            return false;
-        }
-
-        if (state.bootupIfReady()) {
-            extensionApi.setXDMSharedEventState(state.getIdentityProperties().toXDMData(false), null, null);
-            return true;
-        }
-
-        return false; // cannot handle any events until we have booted
-    }
 }

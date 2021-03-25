@@ -17,7 +17,7 @@ import com.adobe.marketing.mobile.ExtensionListener;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-public class ListenerEdgeIdentityUpdateIdentity extends ExtensionListener {
+class ListenerEdgeIdentityUpdateIdentity extends ExtensionListener {
 
     /**
      * Constructor.

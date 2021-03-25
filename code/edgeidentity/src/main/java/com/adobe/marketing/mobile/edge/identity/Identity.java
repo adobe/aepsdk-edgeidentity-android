@@ -84,7 +84,7 @@ public class Identity {
                     return;
                 }
 
-                final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
                 if (identityMap == null) {
                     MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR");
                     returnError(callback, AdobeError.UNEXPECTED_ERROR);
@@ -125,7 +125,7 @@ public class Identity {
 
         final Event updateIdentitiesEvent = new Event.Builder(IdentityConstants.EventNames.UPDATE_IDENTITIES,
                 IdentityConstants.EventType.EDGE_IDENTITY,
-                IdentityConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asEventData()).build();
+                IdentityConstants.EventSource.UPDATE_IDENTITY).setEventData(identityMap.asXDMMap(false)).build();
         MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
     }
 
@@ -162,7 +162,7 @@ public class Identity {
 
         final Event removeIdentitiesEvent = new Event.Builder(IdentityConstants.EventNames.REMOVE_IDENTITIES,
                 IdentityConstants.EventType.EDGE_IDENTITY,
-                IdentityConstants.EventSource.REMOVE_IDENTITY).setEventData(identityMap.asEventData()).build();
+                IdentityConstants.EventSource.REMOVE_IDENTITY).setEventData(identityMap.asXDMMap(false)).build();
         MobileCore.dispatchEvent(removeIdentitiesEvent, errorCallback);
     }
 
@@ -200,7 +200,7 @@ public class Identity {
                     return;
                 }
 
-                final IdentityMap identityMap = IdentityMap.fromData(responseEvent.getEventData());
+                final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
                 if (identityMap == null) {
                     MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR");
                     returnError(callback, AdobeError.UNEXPECTED_ERROR);

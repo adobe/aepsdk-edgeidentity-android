@@ -26,12 +26,12 @@ public class IdentityPropertiesTests {
     // ======================================================================================================================
 
     @Test
-    public void test_toXDMData_Empty() {
+    public void test_toXDMData_AllowEmpty() {
         // setup
         IdentityProperties props = new IdentityProperties();
 
         // test
-        Map<String, Object> xdmMap = props.toXDMData(false);
+        Map<String, Object> xdmMap = props.toXDMData(true);
 
         // verify
         assertNull(xdmMap.get(IdentityConstants.XDMKeys.IDENTITY_MAP));

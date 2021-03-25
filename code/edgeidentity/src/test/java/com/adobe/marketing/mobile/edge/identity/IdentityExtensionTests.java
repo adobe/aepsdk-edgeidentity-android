@@ -93,7 +93,7 @@ public class IdentityExtensionTests {
         // constructor is called in the setup step()
 
         // verify 2 listeners are registered
-        verify(mockExtensionApi, times(6)).registerEventListener(anyString(),
+        verify(mockExtensionApi, times(7)).registerEventListener(anyString(),
                 anyString(), any(Class.class), any(ExtensionErrorCallback.class));
 
         // verify listeners are registered with correct event source and type
@@ -109,6 +109,8 @@ public class IdentityExtensionTests {
                 eq(IdentityConstants.EventSource.REQUEST_RESET), eq(ListenerIdentityRequestReset.class), callbackCaptor.capture());
         verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityConstants.EventType.HUB),
                                                                  eq(IdentityConstants.EventSource.SHARED_STATE), eq(ListenerHubSharedState.class), callbackCaptor.capture());
+        verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityConstants.EventType.HUB),
+                eq(IdentityConstants.EventSource.BOOTED), eq(ListenerEventHubBoot.class), callbackCaptor.capture());
 
         // verify the callback
         ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
@@ -165,7 +167,7 @@ public class IdentityExtensionTests {
 
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
-        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final IdentityMap identityMap = IdentityMap.fromXDMMap(ecidResponseEvent.getEventData());
         final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
         assertNotNull(ecid);
@@ -183,6 +185,7 @@ public class IdentityExtensionTests {
         final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
         // test
+        extension = new IdentityExtension(mockExtensionApi);
         extension.handleIdentityRequest(event);
 
         // verify
@@ -191,14 +194,14 @@ public class IdentityExtensionTests {
 
         // verify response event containing ECID is dispatched
         Event ecidResponseEvent = responseEventCaptor.getAllValues().get(0);
-        final IdentityMap identityMap = IdentityMap.fromData(ecidResponseEvent.getEventData());
+        final IdentityMap identityMap = IdentityMap.fromXDMMap(ecidResponseEvent.getEventData());
         final String ecid = identityMap.getIdentityItemsForNamespace("ECID").get(0).getId();
 
         assertEquals(existingECID.toString(), ecid);
     }
 
     @Test
-    public void test_handleIdentityRequest_noIdentifiers_emptyIdentityMap() {
+    public void test_handleIdentityRequest_noIdentifiers_emptyXDMIdentityMap() {
         // setup
         IdentityProperties emptyProps = new IdentityProperties();
         PowerMockito.stub(PowerMockito.method(IdentityState.class, "getIdentityProperties")).toReturn(emptyProps);
@@ -513,8 +516,8 @@ public class IdentityExtensionTests {
         assertTrue(eventCaptor.getAllValues().isEmpty());
 
         // verify persistence
-        verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
-        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
+        verify(mockSharedPreferenceEditor, times(3)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
+        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(2));
         assertNull(persistedData.get("identityMap.UserId[0].id"));
         assertEquals("token", persistedData.get("identityMap.PushId[0].id"));
     }
@@ -552,8 +555,8 @@ public class IdentityExtensionTests {
 
 
         // verify persistence
-        verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
-        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getValue());
+        verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), persistenceValueCaptor.capture());
+        Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(1));
         assertEquals("someGAID", persistedData.get("identityMap.GAID[0].id"));
         assertEquals("someECID", persistedData.get("identityMap.ECID[0].id"));
         assertEquals("someIDFA", persistedData.get("identityMap.IDFA[0].id"));
@@ -578,7 +581,7 @@ public class IdentityExtensionTests {
         verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), eq(removeIdentityEvent), any(ExtensionErrorCallback.class));
 
         // verify persistence
-        verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), anyString());
+        verify(mockSharedPreferenceEditor, times(2)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES), anyString());// once during constructor and other during remove IdentityEvent
     }
 
 

@@ -275,7 +275,7 @@ public class IdentityTests {
         assertEquals(IdentityConstants.EventNames.UPDATE_IDENTITIES, dispatchedEvent.getName());
         assertEquals(IdentityConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
         assertEquals(IdentityConstants.EventSource.UPDATE_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
-        assertEquals(map.asEventData(), dispatchedEvent.getEventData());
+        assertEquals(map.asXDMMap(), dispatchedEvent.getEventData());
     }
 
     @Test
@@ -311,7 +311,7 @@ public class IdentityTests {
         assertEquals(IdentityConstants.EventSource.REMOVE_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
         IdentityMap sampleInputIdentitymap = new IdentityMap();
         sampleInputIdentitymap.addItem(sampleItem,"namespace");
-        assertEquals(sampleInputIdentitymap.asEventData(), dispatchedEvent.getEventData());
+        assertEquals(sampleInputIdentitymap.asXDMMap(), dispatchedEvent.getEventData());
 
         // TODO - enable when ExtensionError creation is available
         // should not crash on calling the callback

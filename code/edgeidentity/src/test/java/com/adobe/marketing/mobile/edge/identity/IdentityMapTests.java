@@ -32,7 +32,7 @@ public class IdentityMapTests {
         map.addItem(new IdentityItem("California"),"location");
 
         // verify
-        assertEquals("California", map.toObjectMap().get("location").get(0).get("id"));
+        IdentityTestUtil.flattenMap(map.asXDMMap()).get("identityMap.location[0].id");
     }
 
     @Test
@@ -44,7 +44,7 @@ public class IdentityMapTests {
         map.addItem( null,"namespace");
 
         // verify
-        assertTrue(map.toObjectMap().isEmpty());
+        assertTrue(map.isEmpty());
     }
 
     @Test
@@ -92,17 +92,21 @@ public class IdentityMapTests {
         // test
         sampleUserMap.removeItem( new IdentityItem("California"),"location");
 
+
+
         // verify
-        assertEquals(1, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(1, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
 
         // test 2
         sampleUserMap.removeItem(new IdentityItem("280 Highway Lane"),"location");
         sampleUserMap.removeItem(new IdentityItem("Student"), "login");
 
         // verify
-        assertNull(sampleUserMap.toObjectMap().get("location"));
-        assertEquals(2, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap2 = getCastedIdentityMap(sampleUserMap);
+        assertNull(castedMap2.get("location"));
+        assertEquals(2, castedMap2.get("login").size());
     }
 
     @Test
@@ -116,8 +120,9 @@ public class IdentityMapTests {
         sampleUserMap.removeItem(null,"location");
 
         // verify the existing identityMap is unchanged
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
 
@@ -132,10 +137,30 @@ public class IdentityMapTests {
         sampleUserMap.merge(newMap);
 
         // verify the existing identityMap is unchanged
-        assertEquals(3, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(3, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
+
+    @Test
+    public void test_merge_sameItem_GetsReplaced() {
+        // setup
+        IdentityMap baseMap = new IdentityMap();
+        baseMap.addItem(new IdentityItem("California", AuthenticatedState.LOGGED_OUT, false),"location");
+
+        // test
+        IdentityMap newMap = new IdentityMap();
+        newMap.addItem(new IdentityItem("California", AuthenticatedState.AUTHENTICATED, true),"location");
+        baseMap.merge(newMap);
+
+        // verify the existing identityMap is unchanged
+        Map<String, String> flattenedMap = IdentityTestUtil.flattenMap(baseMap.asXDMMap());
+        assertEquals(3, flattenedMap.size());
+        assertEquals("California", flattenedMap.get("identityMap.location[0].id"));
+        assertEquals("authenticated", flattenedMap.get("identityMap.location[0].authenticatedState"));
+        assertEquals("true", flattenedMap.get("identityMap.location[0].primary"));
+    }
 
     @Test
     public void test_merge_EmptyIdentityMap() {
@@ -146,8 +171,9 @@ public class IdentityMapTests {
         sampleUserMap.merge(new IdentityMap());
 
         // verify the existing identityMap is unchanged
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
     @Test
@@ -159,8 +185,9 @@ public class IdentityMapTests {
         sampleUserMap.merge(null);
 
         // verify the existing identityMap is unchanged
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
 
@@ -172,9 +199,11 @@ public class IdentityMapTests {
         // test
         sampleUserMap.clearItemsForNamespace("location");
 
-        // verify the existing identityMap is unchanged
-        assertNull(sampleUserMap.toObjectMap().get("location"));
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        // verify
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertNull(castedMap.get("location"));
+        assertEquals(3, castedMap.get("login").size());
+
     }
 
 
@@ -187,9 +216,10 @@ public class IdentityMapTests {
         sampleUserMap.clearItemsForNamespace(null);
         sampleUserMap.clearItemsForNamespace("");
 
-        // verify
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        // verify the existing identityMap is unchanged
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
     @Test
@@ -199,7 +229,7 @@ public class IdentityMapTests {
 
         // test
         emptyMap.clearItemsForNamespace("location");
-        assertTrue(emptyMap.toObjectMap().isEmpty());
+        assertTrue(emptyMap.asXDMMap().isEmpty());
     }
 
     @Test
@@ -214,8 +244,9 @@ public class IdentityMapTests {
         sampleUserMap.remove(tobeRemovedMap);
 
         // verify
-        assertEquals(1, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(2, sampleUserMap.toObjectMap().get("login").size());
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(1, castedMap.get("location").size());
+        assertEquals(2, castedMap.get("login").size());
     }
 
     @Test
@@ -227,9 +258,10 @@ public class IdentityMapTests {
         sampleUserMap.remove(null);
         sampleUserMap.remove(new IdentityMap());
 
-        // verify that the existing map is unchanged
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        // verify the existing identityMap is unchanged
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
     @Test
@@ -243,9 +275,10 @@ public class IdentityMapTests {
         // test
         sampleUserMap.remove(tobeRemovedMap);
 
-        // verify that the existing map is unchanged
-        assertEquals(2, sampleUserMap.toObjectMap().get("location").size());
-        assertEquals(3, sampleUserMap.toObjectMap().get("login").size());
+        // verify the existing identityMap is unchanged
+        Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+        assertEquals(2, castedMap.get("location").size());
+        assertEquals(3, castedMap.get("login").size());
     }
 
 
@@ -275,28 +308,27 @@ public class IdentityMapTests {
         final Map<String, Object> xdmData = Utils.toMap(jsonObject);
 
         // test
-        IdentityMap map = IdentityMap.fromData(xdmData);
+        IdentityMap map = IdentityMap.fromXDMMap(xdmData);
 
         // verify
-        Map<String, String> flattenedMap = IdentityTestUtil.flattenMap(map.asEventData());
-        assertEquals("randomECID", flattenedMap.get("ECID[0].id"));
-        assertEquals("AMBIGUOUS", flattenedMap.get("ECID[0].authenticatedState"));
-        assertEquals("true", flattenedMap.get("ECID[0].primary"));
-        assertEquals("someUserID", flattenedMap.get("USERID[0].id"));
-        assertEquals("AUTHENTICATED", flattenedMap.get("USERID[0].authenticatedState"));
-        assertEquals("false", flattenedMap.get("USERID[0].primary"));
+        Map<String, String> flattenedMap = IdentityTestUtil.flattenMap(map.asXDMMap());
+        assertEquals("randomECID", flattenedMap.get("identityMap.ECID[0].id"));
+        assertEquals("ambiguous", flattenedMap.get("identityMap.ECID[0].authenticatedState"));
+        assertEquals("true", flattenedMap.get("identityMap.ECID[0].primary"));
+        assertEquals("someUserID", flattenedMap.get("identityMap.USERID[0].id"));
+        assertEquals("authenticated", flattenedMap.get("identityMap.USERID[0].authenticatedState"));
+        assertEquals("false", flattenedMap.get("identityMap.USERID[0].primary"));
+    }
+
+    @Test
+    public void testFromXDMMap_NullAndEmptyData() {
+        assertNull(IdentityMap.fromXDMMap(null));
+        assertNull(IdentityMap.fromXDMMap(new HashMap<String, Object>()));
     }
 
 
     @Test
-    public void test_FromData_NullAndEmptyData() {
-        assertNull(IdentityMap.fromData(null));
-        assertNull(IdentityMap.fromData(new HashMap<String, Object>()));
-    }
-
-
-    @Test
-    public void test_FromData_InvalidXDMData() throws Exception {
+    public void testFromXDMMap_InvalidXDMData() throws Exception {
         // setup
         // ECID is map instead of list
         final String invalidJsonStr = "{\n" +
@@ -313,10 +345,32 @@ public class IdentityMapTests {
         final Map<String, Object> xdmData = Utils.toMap(jsonObject);
 
         // test
-        IdentityMap map = IdentityMap.fromData(xdmData);
+        IdentityMap map = IdentityMap.fromXDMMap(xdmData);
 
         // verify
         assertTrue(map.isEmpty());
+    }
+
+    @Test
+    public void testAsXDMMap_AllowEmptyTrue() {
+        IdentityMap map = new IdentityMap();
+        Map xdmMap = map.asXDMMap(true);
+        assertTrue(xdmMap.isEmpty());
+    }
+
+    @Test
+    public void testAsXDMMap_AllowEmptyFalse() {
+        IdentityMap map = new IdentityMap();
+        Map xdmMap = map.asXDMMap(false);
+
+        // verify that the base xdm key identityMap is present
+        assertEquals(1, xdmMap.size());
+        assertEquals(new HashMap<>(), xdmMap.get(IdentityConstants.XDMKeys.IDENTITY_MAP));
+    }
+
+    private Map<String,List<IdentityItem>> getCastedIdentityMap(final IdentityMap map) {
+        final Map<String, Object> xdmMap = map.asXDMMap();
+        return (Map<String,List<IdentityItem>>) xdmMap.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
     }
 
 

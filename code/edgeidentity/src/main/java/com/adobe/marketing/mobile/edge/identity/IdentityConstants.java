@@ -27,6 +27,7 @@ class IdentityConstants {
         static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
         static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
         static final String RESET_COMPLETE = "com.adobe.eventSource.resetComplete";
+        static final String BOOTED = "com.adobe.eventSource.booted";
         private EventSource() { }
     }
 

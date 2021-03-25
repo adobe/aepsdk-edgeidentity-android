@@ -17,8 +17,7 @@ import com.adobe.marketing.mobile.ExtensionListener;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-class ListenerEdgeIdentityRemoveIdentity extends ExtensionListener {
-
+class ListenerEventHubBoot extends ExtensionListener {
     /**
      * Constructor.
      *
@@ -26,33 +25,28 @@ class ListenerEdgeIdentityRemoveIdentity extends ExtensionListener {
      * @param type         the {@link String} eventType this listener is registered to handle
      * @param source       the {@link String} eventSource this listener is registered to handle
      */
-    ListenerEdgeIdentityRemoveIdentity(final ExtensionApi extensionApi, final String type, final String source) {
+    ListenerEventHubBoot(final ExtensionApi extensionApi, final String type, final String source) {
         super(extensionApi, type, source);
     }
 
-
     /**
-     * Method that gets called when event with event type {@link IdentityConstants.EventType#EDGE_IDENTITY}
-     * and with event source {@link IdentityConstants.EventSource#REMOVE_IDENTITY}  is dispatched through eventHub.
+     * Method that gets called when event with event type {@link IdentityConstants.EventType#HUB}
+     * and with event source {@link IdentityConstants.EventSource#BOOTED}  is dispatched through eventHub.
      *
-     * @param event the remove identity {@link Event} to be processed
+     * @param event the boot {@link Event}
      */
     @Override
     public void hear(final Event event) {
-        if (event == null || event.getEventData() == null) {
-            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "Event or Event data is null. Ignoring the event listened by ListenerEdgeIdentityRemoveIdentity");
-            return;
-        }
 
         final IdentityExtension parentExtension = getIdentityExtension();
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                    "The parent extension, associated with the ListenerEdgeIdentityRemoveIdentity is null, ignoring event.");
+                    "The parent extension associated with the ListenerEventHubBoot is null, ignoring this event.");
             return;
         }
 
-        parentExtension.handleRemoveIdentity(event);
+        parentExtension.handleEventHubBoot(event);
     }
 
     /**

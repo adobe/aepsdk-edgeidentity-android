@@ -17,7 +17,7 @@ import com.adobe.marketing.mobile.ExtensionListener;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
-public class ListenerIdentityRequestReset extends ExtensionListener {
+class ListenerIdentityRequestReset extends ExtensionListener {
     /**
      * Constructor.
      *

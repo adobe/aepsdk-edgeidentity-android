@@ -43,7 +43,7 @@ class IdentityProperties {
      * @param xdmData a map representing the initialization data for this {@code IdentityProperties} instance
      */
     IdentityProperties(final Map<String, Object> xdmData) {
-        IdentityMap map = IdentityMap.fromData(xdmData);
+        IdentityMap map = IdentityMap.fromXDMMap(xdmData);
         this.identityMap = map == null ? new IdentityMap() : map; // always keep an empty identity map so there is no need for null check
     }
 
@@ -160,17 +160,10 @@ class IdentityProperties {
      * Converts this into an event data representation in XDM format
      *
      * @param allowEmpty If this {@link IdentityProperties} contains no data, return a dictionary with a single {@link IdentityMap} key
-     * @return A dictionary representing this in XDM format
+     * @return A {@link Map} representing this in XDM format
      */
     Map<String, Object> toXDMData(final boolean allowEmpty) {
-        final Map<String, Object> map = new HashMap<>();
-
-        final Map<String, List<Map<String, Object>>> dict = identityMap.toObjectMap();
-        if (dict != null && (!dict.isEmpty() || allowEmpty)) {
-            map.put(IdentityConstants.XDMKeys.IDENTITY_MAP, dict);
-        }
-
-        return map;
+        return identityMap.asXDMMap(allowEmpty);
     }
 
     /**
