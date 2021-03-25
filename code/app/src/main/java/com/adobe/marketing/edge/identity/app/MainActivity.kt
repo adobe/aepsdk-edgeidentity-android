@@ -9,12 +9,10 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt
+package com.adobe.marketing.edge.identity.app
 
 import android.os.Bundle
 import android.view.Menu
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -24,11 +22,6 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import com.adobe.marketing.mobile.Assurance
-import com.adobe.marketing.mobile.Edge
-import com.adobe.marketing.mobile.LoggingMode
-import com.adobe.marketing.mobile.MobileCore
-import com.adobe.marketing.mobile.edge.identity.Identity
 
 class MainActivity : AppCompatActivity() {
 

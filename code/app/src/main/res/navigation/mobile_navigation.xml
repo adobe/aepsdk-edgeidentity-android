@@ -18,25 +18,25 @@
 
     <fragment
         android:id="@+id/nav_get_identity"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.GetIdentityFragment"
+        android:name="com.adobe.marketing.edge.identity.app.ui.GetIdentityFragment"
         android:label="@string/menu_get_identity"
         tools:layout="@layout/fragment_get_identity" />
 
     <fragment
         android:id="@+id/nav_custom_identity"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.CustomIdentityFragment"
+        android:name="com.adobe.marketing.edge.identity.app.ui.CustomIdentityFragment"
         android:label="@string/menu_custom_identity"
         tools:layout="@layout/fragment_custom_identity" />
 
     <fragment
         android:id="@+id/nav_multiple_identity"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.MultipleIdentityFragment"
+        android:name="com.adobe.marketing.edge.identity.app.ui.MultipleIdentityFragment"
         android:label="@string/menu_multiple_identity"
         tools:layout="@layout/fragment_multiple_identity" />
 
     <fragment
         android:id="@+id/nav_assurance"
-        android:name="com.adobe.marketing.edge.identity.appkt.ui.AssuranceFragment"
+        android:name="com.adobe.marketing.edge.identity.app.ui.AssuranceFragment"
         android:label="@string/menu_assurance"
         tools:layout="@layout/fragment_assurance" />
 </navigation>

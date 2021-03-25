@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt.ui
+package com.adobe.marketing.edge.identity.app.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -18,7 +18,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
-import com.adobe.marketing.edge.identity.appkt.R
+import com.adobe.marketing.edge.identity.app.R
 import com.adobe.marketing.mobile.Assurance
 
 class AssuranceFragment : Fragment() {

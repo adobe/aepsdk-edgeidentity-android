@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt
+package com.adobe.marketing.edge.identity.app
 
 import android.app.Application
 import com.adobe.marketing.mobile.Assurance

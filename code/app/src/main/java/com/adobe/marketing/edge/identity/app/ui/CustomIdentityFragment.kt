@@ -9,7 +9,7 @@
  governing permissions and limitations under the License.
  */
 
-package com.adobe.marketing.edge.identity.appkt.ui
+package com.adobe.marketing.edge.identity.app.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -19,8 +19,8 @@ import android.widget.*
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.adobe.marketing.edge.identity.appkt.R
-import com.adobe.marketing.edge.identity.appkt.model.SharedViewModel
+import com.adobe.marketing.edge.identity.app.R
+import com.adobe.marketing.edge.identity.app.model.SharedViewModel
 import com.adobe.marketing.mobile.edge.identity.AuthenticatedState
 import com.adobe.marketing.mobile.edge.identity.Identity
 import com.adobe.marketing.mobile.edge.identity.IdentityItem
