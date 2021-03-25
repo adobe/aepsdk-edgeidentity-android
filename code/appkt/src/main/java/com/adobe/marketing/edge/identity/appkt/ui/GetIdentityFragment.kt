@@ -93,7 +93,7 @@ class GetIdentityFragment : Fragment() {
 
         root.findViewById<Button>(R.id.btn_reset_identities).setOnClickListener {
             //TODO - add resetIdentities to MobleCore
-            MobileCore.resetIdentities()
+            //MobileCore.resetIdentities()
         }
 
         return root
