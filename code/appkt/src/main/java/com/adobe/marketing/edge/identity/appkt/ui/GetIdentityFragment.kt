@@ -23,6 +23,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.adobe.marketing.edge.identity.appkt.R
 import com.adobe.marketing.edge.identity.appkt.model.SharedViewModel
+import com.adobe.marketing.mobile.MobileCore
 import org.json.JSONObject
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -69,7 +70,7 @@ class GetIdentityFragment : Fragment() {
                 latch.countDown()
             }
 
-            latch.await(2, TimeUnit.SECONDS)
+            latch.await(1, TimeUnit.SECONDS)
 
             sharedViewModel.setEcidValue(if (resultPrimary != null) "ecid: $resultPrimary" else "ecid: not found")
             sharedViewModel.setEcidLegacyValue(if (resultSecondary != null) "legacy: $resultSecondary" else "")
@@ -92,6 +93,7 @@ class GetIdentityFragment : Fragment() {
 
         root.findViewById<Button>(R.id.btn_reset_identities).setOnClickListener {
             //TODO - add resetIdentities to MobleCore
+            MobileCore.resetIdentities()
         }
 
         return root

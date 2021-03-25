@@ -23,9 +23,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.adobe.marketing.edge.identity.appkt.R
 import com.adobe.marketing.edge.identity.appkt.model.SharedViewModel
-import com.adobe.marketing.mobile.MobileCore
-import com.adobe.marketing.mobile.MobilePrivacyStatus
-import com.adobe.marketing.mobile.VisitorID
+import com.adobe.marketing.mobile.*
 import kotlin.random.Random
 
 class MultipleIdentityFragment : Fragment() {
@@ -69,9 +67,10 @@ class MultipleIdentityFragment : Fragment() {
         }
 
         // Send a sample event to Edge
-        val sendEventButton = root.findViewById<Button>(R.id.btn_edge_send_event)
-        sendEventButton.setOnClickListener {
-            // TODO - send a sample event
+        root.findViewById<Button>(R.id.btn_edge_send_event).setOnClickListener {
+            val event = ExperienceEvent.Builder()
+            event.setXdmSchema(mapOf("eventType" to "com.adobe.edge.identity"))
+            Edge.sendEvent(event.build(), null)
         }
 
         // Trigger state change button, to cause direct Identity state change event
