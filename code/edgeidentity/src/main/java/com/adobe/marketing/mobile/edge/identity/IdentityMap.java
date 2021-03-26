@@ -57,8 +57,11 @@ public class IdentityMap {
         return copyItems;
     }
 
+    /**
+     * @return the list of all the available namespaces for this {@link IdentityMap}
+     */
     public List<String> getNamespaces() {
-        return new ArrayList<>(identityItems.keySet());
+        return new ArrayList(identityItems.keySet());
     }
 
     /**

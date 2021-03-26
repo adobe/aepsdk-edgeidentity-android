@@ -13,9 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.Event;
-import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.TestHelper;
 import com.adobe.marketing.mobile.TestPersistenceHelper;
 
@@ -28,10 +26,10 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import static com.adobe.marketing.mobile.TestHelper.*;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
+import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.registerEdgeIdentityExtension;
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
@@ -47,19 +45,7 @@ public class IdentityPublicAPITest {
 
     @Before
     public void setup() throws Exception {
-        Identity.registerExtension();
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        MobileCore.start(new AdobeCallback() {
-            @Override
-            public void call(Object o) {
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-        TestHelper.waitForThreads(2000);
-        resetTestExpectations();
+        registerEdgeIdentityExtension();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -175,6 +161,8 @@ public class IdentityPublicAPITest {
         Identity.updateIdentities(CreateIdentityMap("IDFA", "<idfa>"));
         Identity.updateIdentities(CreateIdentityMap("IDFa", "<newIdfa>"));
         Identity.updateIdentities(CreateIdentityMap("gaid", "<newgaid>"));
+        Identity.updateIdentities(CreateIdentityMap("ecid", "<newecid>"));
+        Identity.updateIdentities(CreateIdentityMap("idfa", "<newidfa>"));
         TestHelper.waitForThreads(2000);
 
         // verify xdm shared state does not get updated
@@ -417,6 +405,5 @@ public class IdentityPublicAPITest {
         Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
         assertEquals(3, persistedMap.size());  // 3 for ECID that still exists
     }
-
 
 }

@@ -22,7 +22,7 @@ import org.junit.rules.RuleChain;
 import java.util.Map;
 
 import static com.adobe.marketing.mobile.TestHelper.getXDMSharedStateFor;
-import static com.adobe.marketing.mobile.edge.identity.IdentityECIDHandlingTest.registerExtensionWithPersistenceData;
+import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.*;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.createXDMIdentityMap;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenMap;
 import static org.junit.Assert.assertEquals;
@@ -40,12 +40,13 @@ public class IdentityBootUpTest {
     @Test
     public void testOnBootUp_LoadsAllIdentitiesFromPreference() throws Exception {
         // test
-        registerExtensionWithPersistenceData(createXDMIdentityMap(
+        setEdgeIdentityPersistence(createXDMIdentityMap(
                 new IdentityTestUtil.TestItem("ECID", "primaryECID"),
                 new IdentityTestUtil.TestItem("ECID", "secondaryECID"),
                 new IdentityTestUtil.TestItem("Email", "example@email.com"),
                 new IdentityTestUtil.TestItem("UserId", "JohnDoe")
         ));
+        registerEdgeIdentityExtension();
 
         // verify xdm shared state
         Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));

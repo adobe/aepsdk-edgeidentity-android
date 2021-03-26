@@ -11,9 +11,7 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.Event;
-import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.TestHelper;
 import com.adobe.marketing.mobile.TestPersistenceHelper;
 
@@ -25,9 +23,9 @@ import org.junit.rules.RuleChain;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import static com.adobe.marketing.mobile.TestHelper.*;
+import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.registerEdgeIdentityExtension;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
 import static org.junit.Assert.*;
 
@@ -43,19 +41,7 @@ public class IdentityResetHandlingTest {
 
     @Before
     public void setup() throws Exception {
-        Identity.registerExtension();
-
-        final CountDownLatch latch = new CountDownLatch(1);
-        MobileCore.start(new AdobeCallback() {
-            @Override
-            public void call(Object o) {
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-        TestHelper.waitForThreads(2000);
-        resetTestExpectations();
+        registerEdgeIdentityExtension();
     }
 
     // --------------------------------------------------------------------------------------------
