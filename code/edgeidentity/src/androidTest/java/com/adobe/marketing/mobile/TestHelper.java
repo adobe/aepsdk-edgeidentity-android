@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.adobe.marketing.mobile.MonitorExtension.EventSpec;
+import com.adobe.marketing.mobile.edge.identity.ADBCountDownLatch;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 

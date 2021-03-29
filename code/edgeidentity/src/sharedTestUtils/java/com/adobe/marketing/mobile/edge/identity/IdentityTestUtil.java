@@ -34,11 +34,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-
 
 /**
  * Util class used by both Functional and Unit tests
@@ -291,7 +286,7 @@ class IdentityTestUtil {
     static Map<String, Object> getIdentitiesSync() {
         try {
             final HashMap<String, Object> getIdentityResponse = new HashMap<>();
-            final CountDownLatch latch = new CountDownLatch(1);
+            final ADBCountDownLatch latch = new ADBCountDownLatch(1);
             Identity.getIdentities(new AdobeCallbackWithError<IdentityMap>() {
                 @Override
                 public void call(final IdentityMap identities) {
@@ -316,7 +311,7 @@ class IdentityTestUtil {
     static String getExperienceCloudIdSync() {
         try {
             final HashMap<String, String> getExperienceCloudIdResponse = new HashMap<>();
-            final CountDownLatch latch = new CountDownLatch(1);
+            final ADBCountDownLatch latch = new ADBCountDownLatch(1);
             Identity.getExperienceCloudId(new AdobeCallback<String>() {
                 @Override
                 public void call(final String ecid) {

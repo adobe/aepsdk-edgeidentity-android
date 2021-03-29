@@ -11,6 +11,8 @@
 
 package com.adobe.marketing.mobile;
 
+import com.adobe.marketing.mobile.edge.identity.ADBCountDownLatch;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
