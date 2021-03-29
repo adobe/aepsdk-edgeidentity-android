@@ -87,7 +87,7 @@ public final class IdentityItem {
     public String toString() {
         return "{"
                 + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
-                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + authenticatedState + "\", "
+                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + (authenticatedState == null ? "null" : authenticatedState.getName()) + "\", "
                 + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
                 + "}";
     }
