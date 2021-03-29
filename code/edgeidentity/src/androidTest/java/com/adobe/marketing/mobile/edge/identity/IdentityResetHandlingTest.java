@@ -64,6 +64,7 @@ public class IdentityResetHandlingTest {
 
         // verify
         String newECID = getExperienceCloudIdSync();
+        assertNotNull(newECID);
         assertNotEquals(beforeResetECID, newECID);
 
         // verify edge reset complete event dispatched

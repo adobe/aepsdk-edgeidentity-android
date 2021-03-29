@@ -58,7 +58,9 @@ public class IdentityMap {
     }
 
     /**
-     * @return the list of all the available namespaces for this {@link IdentityMap}
+     * Returns a list of all the namespaces contained in this {@code IdentityMap}.
+     *
+     * @return a list of all the namespaces for this {@link IdentityMap}, or an empty string if this {@code IdentityMap} is empty
      */
     public List<String> getNamespaces() {
         return new ArrayList(identityItems.keySet());

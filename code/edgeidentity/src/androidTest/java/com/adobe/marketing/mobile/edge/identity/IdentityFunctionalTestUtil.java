@@ -58,6 +58,7 @@ public class IdentityFunctionalTestUtil {
             {
                 put("global.privacy", "optedin");
                 put("experienceCloud.org", "testOrg@AdobeOrg");
+                put("experienceCloud.server", "notasever");
             }
         };
         MobileCore.updateConfiguration(config);
@@ -84,6 +85,7 @@ public class IdentityFunctionalTestUtil {
             {
                 put("global.privacy", "optedin");
                 put("experienceCloud.org", "testOrg@AdobeOrg");
+                put("experienceCloud.server", "notasever");
             }
         };
         MobileCore.updateConfiguration(config);

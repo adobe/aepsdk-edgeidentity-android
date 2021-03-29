@@ -143,7 +143,7 @@ public class IdentityECIDHandlingTest {
         /// Test Edge Identity and IdentityDirect have same ECID on bootup, and after resetIdentities and privacy change ECIDs are different
 
         // 1) Register Identity then Edge Identity and verify both have same ECID
-        registerIdentityDirectExtension();;
+        registerIdentityDirectExtension();
 
         // register EdgeIdentity extension
         Identity.registerExtension();
