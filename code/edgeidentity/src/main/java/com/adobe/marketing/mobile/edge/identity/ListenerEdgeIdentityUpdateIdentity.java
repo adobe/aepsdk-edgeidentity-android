@@ -40,7 +40,7 @@ class ListenerEdgeIdentityUpdateIdentity extends ExtensionListener {
     @Override
     public void hear(final Event event) {
         if (event == null || event.getEventData() == null) {
-            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "Event or Event data is null. Ignoring the event listened by ListenerEdgeIdentityUpdateIdentity");
+            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "ListenerEdgeIdentityUpdateIdentity - Event or Event data is null. Ignoring the event.");
             return;
         }
 
@@ -48,7 +48,7 @@ class ListenerEdgeIdentityUpdateIdentity extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                    "The parent extension, associated with the ListenerEdgeIdentityUpdateIdentity is null, ignoring event.");
+                    "ListenerEdgeIdentityUpdateIdentity - The parent extension, associated with this listener is null, ignoring event.");
             return;
         }
 

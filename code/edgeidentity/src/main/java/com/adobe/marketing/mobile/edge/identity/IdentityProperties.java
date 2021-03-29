@@ -15,16 +15,16 @@ import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Represents a type which contains instances variables for this Identity extension
  */
 class IdentityProperties {
 
-    private static final String LOG_TAG = "IdentityProperties";
     private static final List<String> reservedNamespaces = new ArrayList<String>() {{
         add(IdentityConstants.Namespaces.ECID);
         add(IdentityConstants.Namespaces.GAID);
@@ -175,7 +175,7 @@ class IdentityProperties {
     private void removeIdentitiesWithReservedNamespaces(final IdentityMap identityMap) {
         for (final String reservedNamespace : reservedNamespaces) {
             if (identityMap.clearItemsForNamespace(reservedNamespace)) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Updating/Removing identifiers in namespace %s is not allowed.", reservedNamespace));
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("IdentityProperties - Updating/Removing identifiers in namespace %s is not allowed.", reservedNamespace));
             }
         }
     }

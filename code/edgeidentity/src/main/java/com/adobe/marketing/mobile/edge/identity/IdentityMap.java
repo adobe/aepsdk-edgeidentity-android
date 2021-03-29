@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 /**
  * Defines a map containing a set of end user identities, keyed on either namespace integration
  * code or the namespace ID of the identity. Within each namespace, the identity is unique.
@@ -29,7 +31,6 @@ import java.util.Map;
  */
 @SuppressWarnings("unused")
 public class IdentityMap {
-    private static final String LOG_TAG = "IdentityMap";
     private final Map<String, List<IdentityItem>> identityItems = new HashMap<>();
 
     /**
@@ -63,7 +64,7 @@ public class IdentityMap {
      * @return a list of all the namespaces for this {@link IdentityMap}, or an empty string if this {@code IdentityMap} is empty
      */
     public List<String> getNamespaces() {
-        return new ArrayList(identityItems.keySet());
+        return new ArrayList<>(identityItems.keySet());
     }
 
     /**
@@ -147,19 +148,18 @@ public class IdentityMap {
      */
     void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
         if (item == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap add item ignored as must contain a non-null IdentityItem.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap - add item ignored as must contain a non-null IdentityItem.");
             return;
         }
 
         if (Utils.isNullOrEmpty(namespace)) {
             MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                    "IdentityMap add item ignored as must contain a non-null/non-empty namespace.");
+                    "IdentityMap - add item ignored as must contain a non-null/non-empty namespace.");
             return;
         }
 
         addItemToMap(item, namespace, isFirstItem);
     }
-
 
     /**
      * Merge the given map on to this {@link IdentityMap}. Any {@link IdentityItem} in map which shares the same
@@ -298,6 +298,7 @@ public class IdentityMap {
     // ========================================================================================
     // private methods
     // ========================================================================================
+
     private void addItemToMap(final IdentityItem newItem, final String namespace, final boolean isFirstItem) {
         // check if namespace exists
         final List<IdentityItem> itemList;

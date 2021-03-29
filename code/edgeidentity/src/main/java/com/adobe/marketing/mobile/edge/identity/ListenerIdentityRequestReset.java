@@ -38,8 +38,8 @@ class ListenerIdentityRequestReset extends ExtensionListener {
      */
     @Override
     public void hear(final Event event) {
-        if (event == null) {
-            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "Event is null. Ignoring the event listened by ListenerIdentityRequestReset");
+        if (event == null || event.getEventData() == null) {
+            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "ListenerIdentityRequestReset - Event or Event data is null. Ignoring the event.");
             return;
         }
 
@@ -47,7 +47,7 @@ class ListenerIdentityRequestReset extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                    "The parent extension, associated with the ListenerIdentityRequestReset is null, ignoring request identity reset event.");
+                    "ListenerIdentityRequestReset - The parent extension, associated with this listener is null, ignoring event.");
             return;
         }
 

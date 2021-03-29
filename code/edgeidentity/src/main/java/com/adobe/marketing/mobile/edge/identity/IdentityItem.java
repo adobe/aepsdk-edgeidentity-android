@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 /**
  * Represents an identity item
  */
@@ -25,8 +27,6 @@ public final class IdentityItem {
     private final String id;
     private final AuthenticatedState authenticatedState;
     private final boolean primary;
-
-    private static final String LOG_TAG = "IdentityItem";
 
     /**
      * Creates a new {@link IdentityItem}
@@ -63,26 +63,6 @@ public final class IdentityItem {
     }
 
     /**
-     * Converts this object into a map representation
-     * @return this object in a map representation
-     */
-    Map<String, Object> toObjectMap() {
-        Map<String, Object> map = new HashMap<>();
-        if (id != null) {
-            map.put(IdentityConstants.XDMKeys.ID, id);
-        }
-
-        if (authenticatedState != null) {
-            map.put(IdentityConstants.XDMKeys.AUTHENTICATED_STATE, authenticatedState.getName());
-        } else {
-            map.put(IdentityConstants.XDMKeys.AUTHENTICATED_STATE, AuthenticatedState.AMBIGUOUS.getName());
-        }
-
-        map.put(IdentityConstants.XDMKeys.PRIMARY, primary);
-        return map;
-    }
-
-    /**
      * @return The id for this identity item
      */
     public String getId() {
@@ -101,6 +81,52 @@ public final class IdentityItem {
      */
     public boolean isPrimary() {
         return primary;
+    }
+
+    @Override
+    public String toString() {
+        return "{"
+                + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
+                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + authenticatedState + "\", "
+                + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
+                + "}";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IdentityItem that = (IdentityItem) o;
+        return id.equalsIgnoreCase(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    // ========================================================================================
+    // package protected methods
+    // ========================================================================================
+
+    /**
+     * Converts this object into a map representation
+     * @return this object in a map representation
+     */
+    Map<String, Object> toObjectMap() {
+        Map<String, Object> map = new HashMap<>();
+        if (id != null) {
+            map.put(IdentityConstants.XDMKeys.ID, id);
+        }
+
+        if (authenticatedState != null) {
+            map.put(IdentityConstants.XDMKeys.AUTHENTICATED_STATE, authenticatedState.getName());
+        } else {
+            map.put(IdentityConstants.XDMKeys.AUTHENTICATED_STATE, AuthenticatedState.AMBIGUOUS.getName());
+        }
+
+        map.put(IdentityConstants.XDMKeys.PRIMARY, primary);
+        return map;
     }
 
     /**
@@ -125,30 +151,8 @@ public final class IdentityItem {
 
             return new IdentityItem(id, authenticatedState, primary);
         } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityItem from data.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityItem - Failed to create IdentityItem from data.");
             return null;
         }
-    }
-
-    @Override
-    public String toString() {
-        return "{"
-                + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
-                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + authenticatedState + "\", "
-                + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
-                + "}";
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IdentityItem that = (IdentityItem) o;
-        return id.equalsIgnoreCase(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
     }
 }

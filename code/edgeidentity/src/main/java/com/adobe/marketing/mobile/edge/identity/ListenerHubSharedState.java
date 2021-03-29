@@ -38,8 +38,8 @@ class ListenerHubSharedState extends ExtensionListener {
      */
     @Override
     public void hear(final Event event) {
-        if (event == null) {
-            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "Event is null. Ignoring the event listened by ListenerHubSharedState");
+        if (event == null || event.getEventData() == null) {
+            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "ListenerHubSharedState - Event / EventData is null. Ignoring the event.");
             return;
         }
 
@@ -47,7 +47,7 @@ class ListenerHubSharedState extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                           "The parent extension, associated with the ListenerHubSharedState is null, ignoring hub shared state event.");
+                    "ListenerHubSharedState - The parent extension, associated with this listener is null, ignoring the event.");
             return;
         }
 

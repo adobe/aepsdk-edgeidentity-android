@@ -24,8 +24,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 class Utils {
-    private static final String LOG_TAG = "Utils";
 
     private Utils() {}
 
@@ -35,57 +36,6 @@ class Utils {
 
     static boolean isNullOrEmpty(final Map<String, Object> map) {
         return map == null || map.isEmpty();
-    }
-
-    static boolean isNullOrEmpty(final JSONArray jsonArray) {
-        return jsonArray == null || jsonArray.length() == 0;
-    }
-
-    static boolean isNullOrEmpty(final JSONObject jsonObject) {
-        return jsonObject == null || jsonObject.length() == 0;
-    }
-
-    /* Helpers for manipulating Maps */
-    /**
-     * Adds {@code key}/{@code values} to {@code map} if {@code values} is not null or an
-     * empty collection.
-     *
-     * @param map collection to put {@code values} mapped to {@code key} if {@code values} is
-     *            non-null and contains at least one entry
-     * @param key key used to map {@code values} in {@code map}
-     * @param values a map to add to {@code map} if not null or empty
-     */
-    static void putIfNotEmpty(final Map<String, Object> map, final String key, final Map values) {
-        boolean addValues =
-                map != null &&
-                        key != null &&
-                        values != null &&
-                        !values.isEmpty();
-
-        if (addValues) {
-            map.put(key, values);
-        }
-    }
-
-    /**
-     * Adds {@code key}/{@code value} to {@code map} if {@code value} is not null or an
-     * empty collection.
-     *
-     * @param map collection to put {@code value} mapped to {@code key} if {@code value} is
-     *            non-null and contains at least one entry
-     * @param key key used to map {@code value} in {@code map}
-     * @param value a String to add to {@code map} if not null or empty
-     */
-    public static void putIfNotEmpty(final Map<String, Object> map, final String key, final String value) {
-        boolean addValues =
-                map != null &&
-                        key != null &&
-                        value != null &&
-                        !value.isEmpty();
-
-        if (addValues) {
-            map.put(key, value);
-        }
     }
 
     /**
@@ -124,7 +74,7 @@ class Utils {
             return null;
         }
 
-        Map<String, Object> jsonAsMap = new HashMap<String, Object>();
+        Map<String, Object> jsonAsMap = new HashMap<>();
         Iterator<String> keysIterator = jsonObject.keys();
 
         while (keysIterator.hasNext()) {
@@ -136,7 +86,7 @@ class Utils {
                 value = jsonObject.get(nextKey);
             } catch (JSONException e) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                        "toMap - Unable to convert jsonObject to Map for key " + nextKey + ", skipping.");
+                        "Utils(toMap) - Unable to convert jsonObject to Map for key " + nextKey + ", skipping.");
             }
 
             if (value == null) {
@@ -170,7 +120,7 @@ class Utils {
             return null;
         }
 
-        List<Object> jsonArrayAsList = new ArrayList<Object>();
+        List<Object> jsonArrayAsList = new ArrayList<>();
         int size = jsonArray.length();
 
         for (int i = 0; i < size; i++) {
@@ -181,7 +131,7 @@ class Utils {
                 value = jsonArray.get(i);
             } catch (JSONException e) {
                 MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                        "toList - Unable to convert jsonObject to List for index " + i + ", skipping.");
+                        "Utils(toList) - Unable to convert jsonObject to List for index " + i + ", skipping.");
             }
 
             if (value == null) {
@@ -202,37 +152,6 @@ class Utils {
         return jsonArrayAsList;
     }
 
-    static List<Map<String, Object>> toListOfMaps(final JSONArray jsonArray) {
-        if (jsonArray == null) {
-            return null;
-        }
-
-        List<Map<String, Object>> jsonArrayAsList = new ArrayList<Map<String, Object>>();
-        int size = jsonArray.length();
-
-        for (int i = 0; i < size; i++) {
-            Object value = null;
-            Map<String, Object> returnValue = null;
-
-            try {
-                value = jsonArray.get(i);
-            } catch (JSONException e) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-                        "toList - Unable to convert jsonObject to List for index " + i + ", skipping.");
-            }
-
-            if (value == null) {
-                continue;
-            }
-
-            if (value instanceof JSONObject) {
-                returnValue = toMap((JSONObject)value);
-                jsonArrayAsList.add(returnValue);
-            }
-        }
-
-        return jsonArrayAsList;
-    }
 
     /**
      * Creates a deep copy of the provided {@link Map}.
@@ -248,7 +167,7 @@ class Utils {
         try {
             return Utils.toMap(new JSONObject(map));
         } catch (NullPointerException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "deepCopy - Unable to deep copy map, json string invalid.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Utils(deepCopy) - Unable to deep copy map, json string invalid.");
         }
 
         return null;
@@ -266,7 +185,7 @@ class Utils {
             return null;
         }
 
-        List<Map<String, Object>> deepCopy = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> deepCopy = new ArrayList<>();
 
         for (Map<String, Object> map : listOfMaps) {
             deepCopy.add(deepCopy(map));

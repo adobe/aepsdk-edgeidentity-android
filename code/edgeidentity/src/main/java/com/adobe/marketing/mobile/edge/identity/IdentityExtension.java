@@ -21,9 +21,10 @@ import com.adobe.marketing.mobile.MobileCore;
 
 import java.util.Map;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 
 class IdentityExtension extends Extension {
-    private static final String LOG_TAG = "IdentityExtension";
     private final IdentityState state = new IdentityState(new IdentityProperties());
 
     /**
@@ -60,7 +61,7 @@ class IdentityExtension extends Extension {
         ExtensionErrorCallback<ExtensionError> listenerErrorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.ERROR, IdentityConstants.LOG_TAG, String.format("Failed to register listener, error: %s",
+                MobileCore.log(LoggingMode.ERROR, LOG_TAG, String.format("Failed to register listener, error: %s",
                         extensionError.getErrorName()));
             }
         };
@@ -108,7 +109,7 @@ class IdentityExtension extends Extension {
         // share the initial XDMSharedState on bootUp
         final Map currentIdentities = state.getIdentityProperties().toXDMData(false);
         if (currentIdentities == null || currentIdentities.isEmpty()) {
-            MobileCore.log(LoggingMode.WARNING, LOG_TAG, "Nothing loaded from persistence for initial Identity XDM shared state on boot");
+            MobileCore.log(LoggingMode.WARNING, LOG_TAG, "IdentityExtension - Nothing loaded from persistence for initial Identity XDM shared state on boot");
             return;
         }
 
@@ -124,7 +125,7 @@ class IdentityExtension extends Extension {
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
         final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to update identifiers as no identifiers were found in the event data.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Failed to update identifiers as no identifiers were found in the event data.");
             return;
         }
 
@@ -141,7 +142,7 @@ class IdentityExtension extends Extension {
         final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
         final IdentityMap map = IdentityMap.fromXDMMap(eventData);
         if (map == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to remove identifiers as no identifiers were found in the event data.");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Failed to remove identifiers as no identifiers were found in the event data.");
             return;
         }
 
@@ -171,7 +172,7 @@ class IdentityExtension extends Extension {
                 return;
             }
         } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse event state owner as String: " + e.getLocalizedMessage());
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Could not process direct Identity shared state change event, failed to parse event state owner as String: " + e.getLocalizedMessage());
             return;
         }
 
@@ -179,7 +180,7 @@ class IdentityExtension extends Extension {
         final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedStateKeys.IDENTITY_DIRECT, event);
 
         if (identityState == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, Identity shared state is null");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Could not process direct Identity shared state change event, Identity shared state is null");
             return;
         }
 
@@ -191,7 +192,7 @@ class IdentityExtension extends Extension {
                 shareIdentityXDMSharedState(event);
             }
         } catch (ClassCastException e) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Could not process direct Identity shared state change event, failed to parse stored ECID as String: " + e.getLocalizedMessage());
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Could not process direct Identity shared state change event, failed to parse stored ECID as String: " + e.getLocalizedMessage());
         }
     }
 
@@ -211,7 +212,7 @@ class IdentityExtension extends Extension {
         MobileCore.dispatchResponseEvent(responseEvent, event, new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Edge Identity response event for event " +
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Failed to dispatch Edge Identity response event for event " +
                         event.getUniqueIdentifier() +
                         " with error " +
                         extensionError.getErrorName());
@@ -236,7 +237,7 @@ class IdentityExtension extends Extension {
         MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to dispatch Edge Identity reset response event for event " +
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - Failed to dispatch Edge Identity reset response event for event " +
                         event.getUniqueIdentifier() +
                         " with error " +
                         extensionError.getErrorName());
@@ -258,7 +259,7 @@ class IdentityExtension extends Extension {
         final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("IdentityExtension - Failed getting direct Identity shared state. Error : %s.", extensionError.getErrorName()));
             }
         };
 
@@ -273,7 +274,7 @@ class IdentityExtension extends Extension {
     private void shareIdentityXDMSharedState(final Event event) {
         final ExtensionApi extensionApi = super.getApi();
         if (extensionApi == null) {
-            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "ExtensionApi is null, unable to share XDM shared state for reset identities");
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityExtension - ExtensionApi is null, unable to share XDM shared state for reset identities");
             return;
         }
 
@@ -281,7 +282,7 @@ class IdentityExtension extends Extension {
         final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
             @Override
             public void error(final ExtensionError extensionError) {
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("IdentityExtension - Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));
             }
         };
 

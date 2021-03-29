@@ -11,7 +11,7 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-class IdentityConstants {
+final class IdentityConstants {
 
     static final String LOG_TAG = "EdgeIdentity";
     static final String EXTENSION_NAME = "com.adobe.edge.identity";

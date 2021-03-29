@@ -42,7 +42,7 @@ class ListenerEventHubBoot extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                    "The parent extension associated with the ListenerEventHubBoot is null, ignoring this event.");
+                    "ListenerEventHubBoot - The parent extension associated with this listener is null, ignoring this event.");
             return;
         }
 

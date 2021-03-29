@@ -39,7 +39,7 @@ class ListenerGenericIdentityRequestContent extends ExtensionListener {
     @Override
     public void hear(final Event event) {
         if (event == null || event.getEventData() == null) {
-            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "Event or Event data is null. Ignoring the event listened by ListenerGenericIdentityRequestContent");
+            MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG, "ListenerGenericIdentityRequestContent - Event or Event data is null. Ignoring the event.");
             return;
         }
 
@@ -47,7 +47,7 @@ class ListenerGenericIdentityRequestContent extends ExtensionListener {
 
         if (parentExtension == null) {
             MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-                    "The parent extension, associated with the ListenerGenericIdentityRequestContent is null, ignoring the generic identity request content event.");
+                    "ListenerGenericIdentityRequestContent - The parent extension, associated with this listener is null, ignoring the event.");
             return;
         }
 

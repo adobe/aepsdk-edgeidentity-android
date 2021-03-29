@@ -14,12 +14,12 @@ package com.adobe.marketing.mobile.edge.identity;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Manages the business logic of this Identity extension
  */
 class IdentityState {
-    private static String LOG_TAG = "IdentityState";
     private IdentityProperties identityProperties;
 
     /**
@@ -37,7 +37,6 @@ class IdentityState {
     IdentityProperties getIdentityProperties() {
         return identityProperties;
     }
-
 
     /**
      * Completes init for the Identity extension.
@@ -58,15 +57,15 @@ class IdentityState {
             final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
             if (directIdentityEcid == null) {
                 identityProperties.setECID(new ECID());
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Bootup - Generating new ECID '" + identityProperties.getECID().toString() + "'");
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'");
             } else {
                 identityProperties.setECID(directIdentityEcid);
-                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Bootup - Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
+                MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
             }
             IdentityStorageService.savePropertiesToPersistence(identityProperties);
         }
 
-        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Edge Identity has successfully booted up");
+        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Edge Identity has successfully booted up");
     }
 
     /**
@@ -82,7 +81,6 @@ class IdentityState {
 
         // TODO: AMSDK-11208 Use return value to tell Identity to dispatch consent ad id update
     }
-
 
     /**
      * Update the customer identifiers by merging the passed in {@link IdentityMap} with the current identifiers present in {@link #identityProperties}.
@@ -126,7 +124,7 @@ class IdentityState {
 
         identityProperties.setECIDSecondary(legacyEcid);
         IdentityStorageService.savePropertiesToPersistence(identityProperties);
-        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
+        MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
         return true;
     }
 
