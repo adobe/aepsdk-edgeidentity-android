@@ -23,6 +23,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.adobe.marketing.edge.identity.app.R
 import com.adobe.marketing.edge.identity.app.model.SharedViewModel
+import com.adobe.marketing.mobile.MobileCore
 import org.json.JSONObject
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -91,8 +92,7 @@ class GetIdentityFragment : Fragment() {
         }
 
         root.findViewById<Button>(R.id.btn_reset_identities).setOnClickListener {
-            //TODO - add resetIdentities to MobleCore
-            //MobileCore.resetIdentities()
+            MobileCore.resetIdentities()
         }
 
         return root

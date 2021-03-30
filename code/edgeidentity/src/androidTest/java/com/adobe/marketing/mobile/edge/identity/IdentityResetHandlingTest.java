@@ -12,6 +12,7 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.TestHelper;
 import com.adobe.marketing.mobile.TestPersistenceHelper;
 
@@ -60,7 +61,7 @@ public class IdentityResetHandlingTest {
         String beforeResetECID = getExperienceCloudIdSync();
 
         // test
-        dispatchRequestResetEvent();
+        MobileCore.resetIdentities();
 
         // verify
         String newECID = getExperienceCloudIdSync();

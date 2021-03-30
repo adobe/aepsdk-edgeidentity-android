@@ -103,8 +103,7 @@ public class IdentityECIDHandlingTest {
         registerEdgeIdentityExtension();
 
         // test
-        // TODO : Change to MobileCore.resetIdentities when Core version 1.8.0 is released
-        dispatchRequestResetEvent();
+        MobileCore.resetIdentities();
         String newECID = getExperienceCloudIdSync();
 
         // verify the new ecid is not the same as old one and the secondary ECID is cleared
@@ -156,7 +155,7 @@ public class IdentityECIDHandlingTest {
         assertEquals(directECID, edgeECID);
 
         // 2) Reset identities and toggle privacy and verify legacy ECID added to IdentityMap
-        dispatchRequestResetEvent();
+        MobileCore.resetIdentities();
         togglePrivacyStatus();
 
         // verify

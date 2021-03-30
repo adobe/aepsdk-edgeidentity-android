@@ -337,9 +337,4 @@ class IdentityTestUtil {
         map.addItem(item, namespace);
         return map;
     }
-
-    static void dispatchRequestResetEvent() {
-        MobileCore.dispatchEvent(new Event.Builder("Request Reset", IdentityConstants.EventType.GENERIC_IDENTITY, IdentityConstants.EventSource.REQUEST_RESET).build(), null);
-    }
-
 }
