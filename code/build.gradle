@@ -5,15 +5,14 @@ buildscript {
     }
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.0.1"
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.11.0"
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -23,30 +22,14 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
-            url "https://eaps.bintray.com/mobileservicesdk"
+            url "https://plugins.gradle.org/m2/"
         }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
 
     apply plugin: 'maven-publish'
-    apply plugin: "com.jfrog.artifactory"
-}
-
-artifactory {
-    contextUrl = artifactoryContextUrl
-    publish {
-        repository {
-            repoKey = artifactoryRepoKey
-            username = artifactoryUserName
-            password = artifactoryPassword
-            maven = true
-        }
-        defaults {
-            publishArtifacts = true
-            publishPom = true
-        }
-    }
 }
 
 task clean(type: Delete) {
