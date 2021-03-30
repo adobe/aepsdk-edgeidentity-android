@@ -50,11 +50,12 @@ ci-generate-library-debug:
 ci-generate-library-release:
 	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME}  assemblePhoneRelease)
 
-ci-publish-staging:
-	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME} clean assemblePhone)
+build-release:
+	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME} clean assemblePhoneRelease)
+
+ci-publish-staging: clean build-release
 	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME} publishReleasePublicationToSonatypeRepository --stacktrace)
 
-ci-publish-main:
-	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME} clean assemblePhone)
+ci-publish-main: clean build-release
 	(./code/gradlew -p code/${EXTENSION-LIBRARY-FOLDER-NAME} publishReleasePublicationToSonatypeRepository -Prelease)
 
