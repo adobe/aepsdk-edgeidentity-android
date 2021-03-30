@@ -8,6 +8,8 @@ buildscript {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+
+        // TODO: the following url can be removed once core is migrated to the new release process
         maven { url "https://eaps.bintray.com/mobileservicesdk" }
     }
     dependencies {
@@ -24,6 +26,8 @@ allprojects {
         mavenCentral()
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+
+        // TODO: the following url can be removed once core is migrated to the new release process
         maven { url "https://eaps.bintray.com/mobileservicesdk" }
     }
 
