@@ -170,7 +170,6 @@ publishing {
                     coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
                     coreDependencyNode.appendNode('artifactId', 'core')
                     coreDependencyNode.appendNode('version', mavenCoreVersion)
-                    }
                 }
             }
         }
