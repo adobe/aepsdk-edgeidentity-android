@@ -19,6 +19,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -31,17 +35,20 @@ public class ListenerEdgeIdentityRequestIdentityTests {
 	private IdentityExtension mockIdentityExtension;
 
 	private ListenerEdgeIdentityRequestIdentity listener;
+	private ExecutorService testExecutor;
 
 	@Before
 	public void setup() {
+		testExecutor = Executors.newSingleThreadExecutor();
 		mockIdentityExtension = Mockito.mock(IdentityExtension.class);
+		doReturn(testExecutor).when(mockIdentityExtension).getExecutor();
 		MobileCore.start(null);
 		listener = spy(new ListenerEdgeIdentityRequestIdentity(null, IdentityConstants.EventType.IDENTITY,
 					   IdentityConstants.EventSource.REQUEST_IDENTITY));
 	}
 
 	@Test
-	public void testHear() {
+	public void testHear() throws Exception {
 		// setup
 		Event event = new Event.Builder("Request Identity", IdentityConstants.EventType.IDENTITY,
 										IdentityConstants.EventSource.REQUEST_IDENTITY).build();
@@ -51,11 +58,12 @@ public class ListenerEdgeIdentityRequestIdentityTests {
 		listener.hear(event);
 
 		// verify
-		verify(mockIdentityExtension, times(1)).handleIdentityRequest(event);
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(1)).processAddEvent(event);
 	}
 
 	@Test
-	public void testHear_WhenParentExtensionNull() {
+	public void testHear_WhenParentExtensionNull() throws Exception {
 		// setup
 		Event event = new Event.Builder("Request Identity", IdentityConstants.EventType.IDENTITY,
 										IdentityConstants.EventSource.REQUEST_IDENTITY).build();
@@ -65,11 +73,12 @@ public class ListenerEdgeIdentityRequestIdentityTests {
 		listener.hear(event);
 
 		// verify
-		verify(mockIdentityExtension, times(0)).handleIdentityRequest(any(Event.class));
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
 	}
 
 	@Test
-	public void testHear_WhenEventNull() {
+	public void testHear_WhenEventNull() throws Exception {
 		// setup
 		doReturn(null).when(listener).getIdentityExtension();
 		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
@@ -78,6 +87,7 @@ public class ListenerEdgeIdentityRequestIdentityTests {
 		listener.hear(null);
 
 		// verify
-		verify(mockIdentityExtension, times(0)).handleIdentityRequest(any(Event.class));
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
 	}
 }

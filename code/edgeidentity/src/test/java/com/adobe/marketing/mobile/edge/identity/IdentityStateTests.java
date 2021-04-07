@@ -62,6 +62,7 @@ public class IdentityStateTests {
 
 	private SharedStateCallback mockSharedStateCallback;
 	private Map<String, Object> hubSharedState;
+	private Map<String, Object> identityDirectSharedState;
 
 	@Before
 	public void before() throws Exception {
@@ -78,6 +79,8 @@ public class IdentityStateTests {
 			public Map<String, Object> getSharedState(final String stateOwner, final Event event) {
 				if (IdentityConstants.SharedState.Hub.NAME.equals(stateOwner)) {
 					return hubSharedState;
+				} else if (IdentityConstants.SharedState.IdentityDirect.NAME.equals(stateOwner)) {
+					return identityDirectSharedState;
 				}
 
 				return null;
@@ -209,6 +212,63 @@ public class IdentityStateTests {
 
 		// verify
 		assertNull(state.getIdentityProperties().getECID());
+	}
+
+	@Test
+	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_usesIdentityDirectECID() {
+		// setup
+		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
+				0)).thenReturn(mockSharedPreference);
+		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
+				null)).thenReturn(null);
+
+
+		IdentityState state = new IdentityState(new IdentityProperties());
+
+		// test
+		hubSharedState = new HashMap<>();
+		hubSharedState.put("extensions", new HashMap<String, Object>() {{
+			put("com.adobe.module.identity", new HashMap<String, String>() {{
+				put("friendlyName", "Identity");
+				put("version", "1.2.2");
+			}});
+		}});
+		identityDirectSharedState = new HashMap<>();
+		identityDirectSharedState.put("mid", "1234");
+		state.bootupIfReady(mockSharedStateCallback);
+
+		// verify
+		assertEquals("1234", state.getIdentityProperties().getECID().toString()); // ECID from Identity direct
+		assertNull(state.getIdentityProperties().getECIDSecondary()); // should be null
+		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+	}
+
+	@Test
+	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_whenIdentityDirectECIDNull_generatesNew() {
+		// setup
+		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
+				0)).thenReturn(mockSharedPreference);
+		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
+				null)).thenReturn(null);
+
+
+		IdentityState state = new IdentityState(new IdentityProperties());
+
+		// test
+		hubSharedState = new HashMap<>();
+		hubSharedState.put("extensions", new HashMap<String, Object>() {{
+			put("com.adobe.module.identity", new HashMap<String, String>() {{
+				put("friendlyName", "Identity");
+				put("version", "1.2.2");
+			}});
+		}});
+		identityDirectSharedState = new HashMap<>(); // no mid key
+		state.bootupIfReady(mockSharedStateCallback);
+
+		// verify
+		assertNotNull("1234", state.getIdentityProperties().getECID()); // new ECID generated
+		assertNull(state.getIdentityProperties().getECIDSecondary()); // should be null
+		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
 	}
 
 	@Test
@@ -428,30 +488,5 @@ public class IdentityStateTests {
 
 		assertNull(state.getIdentityProperties().getECIDSecondary());
 		verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
-	}
-
-	@Test
-	public void testUpdateLegacyExperienceCloudId_setsPrimaryWhenExistingIsNullAndLegacyNotNull() {
-		IdentityState state = new IdentityState(new IdentityProperties());
-		state.getIdentityProperties().setECID(null);
-
-		ECID directIdentityECID = new ECID("legacyECID");
-		state.updateLegacyExperienceCloudId(directIdentityECID);
-
-		assertEquals(directIdentityECID, state.getIdentityProperties().getECID());
-		assertNull(state.getIdentityProperties().getECIDSecondary());
-		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
-	}
-
-	@Test
-	public void testUpdateLegacyExperienceCloudId_generatesNewECIDWhenExistingIsNullAndLegacyNull() {
-		IdentityState state = new IdentityState(new IdentityProperties());
-		state.getIdentityProperties().setECID(null);
-
-		state.updateLegacyExperienceCloudId(null);
-
-		assertNotNull(state.getIdentityProperties().getECID());
-		assertNull(state.getIdentityProperties().getECIDSecondary());
-		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
 	}
 }

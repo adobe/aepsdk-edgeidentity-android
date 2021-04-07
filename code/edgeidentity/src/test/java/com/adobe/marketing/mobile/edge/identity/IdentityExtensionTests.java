@@ -100,15 +100,12 @@ public class IdentityExtensionTests {
 		extension = new IdentityExtension(mockExtensionApi);
 
 		// verify 2 listeners are registered
-		verify(mockExtensionApi, times(7)).registerEventListener(anyString(),
+		verify(mockExtensionApi, times(6)).registerEventListener(anyString(),
 				anyString(), any(Class.class), any(ExtensionErrorCallback.class));
 
 		// verify listeners are registered with correct event source and type
 		verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityConstants.EventType.EDGE_IDENTITY),
 				eq(IdentityConstants.EventSource.REQUEST_IDENTITY), eq(ListenerEdgeIdentityRequestIdentity.class),
-				callbackCaptor.capture());
-		verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityConstants.EventType.GENERIC_IDENTITY),
-				eq(IdentityConstants.EventSource.REQUEST_CONTENT), eq(ListenerGenericIdentityRequestContent.class),
 				callbackCaptor.capture());
 		verify(mockExtensionApi, times(1)).registerEventListener(eq(IdentityConstants.EventType.EDGE_IDENTITY),
 				eq(IdentityConstants.EventSource.UPDATE_IDENTITY), eq(ListenerEdgeIdentityUpdateIdentity.class),

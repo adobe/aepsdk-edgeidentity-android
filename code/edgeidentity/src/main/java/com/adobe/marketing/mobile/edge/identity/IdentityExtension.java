@@ -316,6 +316,10 @@ class IdentityExtension extends Extension {
 	 */
 	void handleIdentityDirectECIDUpdate(final Event event) {
 		final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedState.IdentityDirect.NAME, event);
+		if (identityState == null) {
+			return;
+		}
+
 		try {
 			final String legacyEcidString = (String) identityState.get(IdentityConstants.SharedState.IdentityDirect.ECID);
 			final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);

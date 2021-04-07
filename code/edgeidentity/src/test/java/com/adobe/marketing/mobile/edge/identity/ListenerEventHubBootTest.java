@@ -19,6 +19,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -28,33 +32,37 @@ import static org.mockito.Mockito.verify;
 public class ListenerEventHubBootTest {
 
 	@Mock
-	private IdentityExtension mockConsentExtension;
+	private IdentityExtension mockIdentityExtension;
 
 	private ListenerEventHubBoot listener;
+	private ExecutorService testExecutor;
 
 	@Before
 	public void setup() {
-		mockConsentExtension = Mockito.mock(IdentityExtension.class);
+		testExecutor = Executors.newSingleThreadExecutor();
+		mockIdentityExtension = Mockito.mock(IdentityExtension.class);
+		doReturn(testExecutor).when(mockIdentityExtension).getExecutor();
 		MobileCore.start(null);
 		listener = spy(new ListenerEventHubBoot(null, IdentityConstants.EventType.HUB, IdentityConstants.EventSource.BOOTED));
 	}
 
 	@Test
-	public void testHear() {
+	public void testHear() throws Exception {
 		// setup
 		Event event = new Event.Builder("Event Hub Boot", IdentityConstants.EventType.HUB,
 										IdentityConstants.EventSource.BOOTED).build();
-		doReturn(mockConsentExtension).when(listener).getIdentityExtension();
+		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
 
 		// test
 		listener.hear(event);
 
 		// verify
-		verify(mockConsentExtension, times(1)).handleEventHubBoot(event);
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(1)).handleEventHubBoot(event);
 	}
 
 	@Test
-	public void testHear_WhenParentExtensionNull() {
+	public void testHear_WhenParentExtensionNull() throws Exception {
 		// setup
 		Event event = new Event.Builder("Event Hub Boot", IdentityConstants.EventType.HUB,
 										IdentityConstants.EventSource.BOOTED).build();
@@ -64,7 +72,8 @@ public class ListenerEventHubBootTest {
 		listener.hear(event);
 
 		// verify
-		verify(mockConsentExtension, times(0)).handleEventHubBoot(any(Event.class));
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(0)).handleEventHubBoot(any(Event.class));
 	}
 
 }
