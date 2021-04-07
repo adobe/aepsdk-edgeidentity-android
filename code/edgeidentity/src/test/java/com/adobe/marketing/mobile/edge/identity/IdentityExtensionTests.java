@@ -37,6 +37,7 @@ import java.util.Map;
 
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildUpdateIdentityRequest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -480,6 +481,47 @@ public class IdentityExtensionTests {
 		// verify shared state
 		verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), eq(removeIdentityEvent),
 				any(ExtensionErrorCallback.class));
+	}
+
+	@Test
+	public void test_processCachedEvents_returnsWhenNotBooted() {
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+											  new TestItem("space", "moon")
+										  );
+		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
+		extension.state = mockIdentityState;
+
+		// test
+		extension.processAddEvent(buildUpdateIdentityRequest(identityXDM));
+		extension.processAddEvent(buildUpdateIdentityRequest(identityXDM));
+
+		// verify
+		verify(mockExtensionApi, times(0)).setXDMSharedEventState(any(Map.class), any(Event.class),
+				any(ExtensionErrorCallback.class));
+
+	}
+
+	@Test
+	public void test_processCachedEvents_processesWhenBooted() {
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+											  new TestItem("space", "moon")
+										  );
+		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
+		mockIdentityState.hasBooted = true;
+		extension.state = mockIdentityState;
+
+		// test
+		extension.processAddEvent(buildUpdateIdentityRequest(identityXDM));
+		extension.processAddEvent(buildRemoveIdentityRequest(identityXDM));
+		extension.processAddEvent(new Event.Builder("Test event", IdentityConstants.EventType.EDGE_IDENTITY,
+								  IdentityConstants.EventSource.REQUEST_IDENTITY).build());
+		extension.processAddEvent(new Event.Builder("Test event", IdentityConstants.EventType.GENERIC_IDENTITY,
+								  IdentityConstants.EventSource.REQUEST_RESET).build());
+
+		// verify
+		verify(mockExtensionApi, times(3)).setXDMSharedEventState(any(Map.class), any(Event.class),
+				any(ExtensionErrorCallback.class)); // request identity does not update shared state
+
 	}
 
 	// ========================================================================================

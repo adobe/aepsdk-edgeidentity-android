@@ -58,13 +58,13 @@ final class EventUtils {
 	}
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:EDGE_IDENTITY} and source {@link IdentityConstants.EventSource:REQUEST_RESET}
+	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource:REQUEST_RESET}
 	 *
 	 * @param event the event to verify
 	 * @return true if both type and source match
 	 */
 	static boolean isRequestResetEvent(final Event event) {
-		return event != null && IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType())
+		return event != null && IdentityConstants.EventType.GENERIC_IDENTITY.equalsIgnoreCase(event.getType())
 			   && IdentityConstants.EventSource.REQUEST_RESET.equalsIgnoreCase(event.getSource());
 	}
 

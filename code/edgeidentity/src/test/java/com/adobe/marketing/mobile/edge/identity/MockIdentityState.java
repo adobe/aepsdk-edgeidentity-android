@@ -38,4 +38,10 @@ class MockIdentityState extends IdentityState {
 		removeCustomerIdentifiersCalledTimes++;
 		removeCustomerIdentifiersParams.add(map);
 	}
+
+	boolean hasBooted = false;
+	@Override
+	boolean hasBooted() {
+		return hasBooted;
+	}
 }
