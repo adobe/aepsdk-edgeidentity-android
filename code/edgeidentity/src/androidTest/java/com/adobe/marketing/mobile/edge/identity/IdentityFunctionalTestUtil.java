@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.adobe.marketing.mobile.TestHelper.getXDMSharedStateFor;
 import static com.adobe.marketing.mobile.TestHelper.resetTestExpectations;
@@ -45,7 +46,7 @@ public class IdentityFunctionalTestUtil {
 			}
 		});
 
-		latch.await();
+		latch.await(1000, TimeUnit.MILLISECONDS);
 		TestHelper.waitForThreads(2000);
 		resetTestExpectations();
 	}
@@ -58,7 +59,7 @@ public class IdentityFunctionalTestUtil {
 			{
 				put("global.privacy", "optedin");
 				put("experienceCloud.org", "testOrg@AdobeOrg");
-				put("experienceCloud.server", "notasever");
+				put("experienceCloud.server", "notaserver");
 			}
 		};
 		MobileCore.updateConfiguration(config);
@@ -72,7 +73,7 @@ public class IdentityFunctionalTestUtil {
 			}
 		});
 
-		latch.await();
+		latch.await(1000, TimeUnit.MILLISECONDS);
 		TestHelper.waitForThreads(2000);
 		resetTestExpectations();
 	}
@@ -85,11 +86,10 @@ public class IdentityFunctionalTestUtil {
 			{
 				put("global.privacy", "optedin");
 				put("experienceCloud.org", "testOrg@AdobeOrg");
-				put("experienceCloud.server", "notasever");
+				put("experienceCloud.server", "notaserver");
 			}
 		};
 		MobileCore.updateConfiguration(config);
-
 
 		com.adobe.marketing.mobile.edge.identity.Identity.registerExtension();
 		com.adobe.marketing.mobile.Identity.registerExtension();

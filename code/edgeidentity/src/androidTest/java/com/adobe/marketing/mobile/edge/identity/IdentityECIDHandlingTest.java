@@ -81,16 +81,34 @@ public class IdentityECIDHandlingTest {
 	}
 
 	@Test
-	public void testECID_whenBothExtensionRegistered() throws Exception {
+	public void testECID_whenBothExtensionRegistered_install() throws Exception {
 		// setup
-		registerBothIdentityExtensions();
+		registerBothIdentityExtensions(); // no ECID exists before this step
 
-		String edgeECID = getExperienceCloudIdSync();
 		String directECID = getIdentityDirectECIDSync();
+		String edgeECID = getExperienceCloudIdSync();
 
 		// verify ECID
-		verifyPrimaryECID(edgeECID);
-		verifySecondaryECID(directECID);
+		verifyPrimaryECID(directECID);
+		verifySecondaryECID(null);
+		assertEquals(directECID, edgeECID);
+	}
+
+	@Test
+	public void testECID_whenBothExtensionRegistered_migrationPath() throws Exception {
+		// setup
+		String existingECID = "legacyECID";
+		setIdentityDirectPersistedECID(existingECID);
+		registerBothIdentityExtensions();
+
+		String directECID = getIdentityDirectECIDSync();
+		String edgeECID = getExperienceCloudIdSync();
+
+		// verify ECID
+		verifyPrimaryECID(directECID);
+		verifySecondaryECID(null);
+		assertEquals(directECID, edgeECID);
+		assertEquals(existingECID, edgeECID);
 	}
 
 	@Test
@@ -165,23 +183,20 @@ public class IdentityECIDHandlingTest {
 	@Test
 	public void testECID_DirectEcidIsRemovedOnPrivacyOptOut() throws Exception {
 		// setup
+		setIdentityDirectPersistedECID("legacyECID");
+		setEdgeIdentityPersistence(CreateIdentityMap("ECID", "edgeECID").asXDMMap());
 		registerBothIdentityExtensions();
 
-		String edgeECID = getExperienceCloudIdSync();
-		String directECID = getIdentityDirectECIDSync();
-
 		// verify ECID
-		verifyPrimaryECID(edgeECID);
-		verifySecondaryECID(directECID);
-
+		verifyPrimaryECID("edgeECID");
+		verifySecondaryECID("legacyECID");
 
 		// Set privacy opted-out
 		MobileCore.setPrivacyStatus(MobilePrivacyStatus.OPT_OUT);
 		TestHelper.waitForThreads(2000);
-		edgeECID = getExperienceCloudIdSync();
 
 		// verify that the secondary ECID is removed
-		verifyPrimaryECID(edgeECID);
+		verifyPrimaryECID("edgeECID");
 		verifySecondaryECID(null);
 	}
 

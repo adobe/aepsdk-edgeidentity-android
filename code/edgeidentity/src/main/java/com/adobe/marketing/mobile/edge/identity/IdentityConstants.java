@@ -49,15 +49,22 @@ final class IdentityConstants {
 		private EventNames() { }
 	}
 
-	final class EventDataKeys {
-		static final String VISITOR_ID_ECID = "mid";
+	final class SharedState {
 		static final String STATE_OWNER = "stateowner";
-		private EventDataKeys() { }
-	}
 
-	final class SharedStateKeys {
-		static final String IDENTITY_DIRECT = "com.adobe.module.identity";
-		private SharedStateKeys() { }
+		final class Hub {
+			static final String NAME = "com.adobe.module.eventhub";
+			static final String EXTENSIONS = "extensions";
+			private Hub() {}
+		}
+
+		final class IdentityDirect {
+			static final String NAME = "com.adobe.module.identity";
+			static final String ECID = "mid";
+			private IdentityDirect() {}
+		}
+
+		private SharedState() { }
 	}
 
 	final class Namespaces {

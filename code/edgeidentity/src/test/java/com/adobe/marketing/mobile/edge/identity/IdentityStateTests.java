@@ -15,25 +15,38 @@ import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Map;
+
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildRemoveIdentityRequest;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildUpdateIdentityRequest;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.createXDMIdentityMap;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenJSONString;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
@@ -52,6 +65,9 @@ public class IdentityStateTests {
 	@Mock
 	SharedPreferences.Editor mockSharedPreferenceEditor;
 
+	private SharedStateCallback mockSharedStateCallback;
+	private Map<String, Object> identityDirectSharedState;
+
 	@Before
 	public void before() throws Exception {
 		PowerMockito.mockStatic(MobileCore.class);
@@ -61,6 +77,17 @@ public class IdentityStateTests {
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.DATASTORE_NAME,
 					 0)).thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
+
+		mockSharedStateCallback = new SharedStateCallback() {
+			@Override
+			public Map<String, Object> getSharedState(final String stateOwner, final Event event) {
+				if (IdentityConstants.SharedState.IdentityDirect.NAME.equals(stateOwner)) {
+					return identityDirectSharedState;
+				}
+
+				return null;
+			}
+		};
 	}
 
 
@@ -71,7 +98,7 @@ public class IdentityStateTests {
 		assertNull(state.getIdentityProperties().getECID());
 
 		// test
-		state.bootUp();
+		state.bootupIfReady(mockSharedStateCallback);
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
 
 		// verify
@@ -91,7 +118,7 @@ public class IdentityStateTests {
 		assertNull(state.getIdentityProperties().getECID());
 
 		// test
-		state.bootUp();
+		state.bootupIfReady(mockSharedStateCallback);
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
 
 		// verify
@@ -110,7 +137,7 @@ public class IdentityStateTests {
 		assertNull(state.getIdentityProperties().getECID());
 
 		// test
-		state.bootUp();
+		state.bootupIfReady(mockSharedStateCallback);
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // saves to data store
 
 		// verify
@@ -130,7 +157,7 @@ public class IdentityStateTests {
 					 null)).thenReturn(propsJSON);
 
 		// test
-		state.bootUp();
+		state.bootupIfReady(mockSharedStateCallback);
 		verify(mockSharedPreferenceEditor, never()).apply();
 
 		// verify
@@ -156,7 +183,7 @@ public class IdentityStateTests {
 					 null)).thenReturn(propsJSON);
 
 		// test
-		state. bootUp();
+		state.bootupIfReady(mockSharedStateCallback);
 		verify(mockSharedPreferenceEditor, never()).apply();
 
 		// verify
@@ -181,15 +208,143 @@ public class IdentityStateTests {
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply(); // should save to data store
 	}
 
+	@Test
+	public void testUpdateCustomerIdentifiers_happy() throws Exception {
+		// setup
+		IdentityProperties properties = new IdentityProperties();
+		IdentityState state = new IdentityState(properties);
 
-	// ======================================================================================================================
-	// Tests for "updateCustomerIdentifiers" is already covered in "handleUpdateRequest" tests in IdentityExtensionTests
-	// ======================================================================================================================
+		// test
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("UserId", "secretID")
+		);
+		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
+
+		// verify persistence
+		final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+		verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES),
+				persistenceValueCaptor.capture());
+		Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(0));
+		assertEquals("secretID", persistedData.get("identityMap.UserId[0].id"));
+		assertEquals("ambiguous", persistedData.get("identityMap.UserId[0].authenticatedState"));
+		assertEquals("false", persistedData.get("identityMap.UserId[0].primary"));
+	}
 
 
-	// ======================================================================================================================
-	// Tests for "removeCustomerIdentifiers" is already covered in handleRemoveRequest tests in IdentityExtensionTests
-	// ======================================================================================================================
+	@Test
+	public void testUpdateCustomerIdentifiers_doesNotUpdateReservedNamespace() throws Exception {
+		// setup
+		IdentityProperties properties = new IdentityProperties();
+		properties.setECID(new ECID("internalECID"));
+		IdentityState state = new IdentityState(properties);
+
+		// test
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("ECID", "somevalue"),
+				new IdentityTestUtil.TestItem("GAID", "somevalue"),
+				new IdentityTestUtil.TestItem("IDFA", "somevalue"),
+				new IdentityTestUtil.TestItem("IdFA", "somevalue"),
+				new IdentityTestUtil.TestItem("gaid", "somevalue"),
+				new IdentityTestUtil.TestItem("UserId", "somevalue")
+		);
+		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
+
+		// verify persistence
+		final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+		verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES),
+				persistenceValueCaptor.capture());
+		Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(0));
+		assertEquals(6, persistedData.size()); // USERID identifier and initial ECID
+		assertEquals("somevalue", persistedData.get("identityMap.UserId[0].id"));
+		assertEquals("ambiguous", persistedData.get("identityMap.UserId[0].authenticatedState"));
+		assertEquals("false", persistedData.get("identityMap.UserId[0].primary"));
+		assertEquals("internalECID", persistedData.get("identityMap.ECID[0].id")); // verify that the ECID is not disturbed
+		assertEquals("ambiguous", persistedData.get("identityMap.ECID[0].authenticatedState"));
+		assertEquals("false", persistedData.get("identityMap.ECID[0].primary"));
+	}
+
+	@Test
+	public void testUpdateCustomerIdentifiers_whenCaseSensitiveNamespace_storesAll() throws Exception {
+		// setup
+		IdentityProperties properties = new IdentityProperties();
+		properties.setECID(new ECID("internalECID"));
+		IdentityState state = new IdentityState(properties);
+
+		// test
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("caseSensitive", "somevalue"),
+				new IdentityTestUtil.TestItem("CASESENSITIVE", "SOMEVALUE")
+		);
+		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
+
+		final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+
+		// verify shared state
+		final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+		verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES),
+				persistenceValueCaptor.capture());
+		Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(0));
+		assertEquals(9, persistedData.size()); // updated ids + ECID
+		assertEquals("somevalue", persistedData.get("identityMap.caseSensitive[0].id"));
+		assertEquals("SOMEVALUE", persistedData.get("identityMap.CASESENSITIVE[0].id"));
+		assertEquals("internalECID", persistedData.get("identityMap.ECID[0].id"));
+	}
+
+	@Test
+	public void testRemoveCustomerIdentifiers_happy() throws Exception {
+		// setup
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("UserId", "secretID"),
+				new IdentityTestUtil.TestItem("PushId", "token")
+		);
+		IdentityProperties properties = new IdentityProperties(identityXDM);
+		IdentityState state = new IdentityState(properties);
+
+		// test
+		Map<String, Object> removedIdentityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("UserId", "secretID")
+		);
+		state.removeCustomerIdentifiers(IdentityMap.fromXDMMap(removedIdentityXDM));
+
+		// verify
+		final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+		verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES),
+				persistenceValueCaptor.capture());
+		Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(0));
+		assertEquals(3, persistedData.size());
+		assertNull(persistedData.get("identityMap.UserId[0].id"));
+		assertEquals("token", persistedData.get("identityMap.PushId[0].id"));
+	}
+
+	@Test
+	public void testRemoveCustomerIdentifiers_doesNotRemoveReservedNamespace() throws Exception {
+		// setup
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("GAID", "someGAID"),
+				new IdentityTestUtil.TestItem("ECID", "someECID"),
+				new IdentityTestUtil.TestItem("IDFA", "someIDFA")
+		);
+		IdentityProperties properties = new IdentityProperties(identityXDM);
+		IdentityState state = new IdentityState(properties);
+
+		// test
+		Map<String, Object> removedIdentityXDM = createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("GAID", "someGAID"),
+				new IdentityTestUtil.TestItem("ecid", "someECID"),
+				new IdentityTestUtil.TestItem("Idfa", "someIDFA")
+		);
+		state.removeCustomerIdentifiers(IdentityMap.fromXDMMap(removedIdentityXDM));
+
+		// verify
+		final ArgumentCaptor<String> persistenceValueCaptor = ArgumentCaptor.forClass(String.class);
+		verify(mockSharedPreferenceEditor, times(1)).putString(eq(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES),
+				persistenceValueCaptor.capture());
+		Map<String, String> persistedData = flattenJSONString(persistenceValueCaptor.getAllValues().get(0));
+		assertEquals(9, persistedData.size());
+		assertEquals("someGAID", persistedData.get("identityMap.GAID[0].id"));
+		assertEquals("someECID", persistedData.get("identityMap.ECID[0].id"));
+		assertEquals("someIDFA", persistedData.get("identityMap.IDFA[0].id"));
+	}
 
 	@Test
 	public void testUpdateLegacyExperienceCloudId() {
@@ -252,5 +407,30 @@ public class IdentityStateTests {
 
 		assertNull(state.getIdentityProperties().getECIDSecondary());
 		verify(mockSharedPreferenceEditor, Mockito.times(0)).apply();
+	}
+
+	@Test
+	public void testUpdateLegacyExperienceCloudId_setsPrimaryWhenExistingIsNullAndLegacyNotNull() {
+		IdentityState state = new IdentityState(new IdentityProperties());
+		state.getIdentityProperties().setECID(null);
+
+		ECID directIdentityECID = new ECID("legacyECID");
+		state.updateLegacyExperienceCloudId(directIdentityECID);
+
+		assertEquals(directIdentityECID, state.getIdentityProperties().getECID());
+		assertNull(state.getIdentityProperties().getECIDSecondary());
+		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+	}
+
+	@Test
+	public void testUpdateLegacyExperienceCloudId_generatesNewECIDWhenExistingIsNullAndLegacyNull() {
+		IdentityState state = new IdentityState(new IdentityProperties());
+		state.getIdentityProperties().setECID(null);
+
+		state.updateLegacyExperienceCloudId(null);
+
+		assertNotNull(state.getIdentityProperties().getECID());
+		assertNull(state.getIdentityProperties().getECIDSecondary());
+		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
 	}
 }

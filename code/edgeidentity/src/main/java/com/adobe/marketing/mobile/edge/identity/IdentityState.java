@@ -14,6 +14,9 @@ package com.adobe.marketing.mobile.edge.identity;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
@@ -21,6 +24,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
  */
 class IdentityState {
 	private IdentityProperties identityProperties;
+	private boolean hasBooted;
 
 	/**
 	 * Creates a new {@link IdentityState} with the given {@link IdentityProperties}
@@ -43,8 +47,13 @@ class IdentityState {
 	 * Attempts to load the already persisted identities from persistence into {@link #identityProperties}
 	 * If no ECID is loaded from persistence (ideally meaning first launch), then we attempt to read ECID for the direct Identity Extension.
 	 * If there is no ECID loaded from the persistence of direct Identity Extension, then and new ECID is generated and persisted finishing the bootUp sequence.
+	 * @return True if it should share state after bootup, false otherwise
 	 */
-	void bootUp() {
+	boolean bootupIfReady(final SharedStateCallback callback) {
+		if (hasBooted) {
+			return false;
+		}
+
 		// Load properties from local storage
 		identityProperties = IdentityStorageService.loadPropertiesFromPersistence();
 
@@ -54,22 +63,27 @@ class IdentityState {
 
 		// Generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
+			ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
 
-			if (directIdentityEcid == null) {
-				identityProperties.setECID(new ECID());
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   "IdentityState - Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'");
-			} else {
+			if (directIdentityEcid != null) {
 				identityProperties.setECID(directIdentityEcid);
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   "IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
+						"IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
+			} else if (isIdentityDirectRegistered(callback)) {
+				MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - On bootup direct Identity extention is registered, waiting for its state change.");
+				return false; // If no ECID to migrate but Identity direct is registered, wait for Identity direct shared state
+			} else {
+				identityProperties.setECID(new ECID());
+				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+						"IdentityState - Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'");
 			}
 
 			IdentityStorageService.savePropertiesToPersistence(identityProperties);
 		}
 
+		hasBooted = true;
 		MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Edge Identity has successfully booted up");
+		return true;
 	}
 
 	/**
@@ -117,6 +131,11 @@ class IdentityState {
 		final ECID ecid = identityProperties.getECID();
 		final ECID ecidSecondary = identityProperties.getECIDSecondary();
 
+		if (ecid == null) {
+			handleInstallWithIdentityDirectECID(legacyEcid);
+			return true;
+		}
+
 		if ((legacyEcid != null) && (legacyEcid.equals(ecid) || legacyEcid.equals(ecidSecondary))) {
 			return false;
 		}
@@ -131,6 +150,47 @@ class IdentityState {
 		MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 					   "IdentityState - Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap");
 		return true;
+	}
+
+	private void handleInstallWithIdentityDirectECID(final ECID legacyEcid) {
+		if (legacyEcid != null) {
+			identityProperties.setECID(legacyEcid); // set legacy ECID as main ECID
+			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+					"IdentityState - Identity direct ECID '" + legacyEcid + "' was migrated to Edge Identity, updating the IdentityMap");
+
+		} else { // opt-out scenario or an unexpected state for Identity direct, generate new ECID
+			identityProperties.setECID(new ECID());
+			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+					"IdentityState - Identity direct ECID is null, generating new ECID '" + identityProperties.getECID() + "', updating the IdentityMap");
+		}
+
+		IdentityStorageService.savePropertiesToPersistence(identityProperties);
+	}
+
+	/**
+	 * Check if the Identity direct extension is registered by checking the EventHub's shared state list of registered extensions.
+	 * @param callback the {@link SharedStateCallback} to be used for fetching the EventHub Shared state
+	 * @return true if the Identity direct extension is registered with the EventHub
+	 */
+	private boolean isIdentityDirectRegistered(final SharedStateCallback callback) {
+		Map<String, Object> registeredExtensionsWithHub = callback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null);
+		Map<String, Object> identityDirectInfo = null;
+
+		if (registeredExtensionsWithHub != null) {
+			try {
+				final Map<String, Object> extensions = (HashMap<String, Object>) registeredExtensionsWithHub.get(
+						IdentityConstants.SharedState.Hub.EXTENSIONS);
+
+				if (extensions != null) {
+					identityDirectInfo = (HashMap<String, Object>) extensions.get(IdentityConstants.SharedState.IdentityDirect.NAME);
+				}
+			} catch (ClassCastException e) {
+				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+						"IdentityState - Unable to fetch com.adobe.module.identity info from Hub State due to invalid format, expected Map");
+			}
+		}
+
+		return !Utils.isNullOrEmpty(identityDirectInfo);
 	}
 
 }

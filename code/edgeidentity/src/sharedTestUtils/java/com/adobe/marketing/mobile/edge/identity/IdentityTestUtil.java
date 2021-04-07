@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Util class used by both Functional and Unit tests
@@ -305,7 +306,7 @@ class IdentityTestUtil {
 					latch.countDown();
 				}
 			});
-			latch.await();
+			latch.await(2000, TimeUnit.MILLISECONDS);
 
 			return getIdentityResponse;
 		} catch (Exception exp) {
@@ -324,8 +325,7 @@ class IdentityTestUtil {
 					latch.countDown();
 				}
 			});
-			latch.await();
-
+			latch.await(2000, TimeUnit.MILLISECONDS);
 			return getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
 		} catch (Exception exp) {
 			return null;

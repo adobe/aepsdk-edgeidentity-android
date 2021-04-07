@@ -25,7 +25,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 
 
 class IdentityExtension extends Extension {
-	private final IdentityState state = new IdentityState(new IdentityProperties());
+	// package private for testing
+	IdentityState state = new IdentityState(new IdentityProperties());
 
 	/**
 	 * Constructor.
@@ -80,7 +81,6 @@ class IdentityExtension extends Extension {
 										   ListenerHubSharedState.class, listenerErrorCallback);
 		extensionApi.registerEventListener(IdentityConstants.EventType.GENERIC_IDENTITY,
 										   IdentityConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
-		state.bootUp();
 	}
 
 	/**
@@ -112,6 +112,26 @@ class IdentityExtension extends Extension {
 	 * @param event the boot {@link Event}
 	 */
 	void handleEventHubBoot(final Event event) {
+		SharedStateCallback callback = new SharedStateCallback() {
+			@Override
+			public Map<String, Object> getSharedState(String stateOwner, Event event) {
+				if (getApi() == null) {
+					return null;
+				}
+
+				return getApi().getSharedEventState(stateOwner, event, new ExtensionErrorCallback<ExtensionError>() {
+					@Override
+					public void error(ExtensionError extensionError) {
+						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
+								"SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
+					}
+				});
+			}
+		};
+
+		if (!state.bootupIfReady(callback)) {
+			return;
+		}
 
 		// share the initial XDMSharedState on bootUp
 		final Map currentIdentities = state.getIdentityProperties().toXDMData(false);
@@ -181,21 +201,21 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
+		String stateOwner;
 		try {
-			final String stateOwner = (String) event.getEventData().get(IdentityConstants.EventDataKeys.STATE_OWNER);
-
-			if (!IdentityConstants.SharedStateKeys.IDENTITY_DIRECT.equals(stateOwner)) {
-				return;
-			}
+			stateOwner = (String) event.getEventData().get(IdentityConstants.SharedState.STATE_OWNER);
 		} catch (ClassCastException e) {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - Could not process direct Identity shared state change event, failed to parse event state owner as String: "
+						   "IdentityExtension - Could not process shared state change event, failed to parse event state owner as String: "
 						   + e.getLocalizedMessage());
 			return;
 		}
 
+		if (!IdentityConstants.SharedState.IdentityDirect.NAME.equals(stateOwner)) {
+			return;
+		}
 
-		final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedStateKeys.IDENTITY_DIRECT, event);
+		final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedState.IdentityDirect.NAME, event);
 
 		if (identityState == null) {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
@@ -204,7 +224,7 @@ class IdentityExtension extends Extension {
 		}
 
 		try {
-			final String legacyEcidString = (String) identityState.get(IdentityConstants.EventDataKeys.VISITOR_ID_ECID);
+			final String legacyEcidString = (String) identityState.get(IdentityConstants.SharedState.IdentityDirect.ECID);
 			final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
 
 			if (state.updateLegacyExperienceCloudId(legacyEcid)) {
