@@ -20,12 +20,12 @@ import java.util.Map;
  */
 interface SharedStateCallback {
 
-    /**
-     * Fetches the Shared State for the provided {@code event} from the specified {@code stateOwner}.
-     *
-     * @param stateOwner Shared state owner name
-     * @param event current event for which to fetch the shared state; if null is passed, the latest shared state will be returned
-     * @return current shared state if found, null if shared state is pending or an error occurred
-     */
-    Map<String, Object> getSharedState(final String stateOwner, final Event event);
+	/**
+	 * Fetches the Shared State for the provided {@code event} from the specified {@code stateOwner}.
+	 *
+	 * @param stateOwner Shared state owner name
+	 * @param event current event for which to fetch the shared state; if null is passed, the latest shared state will be returned
+	 * @return current shared state if found, null if shared state is pending or an error occurred
+	 */
+	Map<String, Object> getSharedState(final String stateOwner, final Event event);
 }

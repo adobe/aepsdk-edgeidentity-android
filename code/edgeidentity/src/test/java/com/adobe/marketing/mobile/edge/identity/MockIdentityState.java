@@ -19,23 +19,23 @@ import java.util.List;
  */
 class MockIdentityState extends IdentityState {
 
-    MockIdentityState(final IdentityProperties identityProperties) {
-        super(identityProperties);
-    }
+	MockIdentityState(final IdentityProperties identityProperties) {
+		super(identityProperties);
+	}
 
-    int updateCustomerIdentifiersCalledTimes = 0;
-    List<IdentityMap> updateCustomerIdentifiersParams = new ArrayList<>();
-    @Override
-    void updateCustomerIdentifiers(final IdentityMap map) {
-        updateCustomerIdentifiersCalledTimes++;
-        updateCustomerIdentifiersParams.add(map);
-    }
+	int updateCustomerIdentifiersCalledTimes = 0;
+	List<IdentityMap> updateCustomerIdentifiersParams = new ArrayList<>();
+	@Override
+	void updateCustomerIdentifiers(final IdentityMap map) {
+		updateCustomerIdentifiersCalledTimes++;
+		updateCustomerIdentifiersParams.add(map);
+	}
 
-    int removeCustomerIdentifiersCalledTimes = 0;
-    List<IdentityMap> removeCustomerIdentifiersParams = new ArrayList<>();
-    @Override
-    void removeCustomerIdentifiers(final IdentityMap map) {
-        removeCustomerIdentifiersCalledTimes++;
-        removeCustomerIdentifiersParams.add(map);
-    }
+	int removeCustomerIdentifiersCalledTimes = 0;
+	List<IdentityMap> removeCustomerIdentifiersParams = new ArrayList<>();
+	@Override
+	void removeCustomerIdentifiers(final IdentityMap map) {
+		removeCustomerIdentifiersCalledTimes++;
+		removeCustomerIdentifiersParams.add(map);
+	}
 }

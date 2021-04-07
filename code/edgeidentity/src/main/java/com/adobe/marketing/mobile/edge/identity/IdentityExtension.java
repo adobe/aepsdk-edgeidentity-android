@@ -167,11 +167,12 @@ class IdentityExtension extends Extension {
 					@Override
 					public void error(ExtensionError extensionError) {
 						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
-								"SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
+									   "SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
 					}
 				});
 			}
 		};
+
 		if (state.bootupIfReady(callback)) {
 			shareIdentityXDMSharedState(event);
 		}
@@ -246,11 +247,12 @@ class IdentityExtension extends Extension {
 						@Override
 						public void error(ExtensionError extensionError) {
 							MobileCore.log(LoggingMode.WARNING, LOG_TAG,
-									"SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
+										   "SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
 						}
 					});
 				}
 			};
+
 			if (state.bootupIfReady(callback)) {
 				shareIdentityXDMSharedState(event);
 				processCachedEvents();
@@ -316,6 +318,7 @@ class IdentityExtension extends Extension {
 	 */
 	void handleIdentityDirectECIDUpdate(final Event event) {
 		final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedState.IdentityDirect.NAME, event);
+
 		if (identityState == null) {
 			return;
 		}
@@ -329,8 +332,8 @@ class IdentityExtension extends Extension {
 			}
 		} catch (ClassCastException e) {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-					"IdentityExtension - Could not process direct Identity shared state change event, failed to parse stored ECID as String: "
-							+ e.getLocalizedMessage());
+						   "IdentityExtension - Could not process direct Identity shared state change event, failed to parse stored ECID as String: "
+						   + e.getLocalizedMessage());
 		}
 	}
 

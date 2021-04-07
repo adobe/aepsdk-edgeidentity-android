@@ -81,7 +81,8 @@ public class IdentityExtensionTests {
 		extension = new IdentityExtension(mockExtensionApi);
 
 		// simulate bootup
-		Event event = new Event.Builder("Fake Boot", IdentityConstants.EventType.HUB, IdentityConstants.EventSource.BOOTED).build();
+		Event event = new Event.Builder("Fake Boot", IdentityConstants.EventType.HUB,
+										IdentityConstants.EventSource.BOOTED).build();
 		extension.handleEventHubBoot(event);
 		verify(mockExtensionApi, times(1)).setXDMSharedEventState(any(Map.class), any(Event.class),
 				any(ExtensionErrorCallback.class));
@@ -393,9 +394,9 @@ public class IdentityExtensionTests {
 
 		// test
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new TestItem("id1", "somevalue"),
-				new TestItem("id2", "othervalue")
-		);
+											  new TestItem("id1", "somevalue"),
+											  new TestItem("id2", "othervalue")
+										  );
 		Event updateIdentityEvent = buildUpdateIdentityRequest(identityXDM);
 		extension.handleUpdateIdentities(updateIdentityEvent);
 
@@ -433,9 +434,9 @@ public class IdentityExtensionTests {
 	public void test_handleRemoveIdentity_whenValidData_removesCustomerIdentifiers_updatesSharedState() {
 		// setup
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new TestItem("UserId", "secretID"),
-				new TestItem("PushId", "token")
-		);
+											  new TestItem("UserId", "secretID"),
+											  new TestItem("PushId", "token")
+										  );
 		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
 		extension.state = mockIdentityState;
 
@@ -498,10 +499,10 @@ public class IdentityExtensionTests {
 		when(mockExtensionApi.getSharedEventState(eq(IdentityConstants.SharedState.IdentityDirect.NAME),
 				any(Event.class),
 				any(ExtensionErrorCallback.class)))
-				.thenReturn(new HashMap<String, Object>() {
-					{
-						put(IdentityConstants.SharedState.IdentityDirect.ECID, ecid);
-					}
-				});
+		.thenReturn(new HashMap<String, Object>() {
+			{
+				put(IdentityConstants.SharedState.IdentityDirect.ECID, ecid);
+			}
+		});
 	}
 }

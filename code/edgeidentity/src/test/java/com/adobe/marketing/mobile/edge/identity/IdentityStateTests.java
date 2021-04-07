@@ -192,20 +192,24 @@ public class IdentityStateTests {
 	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_waitsForIdentityDirectECID() {
 		// setup
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-				0)).thenReturn(mockSharedPreference);
+					 0)).thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-				null)).thenReturn(null);
+					 null)).thenReturn(null);
 
 		IdentityState state = new IdentityState(new IdentityProperties());
 
 		// test
 		hubSharedState = new HashMap<>();
-		hubSharedState.put("extensions", new HashMap<String, Object>() {{
-			put("com.adobe.module.identity", new HashMap<String, String>() {{
-				put("friendlyName", "Identity");
-				put("version", "1.2.2");
-			}});
-		}});
+		hubSharedState.put("extensions", new HashMap<String, Object>() {
+			{
+				put("com.adobe.module.identity", new HashMap<String, String>() {
+					{
+						put("friendlyName", "Identity");
+						put("version", "1.2.2");
+					}
+				});
+			}
+		});
 		state.bootupIfReady(mockSharedStateCallback);
 
 		verify(mockSharedPreferenceEditor, never()).apply();
@@ -218,21 +222,25 @@ public class IdentityStateTests {
 	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_usesIdentityDirectECID() {
 		// setup
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-				0)).thenReturn(mockSharedPreference);
+					 0)).thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-				null)).thenReturn(null);
+					 null)).thenReturn(null);
 
 
 		IdentityState state = new IdentityState(new IdentityProperties());
 
 		// test
 		hubSharedState = new HashMap<>();
-		hubSharedState.put("extensions", new HashMap<String, Object>() {{
-			put("com.adobe.module.identity", new HashMap<String, String>() {{
-				put("friendlyName", "Identity");
-				put("version", "1.2.2");
-			}});
-		}});
+		hubSharedState.put("extensions", new HashMap<String, Object>() {
+			{
+				put("com.adobe.module.identity", new HashMap<String, String>() {
+					{
+						put("friendlyName", "Identity");
+						put("version", "1.2.2");
+					}
+				});
+			}
+		});
 		identityDirectSharedState = new HashMap<>();
 		identityDirectSharedState.put("mid", "1234");
 		state.bootupIfReady(mockSharedStateCallback);
@@ -247,21 +255,25 @@ public class IdentityStateTests {
 	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_whenIdentityDirectECIDNull_generatesNew() {
 		// setup
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-				0)).thenReturn(mockSharedPreference);
+					 0)).thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-				null)).thenReturn(null);
+					 null)).thenReturn(null);
 
 
 		IdentityState state = new IdentityState(new IdentityProperties());
 
 		// test
 		hubSharedState = new HashMap<>();
-		hubSharedState.put("extensions", new HashMap<String, Object>() {{
-			put("com.adobe.module.identity", new HashMap<String, String>() {{
-				put("friendlyName", "Identity");
-				put("version", "1.2.2");
-			}});
-		}});
+		hubSharedState.put("extensions", new HashMap<String, Object>() {
+			{
+				put("com.adobe.module.identity", new HashMap<String, String>() {
+					{
+						put("friendlyName", "Identity");
+						put("version", "1.2.2");
+					}
+				});
+			}
+		});
 		identityDirectSharedState = new HashMap<>(); // no mid key
 		state.bootupIfReady(mockSharedStateCallback);
 
@@ -297,8 +309,8 @@ public class IdentityStateTests {
 
 		// test
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("UserId", "secretID")
-		);
+											  new IdentityTestUtil.TestItem("UserId", "secretID")
+										  );
 		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
 
 		// verify persistence
@@ -321,13 +333,13 @@ public class IdentityStateTests {
 
 		// test
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("ECID", "somevalue"),
-				new IdentityTestUtil.TestItem("GAID", "somevalue"),
-				new IdentityTestUtil.TestItem("IDFA", "somevalue"),
-				new IdentityTestUtil.TestItem("IdFA", "somevalue"),
-				new IdentityTestUtil.TestItem("gaid", "somevalue"),
-				new IdentityTestUtil.TestItem("UserId", "somevalue")
-		);
+											  new IdentityTestUtil.TestItem("ECID", "somevalue"),
+											  new IdentityTestUtil.TestItem("GAID", "somevalue"),
+											  new IdentityTestUtil.TestItem("IDFA", "somevalue"),
+											  new IdentityTestUtil.TestItem("IdFA", "somevalue"),
+											  new IdentityTestUtil.TestItem("gaid", "somevalue"),
+											  new IdentityTestUtil.TestItem("UserId", "somevalue")
+										  );
 		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
 
 		// verify persistence
@@ -353,9 +365,9 @@ public class IdentityStateTests {
 
 		// test
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("caseSensitive", "somevalue"),
-				new IdentityTestUtil.TestItem("CASESENSITIVE", "SOMEVALUE")
-		);
+											  new IdentityTestUtil.TestItem("caseSensitive", "somevalue"),
+											  new IdentityTestUtil.TestItem("CASESENSITIVE", "SOMEVALUE")
+										  );
 		state.updateCustomerIdentifiers(IdentityMap.fromXDMMap(identityXDM));
 
 		final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
@@ -375,16 +387,16 @@ public class IdentityStateTests {
 	public void testRemoveCustomerIdentifiers_happy() throws Exception {
 		// setup
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("UserId", "secretID"),
-				new IdentityTestUtil.TestItem("PushId", "token")
-		);
+											  new IdentityTestUtil.TestItem("UserId", "secretID"),
+											  new IdentityTestUtil.TestItem("PushId", "token")
+										  );
 		IdentityProperties properties = new IdentityProperties(identityXDM);
 		IdentityState state = new IdentityState(properties);
 
 		// test
 		Map<String, Object> removedIdentityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("UserId", "secretID")
-		);
+					new IdentityTestUtil.TestItem("UserId", "secretID")
+				);
 		state.removeCustomerIdentifiers(IdentityMap.fromXDMMap(removedIdentityXDM));
 
 		// verify
@@ -401,19 +413,19 @@ public class IdentityStateTests {
 	public void testRemoveCustomerIdentifiers_doesNotRemoveReservedNamespace() throws Exception {
 		// setup
 		Map<String, Object> identityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("GAID", "someGAID"),
-				new IdentityTestUtil.TestItem("ECID", "someECID"),
-				new IdentityTestUtil.TestItem("IDFA", "someIDFA")
-		);
+											  new IdentityTestUtil.TestItem("GAID", "someGAID"),
+											  new IdentityTestUtil.TestItem("ECID", "someECID"),
+											  new IdentityTestUtil.TestItem("IDFA", "someIDFA")
+										  );
 		IdentityProperties properties = new IdentityProperties(identityXDM);
 		IdentityState state = new IdentityState(properties);
 
 		// test
 		Map<String, Object> removedIdentityXDM = createXDMIdentityMap(
-				new IdentityTestUtil.TestItem("GAID", "someGAID"),
-				new IdentityTestUtil.TestItem("ecid", "someECID"),
-				new IdentityTestUtil.TestItem("Idfa", "someIDFA")
-		);
+					new IdentityTestUtil.TestItem("GAID", "someGAID"),
+					new IdentityTestUtil.TestItem("ecid", "someECID"),
+					new IdentityTestUtil.TestItem("Idfa", "someIDFA")
+				);
 		state.removeCustomerIdentifiers(IdentityMap.fromXDMMap(removedIdentityXDM));
 
 		// verify
