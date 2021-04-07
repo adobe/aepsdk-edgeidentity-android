@@ -14,6 +14,9 @@ package com.adobe.marketing.mobile.edge.identity;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Partial mock class for {@link IdentityState} to be used for testing
+ */
 class MockIdentityState extends IdentityState {
 
     MockIdentityState(final IdentityProperties identityProperties) {

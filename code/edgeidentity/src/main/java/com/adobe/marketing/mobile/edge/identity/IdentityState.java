@@ -152,6 +152,12 @@ class IdentityState {
 		return true;
 	}
 
+	/**
+	 * This method is called when the primary Edge ECID is null and the Identity Direct shared state has been updated (install scenario when Identity Direct is registered).
+	 * Sets the {@code legacyEcid} as primary ECID when not null, otherwise generates a new ECID, then updates the persistence.
+	 *
+	 * @param legacyEcid the current ECID from the direct Identity extension
+	 */
 	private void handleInstallWithIdentityDirectECID(final ECID legacyEcid) {
 		if (legacyEcid != null) {
 			identityProperties.setECID(legacyEcid); // set legacy ECID as main ECID
