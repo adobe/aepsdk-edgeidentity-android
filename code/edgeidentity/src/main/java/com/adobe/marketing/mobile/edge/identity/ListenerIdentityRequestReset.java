@@ -52,7 +52,12 @@ class ListenerIdentityRequestReset extends ExtensionListener {
 			return;
 		}
 
-		parentExtension.handleRequestReset(event);
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				parentExtension.processAddEvent(event);
+			}
+		});
 	}
 
 	/**

@@ -53,7 +53,12 @@ class ListenerEdgeIdentityUpdateIdentity extends ExtensionListener {
 			return;
 		}
 
-		parentExtension.handleUpdateIdentities(event);
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				parentExtension.processAddEvent(event);
+			}
+		});
 	}
 
 	/**

@@ -46,7 +46,12 @@ class ListenerEventHubBoot extends ExtensionListener {
 			return;
 		}
 
-		parentExtension.handleEventHubBoot(event);
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				parentExtension.handleEventHubBoot(event);
+			}
+		});
 	}
 
 	/**

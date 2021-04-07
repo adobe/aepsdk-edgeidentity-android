@@ -36,6 +36,13 @@ class IdentityState {
 	}
 
 	/**
+	 * @return the current bootup status
+	 */
+	boolean hasBooted() {
+		return hasBooted;
+	}
+
+	/**
 	 * @return The current {@link IdentityProperties} for this identity state
 	 */
 	IdentityProperties getIdentityProperties() {
@@ -61,14 +68,17 @@ class IdentityState {
 			identityProperties = new IdentityProperties();
 		}
 
-		// Generate new ECID on first launch
+		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
 			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
+			final Map<String, Object> identityDirectSharedState = callback.getSharedState(IdentityConstants.SharedState.IdentityDirect.NAME, null);
 
 			if (directIdentityEcid != null) {
 				identityProperties.setECID(directIdentityEcid);
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 						"IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
+			} else if (identityDirectSharedState != null) { // identity direct shared state is set
+				handleInstallWithIdentityDirectECID(EventUtils.getECID(identityDirectSharedState));
 			} else if (isIdentityDirectRegistered(callback)) {
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - On bootup direct Identity extension is registered, waiting for its state change.");
 				return false; // If no ECID to migrate but Identity direct is registered, wait for Identity direct shared state
@@ -131,11 +141,6 @@ class IdentityState {
 		final ECID ecid = identityProperties.getECID();
 		final ECID ecidSecondary = identityProperties.getECIDSecondary();
 
-		if (ecid == null) {
-			handleInstallWithIdentityDirectECID(legacyEcid);
-			return true;
-		}
-
 		if ((legacyEcid != null) && (legacyEcid.equals(ecid) || legacyEcid.equals(ecidSecondary))) {
 			return false;
 		}
@@ -154,7 +159,7 @@ class IdentityState {
 
 	/**
 	 * This method is called when the primary Edge ECID is null and the Identity Direct shared state has been updated (install scenario when Identity Direct is registered).
-	 * Sets the {@code legacyEcid} as primary ECID when not null, otherwise generates a new ECID, then updates the persistence.
+	 * Sets the {@code legacyEcid} as primary ECID when not null, otherwise generates a new ECID.
 	 *
 	 * @param legacyEcid the current ECID from the direct Identity extension
 	 */
@@ -169,8 +174,6 @@ class IdentityState {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 					"IdentityState - Identity direct ECID is null, generating new ECID '" + identityProperties.getECID() + "', updating the IdentityMap");
 		}
-
-		IdentityStorageService.savePropertiesToPersistence(identityProperties);
 	}
 
 	/**

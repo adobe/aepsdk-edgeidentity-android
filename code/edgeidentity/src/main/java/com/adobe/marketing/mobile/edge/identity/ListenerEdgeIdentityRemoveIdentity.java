@@ -53,7 +53,12 @@ class ListenerEdgeIdentityRemoveIdentity extends ExtensionListener {
 			return;
 		}
 
-		parentExtension.handleRemoveIdentity(event);
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				parentExtension.processAddEvent(event);
+			}
+		});
 	}
 
 	/**

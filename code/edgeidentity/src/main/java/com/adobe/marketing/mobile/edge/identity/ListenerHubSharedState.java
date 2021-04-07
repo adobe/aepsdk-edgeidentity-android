@@ -52,7 +52,12 @@ class ListenerHubSharedState extends ExtensionListener {
 			return;
 		}
 
-		parentExtension.handleHubSharedState(event);
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				parentExtension.handleHubSharedState(event);
+			}
+		});
 	}
 
 	/**
