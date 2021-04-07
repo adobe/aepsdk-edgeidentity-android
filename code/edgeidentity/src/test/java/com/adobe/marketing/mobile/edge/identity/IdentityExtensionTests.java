@@ -37,10 +37,8 @@ import java.util.Map;
 
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;

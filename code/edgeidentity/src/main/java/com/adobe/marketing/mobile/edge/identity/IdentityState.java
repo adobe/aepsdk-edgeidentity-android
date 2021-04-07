@@ -63,14 +63,14 @@ class IdentityState {
 
 		// Generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
+			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
 
 			if (directIdentityEcid != null) {
 				identityProperties.setECID(directIdentityEcid);
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 						"IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
 			} else if (isIdentityDirectRegistered(callback)) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - On bootup direct Identity extention is registered, waiting for its state change.");
+				MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - On bootup direct Identity extension is registered, waiting for its state change.");
 				return false; // If no ECID to migrate but Identity direct is registered, wait for Identity direct shared state
 			} else {
 				identityProperties.setECID(new ECID());

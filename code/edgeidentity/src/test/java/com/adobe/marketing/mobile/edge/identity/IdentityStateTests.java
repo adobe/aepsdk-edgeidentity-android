@@ -16,7 +16,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.adobe.marketing.mobile.Event;
-import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 
 import org.json.JSONObject;
@@ -30,20 +29,16 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildRemoveIdentityRequest;
-import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildUpdateIdentityRequest;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.createXDMIdentityMap;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenJSONString;
-import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -66,7 +61,7 @@ public class IdentityStateTests {
 	SharedPreferences.Editor mockSharedPreferenceEditor;
 
 	private SharedStateCallback mockSharedStateCallback;
-	private Map<String, Object> identityDirectSharedState;
+	private Map<String, Object> hubSharedState;
 
 	@Before
 	public void before() throws Exception {
@@ -81,8 +76,8 @@ public class IdentityStateTests {
 		mockSharedStateCallback = new SharedStateCallback() {
 			@Override
 			public Map<String, Object> getSharedState(final String stateOwner, final Event event) {
-				if (IdentityConstants.SharedState.IdentityDirect.NAME.equals(stateOwner)) {
-					return identityDirectSharedState;
+				if (IdentityConstants.SharedState.Hub.NAME.equals(stateOwner)) {
+					return hubSharedState;
 				}
 
 				return null;
@@ -92,7 +87,7 @@ public class IdentityStateTests {
 
 
 	@Test
-	public void testBootUp_GeneratesECID() {
+	public void testBootupIfReady_GeneratesECID() {
 		// setup
 		IdentityState state = new IdentityState(new IdentityProperties());
 		assertNull(state.getIdentityProperties().getECID());
@@ -106,7 +101,7 @@ public class IdentityStateTests {
 	}
 
 	@Test
-	public void testBootUp_LoadsDirectIdentityECID() {
+	public void testBootupIfReady_LoadsDirectIdentityECID() {
 		// setup
 		ECID ecid = new ECID();
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
@@ -126,7 +121,7 @@ public class IdentityStateTests {
 	}
 
 	@Test
-	public void testBootUp_GeneratesECIDWhenDirectECIDIsNull() {
+	public void testBootupIfReady_GeneratesECIDWhenDirectECIDIsNull() {
 		// setup
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
 					 0)).thenReturn(mockSharedPreference);
@@ -145,7 +140,7 @@ public class IdentityStateTests {
 	}
 
 	@Test
-	public void testBootUp_LoadsFromPersistence() {
+	public void testBootupIfReady_LoadsFromPersistence() {
 		// setup
 		IdentityState state = new IdentityState(new IdentityProperties());
 
@@ -165,7 +160,7 @@ public class IdentityStateTests {
 	}
 
 	@Test
-	public void testBootUp_IfReadyLoadsFromPersistenceWhenDirectECIDIsValid() {
+	public void testBootupIfReady_IfReadyLoadsFromPersistenceWhenDirectECIDIsValid() {
 		// setup
 		ECID ecid = new ECID();
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
@@ -188,6 +183,32 @@ public class IdentityStateTests {
 
 		// verify
 		assertEquals(persistedProps.getECID(), state.getIdentityProperties().getECID());
+	}
+
+	@Test
+	public void testBootupIfReady_whenIdentityDirectRegistered_onFirstBoot_waitsForIdentityDirectECID() {
+		// setup
+		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
+				0)).thenReturn(mockSharedPreference);
+		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
+				null)).thenReturn(null);
+
+		IdentityState state = new IdentityState(new IdentityProperties());
+
+		// test
+		hubSharedState = new HashMap<>();
+		hubSharedState.put("extensions", new HashMap<String, Object>() {{
+			put("com.adobe.module.identity", new HashMap<String, String>() {{
+				put("friendlyName", "Identity");
+				put("version", "1.2.2");
+			}});
+		}});
+		state.bootupIfReady(mockSharedStateCallback);
+
+		verify(mockSharedPreferenceEditor, never()).apply();
+
+		// verify
+		assertNull(state.getIdentityProperties().getECID());
 	}
 
 	@Test
