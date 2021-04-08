@@ -75,8 +75,6 @@ class IdentityState {
 
 		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			final Map<String, Object> identityDirectSharedState = callback.getSharedState(
-						IdentityConstants.SharedState.IdentityDirect.NAME, null);
 
 			// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
 			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
@@ -89,6 +87,8 @@ class IdentityState {
 
 			// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
 			else if (isIdentityDirectRegistered(callback)) {
+				final Map<String, Object> identityDirectSharedState = callback.getSharedState(
+							IdentityConstants.SharedState.IdentityDirect.NAME, null);
 
 				// If the direct Identity extension is registered, attempt to get its shared state
 				if (identityDirectSharedState != null) { // identity direct shared state is set
