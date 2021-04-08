@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.adobe.marketing.mobile.MonitorExtension.EventSpec;
 import com.adobe.marketing.mobile.edge.identity.ADBCountDownLatch;
+import com.adobe.marketing.mobile.services.ServiceProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -76,6 +77,7 @@ public class TestHelper {
 						defaultApplication = Instrumentation.newApplication(CustomApplication.class, context);
 					}
 
+					ServiceProvider.getInstance().setNetworkService(new MockNetworkService()); // set mock network service for testing
 					MobileCore.setLogLevel(LoggingMode.VERBOSE);
 					MobileCore.setApplication(defaultApplication);
 
