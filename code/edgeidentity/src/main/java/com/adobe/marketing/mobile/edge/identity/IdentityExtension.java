@@ -157,11 +157,13 @@ class IdentityExtension extends Extension {
 		SharedStateCallback callback = new SharedStateCallback() {
 			@Override
 			public Map<String, Object> getSharedState(String stateOwner, Event event) {
-				if (getApi() == null) {
+				ExtensionApi api = getApi();
+
+				if (api == null) {
 					return null;
 				}
 
-				return getApi().getSharedEventState(stateOwner, event, new ExtensionErrorCallback<ExtensionError>() {
+				return api.getSharedEventState(stateOwner, event, new ExtensionErrorCallback<ExtensionError>() {
 					@Override
 					public void error(ExtensionError extensionError) {
 						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
@@ -172,11 +174,13 @@ class IdentityExtension extends Extension {
 
 			@Override
 			public boolean setXDMSharedEventState(Map<String, Object> state, Event event) {
-				if (getApi() == null) {
+				ExtensionApi api = getApi();
+
+				if (api == null) {
 					return false;
 				}
 
-				return getApi().setXDMSharedEventState(state, event, new ExtensionErrorCallback<ExtensionError>() {
+				return api.setXDMSharedEventState(state, event, new ExtensionErrorCallback<ExtensionError>() {
 					@Override
 					public void error(ExtensionError extensionError) {
 						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
