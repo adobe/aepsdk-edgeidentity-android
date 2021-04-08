@@ -37,8 +37,8 @@ public class IdentityMap {
 	 * Gets the {@link IdentityItem}s for the namespace
 	 * returns an empty list if no {@link IdentityItem}s were found for the namespace
 	 *
-	 * @param namespace namespace for the id
-	 * @return IdentityItem for the namespace,
+	 * @param namespace namespace for the list of identities to retrieve
+	 * @return IdentityItem for the namespace
 	 */
 	public List<IdentityItem>  getIdentityItemsForNamespace(final String namespace) {
 		final List<IdentityItem> copyItems = new ArrayList<>();
@@ -73,9 +73,8 @@ public class IdentityMap {
 	 * Add an identity item which is used to clearly distinguish entities that are interacting
 	 * with digital experiences.
 	 *
-	 * @param item      {@link IdentityItem} to be added to the namespace
+	 * @param item      {@link IdentityItem} to be added to the given {@code namespace}
 	 * @param namespace the namespace integration code or namespace ID of the identity
-	 * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
 	 */
 	public void addItem(final IdentityItem item, final String namespace) {
 		addItem(item, namespace, false);
@@ -84,8 +83,8 @@ public class IdentityMap {
 	/**
 	 * Remove a single {@link IdentityItem} from this map.
 	 *
-	 * @param item      {@link IdentityItem} to be added to the namespace
-	 * @param namespace The {@code IdentityItem} to remove from the given namespace
+	 * @param item      {@link IdentityItem} to be removed from the given {@code namespace}
+	 * @param namespace the namespace integration code or namespace ID of the identity
 	 */
 	public void removeItem(final IdentityItem item, final String namespace) {
 		if (item == null) {
@@ -150,7 +149,6 @@ public class IdentityMap {
 	 * @param item      {@link IdentityItem} to be added to the namespace
 	 * @param namespace the namespace integration code or namespace ID of the identity
 	 * @param isFirstItem on {@code true} keeps the provided {@code IdentityItem} as the first element of the identity list for this namespace
-	 * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/context/identityitem.schema.md">IdentityItem Schema</a>
 	 */
 	void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
 		if (item == null) {
@@ -231,7 +229,7 @@ public class IdentityMap {
 	}
 
 	/**
-	 * Use this method to cast the {@link IdentityMap} as {@link Map<String,Object>} to be passed as EventData for an SDK Event.
+	 * Use this method to cast the {@link IdentityMap} as {@code Map<String, Object>} to be passed as EventData for an SDK Event.
 	 * This method returns an empty map if the {@code IdentityMap} contains no data
 	 *
 	 * @return {@code Map} representation of xdm formatted IdentityMap
@@ -241,7 +239,7 @@ public class IdentityMap {
 	}
 
 	/**
-	 * Use this method to cast the {@link IdentityMap} as {@link Map<String,Object>} to be passed as EventData for an SDK Event.
+	 * Use this method to cast the {@link IdentityMap} as {@code Map<String,Object>} to be passed as EventData for an SDK Event.
 	 *
 	 * @param allowEmpty If false and if this {@code IdentityMap} contains no data, then returns a map with empty xdmFormatted Identity Map.
 	 *                   If true and if this {@code IdentityMap} contains no data, then returns an empty map
@@ -273,7 +271,7 @@ public class IdentityMap {
 	 * Returns null if the provided map is null/empty.
 	 * Return null if the provided map is not in Identity Map's XDM format.
 	 *
-	 * @return {@link Map<String,Object>} XDM format representation of IdentityMap
+	 * @return {@code Map<String,Object>} XDM format representation of IdentityMap
 	 */
 	static IdentityMap fromXDMMap(final Map<String, Object> map) {
 		if (Utils.isNullOrEmpty(map)) {

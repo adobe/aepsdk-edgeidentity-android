@@ -21,7 +21,10 @@ import java.util.Objects;
 import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
- * Represents an identity item
+ * Identity is used to clearly distinguish people that are interacting with digital experiences.
+ * An {@code IdentityItem} is intended to be included in an instance of {@link IdentityMap}.
+ *
+ * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md">Identity Item Schema</a>
  */
 public final class IdentityItem {
 	private final String id;
@@ -47,8 +50,8 @@ public final class IdentityItem {
 
 	/**
 	 * Creates a new {@link IdentityItem} with default values
-	 * authenticatedState is set to AMBIGUOUS
-	 * primary is set to false
+	 * {@code authenticatedState) is set to AMBIGUOUS
+	 * (@code primary} is set to false
 	 * @param id the id for this {@link IdentityItem}
 	 */
 	public IdentityItem(final String id) {
@@ -56,7 +59,7 @@ public final class IdentityItem {
 	}
 
 	/**
-	 * Creates a copy of item
+	 * Creates a copy of item.
 	 * @param item A {@link IdentityItem} to be copied
 	 */
 	public IdentityItem(final IdentityItem item) {
@@ -64,6 +67,7 @@ public final class IdentityItem {
 	}
 
 	/**
+	 * Identity of the consumer in the related namespace.
 	 * @return The id for this identity item
 	 */
 	public String getId() {
@@ -71,6 +75,7 @@ public final class IdentityItem {
 	}
 
 	/**
+	 * The state this identity is authenticated.
 	 * @return Current {@link AuthenticatedState} for this item
 	 */
 	public AuthenticatedState getAuthenticatedState() {
@@ -78,6 +83,8 @@ public final class IdentityItem {
 	}
 
 	/**
+	 * Indicates if this identity is the preferred identity.
+	 * Is used as a hint to help systems better organize how identities are queried.
 	 * @return true if this item is primary, false otherwise
 	 */
 	public boolean isPrimary() {
