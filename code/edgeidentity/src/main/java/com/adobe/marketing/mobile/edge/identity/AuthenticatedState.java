@@ -15,8 +15,19 @@ package com.adobe.marketing.mobile.edge.identity;
  * Represents the authentication state for an {@link IdentityItem}
  */
 public enum AuthenticatedState {
+	/**
+	 * The state is ambiguous.
+	 */
 	AMBIGUOUS("ambiguous"),
+
+	/**
+	 * User identified by a login or similar action that was valid at the time of the event observation.
+	 */
 	AUTHENTICATED("authenticated"),
+
+	/**
+	 * User was identified by a login action at some point of time previously, but is not currently logged in.
+	 */
 	LOGGED_OUT("loggedOut");
 
 	private String name;

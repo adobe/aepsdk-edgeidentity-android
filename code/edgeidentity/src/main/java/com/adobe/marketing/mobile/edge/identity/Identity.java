@@ -24,7 +24,9 @@ import java.util.List;
 
 import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
-
+/**
+ * Defines the public APIs for the AEP Edge Identity extension.
+ */
 public class Identity {
 
 	private Identity() {}
@@ -54,7 +56,7 @@ public class Identity {
 	/**
 	 * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
 	 *
-	 * @param callback {@link AdobeCallback} of {@link String} invoked with the Experience Cloud ID
+	 * @param callback {@link AdobeCallback} of {@code String} invoked with the Experience Cloud ID
 	 *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
 	 *                 eventuality of any error that occurred while getting the Experience Cloud ID
 	 */
@@ -109,8 +111,10 @@ public class Identity {
 	}
 
 	/**
-	 * Updates the currently known {@link IdentityMap} within the SDK and XDM shared state.
-	 * The Identity extension will merge the received identifiers with the previously saved one in an additive manner, no identifiers will be removed using this API.
+	 * Updates the currently known {@link IdentityMap} within the SDK.
+	 * The Identity extension will merge the received identifiers with the previously saved one in an additive manner,
+	 * no identifiers will be removed using this API.
+	 * Identifiers which have an empty {@code id} or empty {@code namespace} are not allowed and are ignored.
 	 *
 	 * @param identityMap The identifiers to add or update.
 	 */
@@ -138,12 +142,11 @@ public class Identity {
 	}
 
 	/**
-	 * Removes the identity from the stored client-side {@link IdentityMap} and XDM shared state. The Identity extension will stop sending this identifier.
+	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
 	 * This does not clear the identifier from the User Profile Graph.
-	 * Identifiers which have an empty `id` or empty `namespace` are not allowed and are ignored.
 	 *
-	 * @param item {@link IdentityItem} representing the identity to remove.
-	 * @param namespace The namespace the identity to remove is under.
+	 * @param item the {@link IdentityItem} to remove.
+	 * @param namespace The namespace of the identity to remove.
 	 */
 	public static void removeIdentity(final IdentityItem item, final String namespace) {
 		if (Utils.isNullOrEmpty(namespace)) {
