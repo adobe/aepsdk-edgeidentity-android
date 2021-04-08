@@ -50,15 +50,20 @@ class IdentityState {
 	}
 
 	/**
-	 * Completes init for the Identity extension.
+	 * Completes init for this Identity extension.
 	 * Attempts to load the already persisted identities from persistence into {@link #identityProperties}
-	 * If no ECID is loaded from persistence (ideally meaning first launch), then we attempt to read ECID for the direct Identity Extension.
-	 * If there is no ECID loaded from the persistence of direct Identity Extension, then and new ECID is generated and persisted finishing the bootUp sequence.
-	 * @return True if it should share state after bootup, false otherwise
+	 * If no ECID is loaded from persistence (ideally meaning first launch), attempts to migrate existing ECID
+	 * for the direct Identity Extension, either from its persisted store or from its shared state if the
+	 * direct Identity extension is registered. If no ECID is found for migration, then a new ECID is generated.
+	 * Stores the {@code identityProperties} once an ECID is set and creates the first shared state.
+	 *
+	 * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
+	 *             		and create a shared state on the EventHub
+	 * @return True if the bootup is complete
 	 */
 	boolean bootupIfReady(final SharedStateCallback callback) {
 		if (hasBooted) {
-			return false;
+			return true;
 		}
 
 		// Load properties from local storage
@@ -70,21 +75,34 @@ class IdentityState {
 
 		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
 			final Map<String, Object> identityDirectSharedState = callback.getSharedState(
 						IdentityConstants.SharedState.IdentityDirect.NAME, null);
+
+			// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
+			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
 
 			if (directIdentityEcid != null) {
 				identityProperties.setECID(directIdentityEcid);
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 							   "IdentityState -  On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'");
-			} else if (identityDirectSharedState != null) { // identity direct shared state is set
-				handleInstallWithIdentityDirectECID(EventUtils.getECID(identityDirectSharedState));
-			} else if (isIdentityDirectRegistered(callback)) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   "IdentityState - On bootup direct Identity extension is registered, waiting for its state change.");
-				return false; // If no ECID to migrate but Identity direct is registered, wait for Identity direct shared state
-			} else {
+			}
+
+			// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
+			else if (isIdentityDirectRegistered(callback)) {
+
+				// If the direct Identity extension is registered, attempt to get its shared state
+				if (identityDirectSharedState != null) { // identity direct shared state is set
+					handleECIDfromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
+				}
+				// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
+				else {
+					MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
+								   "IdentityState - On bootup direct Identity extension is registered, waiting for its state change.");
+					return false; // If no ECID to migrate but Identity direct is registered, wait for Identity direct shared state
+				}
+			}
+			// Generate a new ECID as the direct Identity extension is not registered with the SDK and there was no direct Identity persisted ECID
+			else {
 				identityProperties.setECID(new ECID());
 				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 							   "IdentityState - Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'");
@@ -95,7 +113,12 @@ class IdentityState {
 
 		hasBooted = true;
 		MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Edge Identity has successfully booted up");
-		return true;
+
+		if (callback != null) {
+			callback.setXDMSharedEventState(identityProperties.toXDMData(false), null);
+		}
+
+		return hasBooted;
 	}
 
 	/**
@@ -160,14 +183,15 @@ class IdentityState {
 	}
 
 	/**
-	 * This method is called when the primary Edge ECID is null and the Identity Direct shared state has been updated (install scenario when Identity Direct is registered).
+	 * This method is called when the primary Edge ECID is null and the Identity Direct shared state has been updated
+	 * (install scenario when Identity Direct is registered).
 	 * Sets the {@code legacyEcid} as primary ECID when not null, otherwise generates a new ECID.
 	 *
 	 * @param legacyEcid the current ECID from the direct Identity extension
 	 */
-	private void handleInstallWithIdentityDirectECID(final ECID legacyEcid) {
+	private void handleECIDfromIdentityDirect(final ECID legacyEcid) {
 		if (legacyEcid != null) {
-			identityProperties.setECID(legacyEcid); // set legacy ECID as main ECID
+			identityProperties.setECID(legacyEcid); // migrate legacy ECID
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
 						   "IdentityState - Identity direct ECID '" + legacyEcid + "' was migrated to Edge Identity, updating the IdentityMap");
 
@@ -185,7 +209,12 @@ class IdentityState {
 	 * @return true if the Identity direct extension is registered with the EventHub
 	 */
 	private boolean isIdentityDirectRegistered(final SharedStateCallback callback) {
-		Map<String, Object> registeredExtensionsWithHub = callback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null);
+		Map<String, Object> registeredExtensionsWithHub = null;
+
+		if (callback != null) {
+			registeredExtensionsWithHub = callback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null);
+		}
+
 		Map<String, Object> identityDirectInfo = null;
 
 		if (registeredExtensionsWithHub != null) {
@@ -204,5 +233,4 @@ class IdentityState {
 
 		return !Utils.isNullOrEmpty(identityDirectInfo);
 	}
-
 }

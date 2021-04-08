@@ -49,7 +49,7 @@ class ListenerEventHubBoot extends ExtensionListener {
 		parentExtension.getExecutor().execute(new Runnable() {
 			@Override
 			public void run() {
-				parentExtension.handleEventHubBoot(event);
+				parentExtension.bootupIfReady();
 			}
 		});
 	}

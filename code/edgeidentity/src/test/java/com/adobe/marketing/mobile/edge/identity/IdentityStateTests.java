@@ -63,6 +63,7 @@ public class IdentityStateTests {
 	private SharedStateCallback mockSharedStateCallback;
 	private Map<String, Object> hubSharedState;
 	private Map<String, Object> identityDirectSharedState;
+	private int setXDMSharedEventStateCalledTimes;
 
 	@Before
 	public void before() throws Exception {
@@ -74,6 +75,7 @@ public class IdentityStateTests {
 					 0)).thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
 
+		setXDMSharedEventStateCalledTimes = 0;
 		mockSharedStateCallback = new SharedStateCallback() {
 			@Override
 			public Map<String, Object> getSharedState(final String stateOwner, final Event event) {
@@ -84,6 +86,12 @@ public class IdentityStateTests {
 				}
 
 				return null;
+			}
+
+			@Override
+			public boolean setXDMSharedEventState(Map<String, Object> state, Event event) {
+				setXDMSharedEventStateCalledTimes++;
+				return true;
 			}
 		};
 	}
@@ -101,6 +109,7 @@ public class IdentityStateTests {
 
 		// verify
 		assertNotNull(state.getIdentityProperties().getECID());
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -121,10 +130,11 @@ public class IdentityStateTests {
 
 		// verify
 		assertEquals(ecid, state.getIdentityProperties().getECID());
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
-	public void testBootupIfReady_GeneratesECIDWhenDirectECIDIsNull() {
+	public void testBootupIfReady_GeneratesECIDWhenDirectECIDIsNullInPersistence() {
 		// setup
 		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
 					 0)).thenReturn(mockSharedPreference);
@@ -140,6 +150,7 @@ public class IdentityStateTests {
 
 		// verify
 		assertNotNull(state.getIdentityProperties().getECID());
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -160,6 +171,7 @@ public class IdentityStateTests {
 
 		// verify
 		assertEquals(persistedProps.getECID().toString(), state.getIdentityProperties().getECID().toString());
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -186,6 +198,7 @@ public class IdentityStateTests {
 
 		// verify
 		assertEquals(persistedProps.getECID(), state.getIdentityProperties().getECID());
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -216,6 +229,7 @@ public class IdentityStateTests {
 
 		// verify
 		assertNull(state.getIdentityProperties().getECID());
+		assertEquals(0, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -249,6 +263,7 @@ public class IdentityStateTests {
 		assertEquals("1234", state.getIdentityProperties().getECID().toString()); // ECID from Identity direct
 		assertNull(state.getIdentityProperties().getECIDSecondary()); // should be null
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test
@@ -281,6 +296,7 @@ public class IdentityStateTests {
 		assertNotNull("1234", state.getIdentityProperties().getECID()); // new ECID generated
 		assertNull(state.getIdentityProperties().getECIDSecondary()); // should be null
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
+		assertEquals(1, setXDMSharedEventStateCalledTimes);
 	}
 
 	@Test

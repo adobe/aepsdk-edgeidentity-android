@@ -149,13 +149,11 @@ class IdentityExtension extends Extension {
 	}
 
 	/**
-	 * Call this method with the EventHub's Boot event to handle the boot operation of the {@code Identity} Extension.
-	 * <p>
-	 * On boot share the initial identities loaded from persistence to XDM shared state.
+	 * Calls {@link IdentityState#bootupIfReady(SharedStateCallback)} with a valid callback
 	 *
-	 * @param event the boot {@link Event}
+	 * @return True if the bootup is complete
 	 */
-	void handleEventHubBoot(final Event event) {
+	boolean bootupIfReady() {
 		SharedStateCallback callback = new SharedStateCallback() {
 			@Override
 			public Map<String, Object> getSharedState(String stateOwner, Event event) {
@@ -171,11 +169,24 @@ class IdentityExtension extends Extension {
 					}
 				});
 			}
+
+			@Override
+			public boolean setXDMSharedEventState(Map<String, Object> state, Event event) {
+				if (getApi() == null) {
+					return false;
+				}
+
+				return getApi().setXDMSharedEventState(state, event, new ExtensionErrorCallback<ExtensionError>() {
+					@Override
+					public void error(ExtensionError extensionError) {
+						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
+									   "SharedStateCallback - Unable to set XDM shared state, failed with error: " + extensionError.getErrorName());
+					}
+				});
+			}
 		};
 
-		if (state.bootupIfReady(callback)) {
-			shareIdentityXDMSharedState(event);
-		}
+		return state.bootupIfReady(callback);
 	}
 
 	/**
@@ -236,25 +247,7 @@ class IdentityExtension extends Extension {
 			// regular Identity Direct shared state update, queue the event
 			processAddEvent(event);
 		} else {
-			SharedStateCallback callback = new SharedStateCallback() {
-				@Override
-				public Map<String, Object> getSharedState(String stateOwner, Event event) {
-					if (getApi() == null) {
-						return null;
-					}
-
-					return getApi().getSharedEventState(stateOwner, event, new ExtensionErrorCallback<ExtensionError>() {
-						@Override
-						public void error(ExtensionError extensionError) {
-							MobileCore.log(LoggingMode.WARNING, LOG_TAG,
-										   "SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
-						}
-					});
-				}
-			};
-
-			if (state.bootupIfReady(callback)) {
-				shareIdentityXDMSharedState(event);
+			if (bootupIfReady()) {
 				processCachedEvents();
 			}
 		}

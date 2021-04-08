@@ -44,6 +44,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,10 +83,8 @@ public class IdentityExtensionTests {
 		extension = new IdentityExtension(mockExtensionApi);
 
 		// simulate bootup
-		Event event = new Event.Builder("Fake Boot", IdentityConstants.EventType.HUB,
-										IdentityConstants.EventSource.BOOTED).build();
-		extension.handleEventHubBoot(event);
-		verify(mockExtensionApi, times(1)).setXDMSharedEventState(any(Map.class), any(Event.class),
+		extension.bootupIfReady();
+		verify(mockExtensionApi, times(1)).setXDMSharedEventState(any(Map.class), nullable(Event.class),
 				any(ExtensionErrorCallback.class));
 		clearInvocations(mockExtensionApi);
 	}

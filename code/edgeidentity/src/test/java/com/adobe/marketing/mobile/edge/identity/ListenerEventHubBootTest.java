@@ -58,7 +58,7 @@ public class ListenerEventHubBootTest {
 
 		// verify
 		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
-		verify(mockIdentityExtension, times(1)).handleEventHubBoot(event);
+		verify(mockIdentityExtension, times(1)).bootupIfReady();
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class ListenerEventHubBootTest {
 
 		// verify
 		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
-		verify(mockIdentityExtension, times(0)).handleEventHubBoot(any(Event.class));
+		verify(mockIdentityExtension, times(0)).bootupIfReady();
 	}
 
 }
