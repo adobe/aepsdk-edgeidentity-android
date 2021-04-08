@@ -25,7 +25,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 final class EventUtils {
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:EDGE_IDENTITY} and source {@link IdentityConstants.EventSource:REMOVE_IDENTITY}
+	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#REMOVE_IDENTITY}
 	 *
 	 * @param event the event to verify
 	 * @return true if both type and source match
@@ -36,7 +36,7 @@ final class EventUtils {
 	}
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:EDGE_IDENTITY} and source {@link IdentityConstants.EventSource:UPDATE_IDENTITY}
+	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#UPDATE_IDENTITY}
 	 *
 	 * @param event the event to verify
 	 * @return true if both type and source match
@@ -47,7 +47,7 @@ final class EventUtils {
 	}
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:EDGE_IDENTITY} and source {@link IdentityConstants.EventSource:REQUEST_IDENTITY}
+	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_IDENTITY}
 	 *
 	 * @param event the event to verify
 	 * @return true if both type and source match
@@ -58,7 +58,7 @@ final class EventUtils {
 	}
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType:GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource:REQUEST_RESET}
+	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_RESET}
 	 *
 	 * @param event the event to verify
 	 * @return true if both type and source match
@@ -73,7 +73,7 @@ final class EventUtils {
 	 *
 	 * @param stateOwnerName the shared state owner name; should not be null
 	 * @param event current event to check; should not be null
-	 * @return {@code boolean} indicating if it is the shared stage update for the provided {@code stateOwnerName}
+	 * @return {@code boolean} indicating if it is the shared state update for the provided {@code stateOwnerName}
 	 */
 	static boolean isSharedStateUpdateFor(final String stateOwnerName, final Event event) {
 		if (Utils.isNullOrEmpty(stateOwnerName) || event == null) {
@@ -106,7 +106,7 @@ final class EventUtils {
 			legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
 		} catch (ClassCastException e) {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - Could not process direct Identity shared state change event, failed to parse stored ECID as String: "
+						   "EventUtils - Failed to extract ECID from Identity direct shared state, expected String: "
 						   + e.getLocalizedMessage());
 		}
 

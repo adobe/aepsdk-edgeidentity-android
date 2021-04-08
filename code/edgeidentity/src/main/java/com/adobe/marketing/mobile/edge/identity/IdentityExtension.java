@@ -30,7 +30,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 class IdentityExtension extends Extension {
 	private ExecutorService executorService;
 	private final Object executorMutex = new Object();
-	private ConcurrentLinkedQueue<Event> cachedEvents; // cached events in memory until required shared states are resolved
+	private final ConcurrentLinkedQueue<Event>
+	cachedEvents; // cached events in memory until required shared states are resolved
 
 	// package private for testing
 	IdentityState state = new IdentityState(new IdentityProperties());
@@ -156,7 +157,7 @@ class IdentityExtension extends Extension {
 	boolean bootupIfReady() {
 		SharedStateCallback callback = new SharedStateCallback() {
 			@Override
-			public Map<String, Object> getSharedState(String stateOwner, Event event) {
+			public Map<String, Object> getSharedState(final String stateOwner, final Event event) {
 				ExtensionApi api = getApi();
 
 				if (api == null) {
@@ -173,7 +174,7 @@ class IdentityExtension extends Extension {
 			}
 
 			@Override
-			public boolean setXDMSharedEventState(Map<String, Object> state, Event event) {
+			public boolean setXDMSharedEventState(final Map<String, Object> state, final Event event) {
 				ExtensionApi api = getApi();
 
 				if (api == null) {
@@ -248,7 +249,7 @@ class IdentityExtension extends Extension {
 		}
 
 		if (state.hasBooted()) {
-			// regular Identity Direct shared state update, queue the event
+			// regular Identity Direct shared state update, queue event for handleIdentityDirectECIDUpdate
 			processAddEvent(event);
 		} else {
 			if (bootupIfReady()) {
@@ -320,17 +321,10 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
-		try {
-			final String legacyEcidString = (String) identityState.get(IdentityConstants.SharedState.IdentityDirect.ECID);
-			final ECID legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
+		final ECID legacyEcid = EventUtils.getECID(identityState);
 
-			if (state.updateLegacyExperienceCloudId(legacyEcid)) {
-				shareIdentityXDMSharedState(event);
-			}
-		} catch (ClassCastException e) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - Could not process direct Identity shared state change event, failed to parse stored ECID as String: "
-						   + e.getLocalizedMessage());
+		if (state.updateLegacyExperienceCloudId(legacyEcid)) {
+			shareIdentityXDMSharedState(event);
 		}
 	}
 

@@ -53,12 +53,12 @@ class IdentityState {
 	 * Completes init for this Identity extension.
 	 * Attempts to load the already persisted identities from persistence into {@link #identityProperties}
 	 * If no ECID is loaded from persistence (ideally meaning first launch), attempts to migrate existing ECID
-	 * for the direct Identity Extension, either from its persisted store or from its shared state if the
+	 * from the direct Identity Extension, either from its persisted store or from its shared state if the
 	 * direct Identity extension is registered. If no ECID is found for migration, then a new ECID is generated.
 	 * Stores the {@code identityProperties} once an ECID is set and creates the first shared state.
 	 *
 	 * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
-	 *             		and create a shared state on the EventHub
+	 *             		and create a shared state on the EventHub; should not be null
 	 * @return True if the bootup is complete
 	 */
 	boolean bootupIfReady(final SharedStateCallback callback) {
@@ -92,7 +92,7 @@ class IdentityState {
 
 				// If the direct Identity extension is registered, attempt to get its shared state
 				if (identityDirectSharedState != null) { // identity direct shared state is set
-					handleECIDfromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
+					handleECIDFromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
 				}
 				// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
 				else {
@@ -113,10 +113,7 @@ class IdentityState {
 
 		hasBooted = true;
 		MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityState - Edge Identity has successfully booted up");
-
-		if (callback != null) {
-			callback.setXDMSharedEventState(identityProperties.toXDMData(false), null);
-		}
+		callback.setXDMSharedEventState(identityProperties.toXDMData(false), null);
 
 		return hasBooted;
 	}
@@ -189,7 +186,7 @@ class IdentityState {
 	 *
 	 * @param legacyEcid the current ECID from the direct Identity extension
 	 */
-	private void handleECIDfromIdentityDirect(final ECID legacyEcid) {
+	private void handleECIDFromIdentityDirect(final ECID legacyEcid) {
 		if (legacyEcid != null) {
 			identityProperties.setECID(legacyEcid); // migrate legacy ECID
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
@@ -205,15 +202,11 @@ class IdentityState {
 
 	/**
 	 * Check if the Identity direct extension is registered by checking the EventHub's shared state list of registered extensions.
-	 * @param callback the {@link SharedStateCallback} to be used for fetching the EventHub Shared state
+	 * @param callback the {@link SharedStateCallback} to be used for fetching the EventHub Shared state; should not be null
 	 * @return true if the Identity direct extension is registered with the EventHub
 	 */
 	private boolean isIdentityDirectRegistered(final SharedStateCallback callback) {
-		Map<String, Object> registeredExtensionsWithHub = null;
-
-		if (callback != null) {
-			registeredExtensionsWithHub = callback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null);
-		}
+		Map<String, Object> registeredExtensionsWithHub = callback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null);
 
 		Map<String, Object> identityDirectInfo = null;
 
