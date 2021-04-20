@@ -46,7 +46,8 @@ jobs:
             echo "Using CodeCov version '$VERSION'"
             for i in 1 256 512
             do
-              shasum -a $i -c <(curl -s https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM)
+              shasum -a $i -c --ignore-missing <(curl -s "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM") ||
+              shasum -a $i -c <(curl -s "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM")
             done
             bash ./codecov -v -X s3 -c -D "./ci/unit-test/build/reports" -F unit-tests
 
@@ -70,7 +71,7 @@ jobs:
           #   The test command
           test-command: make ci-functional-test
       
-           # code coverage
+      # code coverage
       - run:
           name: Upload Code Coverage Report
           command: |
@@ -79,12 +80,14 @@ jobs:
             echo "Using CodeCov version '$VERSION'"
             for i in 1 256 512
             do
-              shasum -a $i -c <(curl -s https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM)
+              shasum -a $i -c --ignore-missing <(curl -s "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM") ||
+              shasum -a $i -c <(curl -s "https://raw.githubusercontent.com/codecov/codecov-bash/${VERSION}/SHA${i}SUM")
             done
             bash ./codecov -v -X s3 -c -D "./ci/functional-test/build/reports" -F functional-tests
 
       - store_artifacts:
           path: ci/functional-test/build/reports
+
       - store_test_results:
           path: ci/functional-test/build/outputs/androidTest-results
           
