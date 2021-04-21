@@ -59,6 +59,8 @@ dependencies {
     implementation project(':edgeidentity')
     implementation 'com.adobe.marketing.mobile:core:1+'
     implementation 'com.adobe.marketing.mobile:identity:1+'
-    implementation 'com.adobe.marketing.mobile:edge:1+'
+    implementation('com.adobe.marketing.mobile:edge:1+') {
+        exclude group: 'com.adobe.marketing.mobile', module:'edgeidentity'
+    }
     implementation 'com.adobe.marketing.mobile:assurance:1+'
 }
