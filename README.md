@@ -36,7 +36,7 @@ $ adb shell am start -W -a  android.intent.action.VIEW -d "testapp://main?adb_va
 
 Note: replace ADD_YOUR_SESSION_ID_HERE with your Assurance session identifier.
 
-Once the connection is established and the events list starts getting populated, you can filter the events for this extension by typing `Edge Identity` in the `Search Events` search box. See full list of available events [here](https://aep-sdks.gitbook.io/docs/beta/experience-platform-extension/experience-platform-debugging#event-types-handled-by-the-aep-mobile-extension).
+Once the connection is established and the events list starts getting populated, you can filter the events for this extension by typing `Edge Identity` in the `Search Events` search box.
 
 
 
