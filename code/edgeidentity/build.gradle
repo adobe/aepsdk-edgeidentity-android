@@ -16,7 +16,7 @@ spotless {
         target "src/*/java/**/*.java"
         removeUnusedImports()
         prettier(['prettier': '2.3.0', 'prettier-plugin-java': '1.1.0'])
-                .config(['parser': 'java', 'tabWidth': 4, 'useTabs': true, 'printWidth': 120])
+                .config(['parser': 'java', 'tabWidth': 4, 'useTabs': false, 'printWidth': 120])
         endWithNewline()
         licenseHeaderFile "../../config/formatter/adobe.header.txt"
     }
