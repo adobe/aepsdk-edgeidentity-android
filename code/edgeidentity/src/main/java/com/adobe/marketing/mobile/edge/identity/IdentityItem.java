@@ -93,12 +93,14 @@ public final class IdentityItem {
 
 	@Override
 	public String toString() {
+		// format:off
 		return "{"
 			   + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
 			   + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + (authenticatedState == null ? "null" :
 					   authenticatedState.getName()) + "\", "
 			   + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
 			   + "}";
+		// format:on
 	}
 
 	@Override
