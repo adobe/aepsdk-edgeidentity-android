@@ -38,7 +38,16 @@ Note: replace ADD_YOUR_SESSION_ID_HERE with your Assurance session identifier.
 
 Once the connection is established and the events list starts getting populated, you can filter the events for this extension by typing `Edge Identity` in the `Search Events` search box.
 
+### Code Format
 
+This project uses the code formatting tools Spotless with Prettier and ktlint. Formatting is applied when the project is built from Gradle and is checked when changes are submitted to the CI build system.
+
+To enable the Git pre-commit hook to apply code formatting on each commit, run the following to update the project's git config `core.hooksPath`:
+```
+make init
+```
+
+An `.editorconfig` file which defines the code style for this project is also provided. Enable it in IntelliJ IDEA or Android Studio by selecting the checkbox "Enable EditorConfig support" under "Editor -> Code Style" in the "Preferences" menu.
 
 ## Related Projects
 
