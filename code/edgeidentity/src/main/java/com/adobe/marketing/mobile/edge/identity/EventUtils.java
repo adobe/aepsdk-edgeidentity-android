@@ -83,7 +83,7 @@ final class EventUtils {
      * Checks if the provided {@code event} is a shared state update event for {@code stateOwnerName}
      *
      * @param stateOwnerName the shared state owner name; should not be null
-     * @param event current event to check; should not be null
+     * @param event          current event to check; should not be null
      * @return {@code boolean} indicating if it is the shared state update for the provided {@code stateOwnerName}
      */
     static boolean isSharedStateUpdateFor(final String stateOwnerName, final Event event) {

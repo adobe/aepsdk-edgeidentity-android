@@ -153,8 +153,8 @@ public class IdentityMap {
      * Add an identity item which is used to clearly distinguish entities that are interacting
      * with digital experiences.
      *
-     * @param item      {@link IdentityItem} to be added to the namespace
-     * @param namespace the namespace integration code or namespace ID of the identity
+     * @param item        {@link IdentityItem} to be added to the namespace
+     * @param namespace   the namespace integration code or namespace ID of the identity
      * @param isFirstItem on {@code true} keeps the provided {@code IdentityItem} as the first element of the identity list for this namespace
      */
     void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {

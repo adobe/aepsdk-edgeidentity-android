@@ -118,6 +118,7 @@ class IdentityStorageService {
 
     /**
      * Retrieves the direct Identity extension ECID value stored in persistence.
+     *
      * @return {@link ECID} stored in direct Identity extension's persistence, or null if no ECID value is stored.
      */
     static ECID loadEcidFromDirectIdentityPersistence() {
@@ -152,7 +153,6 @@ class IdentityStorageService {
      * Returns null if the app or app context is not available
      *
      * @param datastoreName the name of the data store to get
-     *
      * @return a {@code SharedPreferences} instance
      */
     private static SharedPreferences getSharedPreference(final String datastoreName) {

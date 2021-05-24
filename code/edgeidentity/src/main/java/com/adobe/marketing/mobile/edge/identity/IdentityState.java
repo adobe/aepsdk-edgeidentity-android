@@ -58,7 +58,7 @@ class IdentityState {
      * Stores the {@code identityProperties} once an ECID is set and creates the first shared state.
      *
      * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
-     *             		and create a shared state on the EventHub; should not be null
+     *                 and create a shared state on the EventHub; should not be null
      * @return True if the bootup is complete
      */
     boolean bootupIfReady(final SharedStateCallback callback) {
@@ -223,6 +223,7 @@ class IdentityState {
 
     /**
      * Check if the Identity direct extension is registered by checking the EventHub's shared state list of registered extensions.
+     *
      * @param callback the {@link SharedStateCallback} to be used for fetching the EventHub Shared state; should not be null
      * @return true if the Identity direct extension is registered with the EventHub
      */

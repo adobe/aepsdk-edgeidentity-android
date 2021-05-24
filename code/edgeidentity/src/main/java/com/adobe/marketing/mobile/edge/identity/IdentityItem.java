@@ -33,9 +33,10 @@ public final class IdentityItem {
 
     /**
      * Creates a new {@link IdentityItem}
-     * @param id id for the item
+     *
+     * @param id                 id for the item
      * @param authenticatedState {@link AuthenticatedState} for the item
-     * @param primary primary flag for the item
+     * @param primary            primary flag for the item
      * @throws IllegalArgumentException if id is null
      */
     public IdentityItem(final String id, final AuthenticatedState authenticatedState, final boolean primary) {
@@ -52,6 +53,7 @@ public final class IdentityItem {
      * Creates a new {@link IdentityItem} with default values
      * {@code authenticatedState) is set to AMBIGUOUS
      * (@code primary} is set to false
+     *
      * @param id the id for this {@link IdentityItem}
      */
     public IdentityItem(final String id) {
@@ -60,6 +62,7 @@ public final class IdentityItem {
 
     /**
      * Creates a copy of item.
+     *
      * @param item A {@link IdentityItem} to be copied
      */
     public IdentityItem(final IdentityItem item) {
@@ -68,6 +71,7 @@ public final class IdentityItem {
 
     /**
      * Identity of the consumer in the related namespace.
+     *
      * @return The id for this identity item
      */
     public String getId() {
@@ -76,6 +80,7 @@ public final class IdentityItem {
 
     /**
      * The state this identity is authenticated.
+     *
      * @return Current {@link AuthenticatedState} for this item
      */
     public AuthenticatedState getAuthenticatedState() {
@@ -85,6 +90,7 @@ public final class IdentityItem {
     /**
      * Indicates if this identity is the preferred identity.
      * Is used as a hint to help systems better organize how identities are queried.
+     *
      * @return true if this item is primary, false otherwise
      */
     public boolean isPrimary() {
@@ -94,13 +100,13 @@ public final class IdentityItem {
     @Override
     public String toString() {
         // format:off
-		return "{"
-			   + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
-			   + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + (authenticatedState == null ? "null" :
-					   authenticatedState.getName()) + "\", "
-			   + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
-			   + "}";
-		// format:on
+        return "{"
+                + "\"" + IdentityConstants.XDMKeys.ID + "\": \"" + id + "\", "
+                + "\"" + IdentityConstants.XDMKeys.AUTHENTICATED_STATE + "\": \"" + (authenticatedState == null ? "null" :
+                authenticatedState.getName()) + "\", "
+                + "\"" + IdentityConstants.XDMKeys.PRIMARY + "\": " + primary
+                + "}";
+        // format:on
     }
 
     @Override
@@ -128,6 +134,7 @@ public final class IdentityItem {
 
     /**
      * Converts this object into a map representation
+     *
      * @return this object in a map representation
      */
     Map<String, Object> toObjectMap() {
@@ -149,6 +156,7 @@ public final class IdentityItem {
 
     /**
      * Creates an {@link IdentityItem} from the data
+     *
      * @param data the data representing an {@link IdentityItem}
      * @return an initialized {@link IdentityItem} based on the data, null if data is invalid
      */

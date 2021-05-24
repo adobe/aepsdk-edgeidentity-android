@@ -136,6 +136,7 @@ class IdentityExtension extends Extension {
 
     /**
      * Adds an event to the event queue and starts processing the queue.
+     *
      * @param event the received event to be added in the events queue; should not be null
      */
     void processAddEvent(final Event event) {
@@ -418,7 +419,7 @@ class IdentityExtension extends Extension {
      * Retrieves the shared state for the given state owner
      *
      * @param stateOwner the state owner for the requested shared state
-     * @param event the {@link Event} for which is shared state is to be retrieved
+     * @param event      the {@link Event} for which is shared state is to be retrieved
      */
     private Map<String, Object> getSharedState(final String stateOwner, final Event event) {
         final ExtensionApi extensionApi = getApi();

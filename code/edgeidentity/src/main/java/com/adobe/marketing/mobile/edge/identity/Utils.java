@@ -40,9 +40,9 @@ class Utils {
      * Adds {@code key}/{@code value} to {@code map} if {@code value} is not null or an
      * empty collection.
      *
-     * @param map collection to put {@code value} mapped to {@code key} if {@code value} is
-     *            non-null and contains at least one entry
-     * @param key key used to map {@code value} in {@code map}
+     * @param map   collection to put {@code value} mapped to {@code key} if {@code value} is
+     *              non-null and contains at least one entry
+     * @param key   key used to map {@code value} in {@code map}
      * @param value a Object to add to {@code map} if not null
      */
     static void putIfNotNull(final Map<String, Object> map, final String key, final Object value) {
@@ -56,6 +56,7 @@ class Utils {
     /* JSON - Map conversion helpers */
     // TODO: add tests / replace with third party library for json conversion; test more around jsonObject/jsonArray with null nodes
     // TODO: check what should be the expected behavior with the konductor team (e.g. don't add the null nodes or add them with null values)
+
     /**
      * Converts provided {@link JSONObject} into {@link Map} for any number of levels, which can be used as event data
      * This method is recursive.

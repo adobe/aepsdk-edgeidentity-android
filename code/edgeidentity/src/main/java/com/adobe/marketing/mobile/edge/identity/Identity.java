@@ -183,7 +183,7 @@ public class Identity {
      * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
      * This does not clear the identifier from the User Profile Graph.
      *
-     * @param item the {@link IdentityItem} to remove.
+     * @param item      the {@link IdentityItem} to remove.
      * @param namespace The namespace of the identity to remove.
      */
     public static void removeIdentity(final IdentityItem item, final String namespace) {
