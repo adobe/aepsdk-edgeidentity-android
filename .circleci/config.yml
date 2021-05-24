@@ -19,6 +19,11 @@ jobs:
       JVM_OPTS: -Xmx3200m
     steps:
       - checkout
+
+      - run:
+          name: Check Code Format
+          command: make format-check
+
       - run:
           name: Javadoc
           command: make ci-javadoc
