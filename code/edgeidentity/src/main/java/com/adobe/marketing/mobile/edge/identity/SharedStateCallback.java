@@ -12,14 +12,12 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.Event;
-
 import java.util.Map;
 
 /**
  * Callback for fetching Shared States from the outside of the extension class.
  */
 interface SharedStateCallback {
-
 	/**
 	 * Fetches the Shared State for the provided {@code event} from the specified {@code stateOwner}.
 	 *

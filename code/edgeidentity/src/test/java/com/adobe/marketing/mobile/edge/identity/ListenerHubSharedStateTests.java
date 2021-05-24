@@ -11,25 +11,24 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import com.adobe.marketing.mobile.Event;
-import com.adobe.marketing.mobile.MobileCore;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.MobileCore;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+
 public class ListenerHubSharedStateTests {
+
 	@Mock
 	private IdentityExtension mockIdentityExtension;
 
@@ -42,15 +41,25 @@ public class ListenerHubSharedStateTests {
 		mockIdentityExtension = Mockito.mock(IdentityExtension.class);
 		doReturn(testExecutor).when(mockIdentityExtension).getExecutor();
 		MobileCore.start(null);
-		listener = spy(new ListenerHubSharedState(null, IdentityConstants.EventType.HUB,
-					   IdentityConstants.EventSource.SHARED_STATE));
+		listener =
+			spy(
+				new ListenerHubSharedState(
+					null,
+					IdentityConstants.EventType.HUB,
+					IdentityConstants.EventSource.SHARED_STATE
+				)
+			);
 	}
 
 	@Test
 	public void testHear() throws Exception {
 		// setup
-		Event event = new Event.Builder("Shared State Change", IdentityConstants.EventType.HUB,
-										IdentityConstants.EventSource.SHARED_STATE).build();
+		Event event = new Event.Builder(
+			"Shared State Change",
+			IdentityConstants.EventType.HUB,
+			IdentityConstants.EventSource.SHARED_STATE
+		)
+			.build();
 		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
 
 		// test
@@ -64,8 +73,12 @@ public class ListenerHubSharedStateTests {
 	@Test
 	public void testHear_WhenParentExtensionNull() throws Exception {
 		// setup
-		Event event = new Event.Builder("Shared State Change", IdentityConstants.EventType.HUB,
-										IdentityConstants.EventSource.SHARED_STATE).build();
+		Event event = new Event.Builder(
+			"Shared State Change",
+			IdentityConstants.EventType.HUB,
+			IdentityConstants.EventSource.SHARED_STATE
+		)
+			.build();
 		doReturn(null).when(listener).getIdentityExtension();
 
 		// test

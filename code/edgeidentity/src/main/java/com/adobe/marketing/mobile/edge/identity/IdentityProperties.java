@@ -11,14 +11,13 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Represents a type which contains instances variables for this Identity extension
@@ -46,8 +45,7 @@ class IdentityProperties {
 	 */
 	IdentityProperties(final Map<String, Object> xdmData) {
 		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
-		this.identityMap = map == null ? new IdentityMap() :
-						   map; // always keep an empty identity map so there is no need for null check
+		this.identityMap = map == null ? new IdentityMap() : map; // always keep an empty identity map so there is no need for null check
 	}
 
 	/**
@@ -81,10 +79,16 @@ class IdentityProperties {
 	 * @return current {@code ECID}
 	 */
 	ECID getECID() {
-		final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityConstants.Namespaces.ECID);
+		final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(
+			IdentityConstants.Namespaces.ECID
+		);
 
-		if (ecidItems != null && !ecidItems.isEmpty() && ecidItems.get(0) != null
-				&& !Utils.isNullOrEmpty(ecidItems.get(0).getId())) {
+		if (
+			ecidItems != null &&
+			!ecidItems.isEmpty() &&
+			ecidItems.get(0) != null &&
+			!Utils.isNullOrEmpty(ecidItems.get(0).getId())
+		) {
 			return new ECID(ecidItems.get(0).getId());
 		}
 
@@ -113,8 +117,11 @@ class IdentityProperties {
 
 		// add the new secondary ECID to Identity map
 		if (newSecondaryEcid != null) {
-			final IdentityItem newSecondaryECIDItem = new IdentityItem(newSecondaryEcid.toString(), AuthenticatedState.AMBIGUOUS,
-					false);
+			final IdentityItem newSecondaryECIDItem = new IdentityItem(
+				newSecondaryEcid.toString(),
+				AuthenticatedState.AMBIGUOUS,
+				false
+			);
 			identityMap.addItem(newSecondaryECIDItem, IdentityConstants.Namespaces.ECID);
 		}
 	}
@@ -125,10 +132,16 @@ class IdentityProperties {
 	 * @return secondary {@code ECID}
 	 */
 	ECID getECIDSecondary() {
-		final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(IdentityConstants.Namespaces.ECID);
+		final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(
+			IdentityConstants.Namespaces.ECID
+		);
 
-		if (ecidItems != null && ecidItems.size() > 1 && ecidItems.get(1) != null
-				&& !Utils.isNullOrEmpty(ecidItems.get(1).getId())) {
+		if (
+			ecidItems != null &&
+			ecidItems.size() > 1 &&
+			ecidItems.get(1) != null &&
+			!Utils.isNullOrEmpty(ecidItems.get(1).getId())
+		) {
 			return new ECID(ecidItems.get(1).getId());
 		}
 
@@ -187,10 +200,15 @@ class IdentityProperties {
 	private void removeIdentitiesWithReservedNamespaces(final IdentityMap identityMap) {
 		for (final String reservedNamespace : reservedNamespaces) {
 			if (identityMap.clearItemsForNamespace(reservedNamespace)) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   String.format("IdentityProperties - Updating/Removing identifiers in namespace %s is not allowed.", reservedNamespace));
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					String.format(
+						"IdentityProperties - Updating/Removing identifiers in namespace %s is not allowed.",
+						reservedNamespace
+					)
+				);
 			}
 		}
 	}
-
 }

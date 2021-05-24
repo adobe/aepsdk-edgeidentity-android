@@ -18,6 +18,7 @@ import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 
 class ListenerEventHubBoot extends ExtensionListener {
+
 	/**
 	 * Constructor.
 	 *
@@ -37,21 +38,27 @@ class ListenerEventHubBoot extends ExtensionListener {
 	 */
 	@Override
 	public void hear(final Event event) {
-
 		final IdentityExtension parentExtension = getIdentityExtension();
 
 		if (parentExtension == null) {
-			MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-						   "ListenerEventHubBoot - The parent extension associated with this listener is null, ignoring this event.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerEventHubBoot - The parent extension associated with this listener is null, ignoring this event."
+			);
 			return;
 		}
 
-		parentExtension.getExecutor().execute(new Runnable() {
-			@Override
-			public void run() {
-				parentExtension.bootupIfReady();
-			}
-		});
+		parentExtension
+			.getExecutor()
+			.execute(
+				new Runnable() {
+					@Override
+					public void run() {
+						parentExtension.bootupIfReady();
+					}
+				}
+			);
 	}
 
 	/**

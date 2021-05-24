@@ -14,23 +14,27 @@ package com.adobe.marketing.mobile.edge.identity;
 public class IdentityTestConstants {
 
 	public final class DataStoreKey {
+
 		public static final String CONFIG_DATASTORE = "AdobeMobile_ConfigState";
 		public static final String IDENTITY_DATASTORE = "com.adobe.edge.identity";
 		public static final String IDENTITY_DIRECT_DATASTORE = "visitorIDServiceDataStore";
-		private DataStoreKey() { }
+
+		private DataStoreKey() {}
 	}
 
 	public final class SharedStateName {
+
 		public static final String CONFIG = "com.adobe.module.configuration";
 		public static final String EVENT_HUB = "com.adobe.module.eventhub";
-		private SharedStateName() { }
+
+		private SharedStateName() {}
 	}
 
 	public final class GetIdentitiesHelper {
+
 		public static final String VALUE = "getConsentValue";
 		public static final String ERROR = "getConsentError";
-		private GetIdentitiesHelper() { }
+
+		private GetIdentitiesHelper() {}
 	}
-
-
 }

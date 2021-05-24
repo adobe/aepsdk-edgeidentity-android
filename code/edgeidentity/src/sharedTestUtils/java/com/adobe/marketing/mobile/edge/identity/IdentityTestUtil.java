@@ -22,11 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +30,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Util class used by both Functional and Unit tests
@@ -64,8 +62,11 @@ class IdentityTestUtil {
 			try {
 				value = jsonObject.get(nextKey);
 			} catch (JSONException e) {
-				MobileCore.log(LoggingMode.DEBUG, "Functional Test",
-							   "toMap - Unable to convert jsonObject to Map for key " + nextKey + ", skipping.");
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					"Functional Test",
+					"toMap - Unable to convert jsonObject to Map for key " + nextKey + ", skipping."
+				);
 			}
 
 			if (value == null) {
@@ -109,8 +110,11 @@ class IdentityTestUtil {
 			try {
 				value = jsonArray.get(i);
 			} catch (JSONException e) {
-				MobileCore.log(LoggingMode.DEBUG, "Functional Test",
-							   "toList - Unable to convert jsonObject to List for index " + i + ", skipping.");
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					"Functional Test",
+					"toList - Unable to convert jsonObject to List for index " + i + ", skipping."
+				);
 			}
 
 			if (value == null) {
@@ -170,8 +174,13 @@ class IdentityTestUtil {
 	 * Helper method to build remove identity request event with XDM formatted Identity map
 	 */
 	static Event buildRemoveIdentityRequest(final Map<String, Object> map) {
-		return new Event.Builder("Remove Identity Event", IdentityConstants.EventType.EDGE_IDENTITY,
-								 IdentityConstants.EventSource.REMOVE_IDENTITY).setEventData(map).build();
+		return new Event.Builder(
+			"Remove Identity Event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REMOVE_IDENTITY
+		)
+			.setEventData(map)
+			.build();
 	}
 
 	/**
@@ -187,10 +196,14 @@ class IdentityTestUtil {
 	 * Helper method to build update identity request event with XDM formatted Identity map
 	 */
 	static Event buildUpdateIdentityRequest(final Map<String, Object> map) {
-		return new Event.Builder("Update Identity Event", IdentityConstants.EventType.EDGE_IDENTITY,
-								 IdentityConstants.EventSource.UPDATE_IDENTITY).setEventData(map).build();
+		return new Event.Builder(
+			"Update Identity Event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.UPDATE_IDENTITY
+		)
+			.setEventData(map)
+			.build();
 	}
-
 
 	/**
 	 * Serialize the given {@code jsonString} to a JSON Object, then flattens to {@code Map<String, String>}.
@@ -230,7 +243,6 @@ class IdentityTestUtil {
 		return Collections.emptyMap();
 	}
 
-
 	/**
 	 * Deserialize {@code JsonNode} and flatten to provided {@code map}.
 	 * For example, a JSON such as "{xdm: {stitchId: myID, eventType: myType}}" is flattened
@@ -266,12 +278,12 @@ class IdentityTestUtil {
 		}
 	}
 
-
 	/**
 	 * Class similar to {@link IdentityItem} for a specific namespace used for easier testing.
 	 * For simplicity this class does not involve authenticatedState and primary key
 	 */
 	public static class TestItem {
+
 		private String namespace;
 		private String id;
 		private boolean isPrimary = false;
@@ -283,29 +295,31 @@ class IdentityTestUtil {
 	}
 
 	public static class TestECIDItem extends TestItem {
+
 		public TestECIDItem(final String ecid) {
 			super(IdentityConstants.Namespaces.ECID, ecid);
 		}
 	}
 
-
 	static Map<String, Object> getIdentitiesSync() {
 		try {
 			final HashMap<String, Object> getIdentityResponse = new HashMap<>();
 			final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-			Identity.getIdentities(new AdobeCallbackWithError<IdentityMap>() {
-				@Override
-				public void call(final IdentityMap identities) {
-					getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, identities);
-					latch.countDown();
-				}
+			Identity.getIdentities(
+				new AdobeCallbackWithError<IdentityMap>() {
+					@Override
+					public void call(final IdentityMap identities) {
+						getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, identities);
+						latch.countDown();
+					}
 
-				@Override
-				public void fail(final AdobeError adobeError) {
-					getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.ERROR, adobeError);
-					latch.countDown();
+					@Override
+					public void fail(final AdobeError adobeError) {
+						getIdentityResponse.put(IdentityTestConstants.GetIdentitiesHelper.ERROR, adobeError);
+						latch.countDown();
+					}
 				}
-			});
+			);
 			latch.await(2000, TimeUnit.MILLISECONDS);
 
 			return getIdentityResponse;
@@ -318,13 +332,15 @@ class IdentityTestUtil {
 		try {
 			final HashMap<String, String> getExperienceCloudIdResponse = new HashMap<>();
 			final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-			Identity.getExperienceCloudId(new AdobeCallback<String>() {
-				@Override
-				public void call(final String ecid) {
-					getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
-					latch.countDown();
+			Identity.getExperienceCloudId(
+				new AdobeCallback<String>() {
+					@Override
+					public void call(final String ecid) {
+						getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
+						latch.countDown();
+					}
 				}
-			});
+			);
 			latch.await(2000, TimeUnit.MILLISECONDS);
 			return getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
 		} catch (Exception exp) {
@@ -336,8 +352,12 @@ class IdentityTestUtil {
 		return CreateIdentityMap(namespace, id, AuthenticatedState.AMBIGUOUS, false);
 	}
 
-	static IdentityMap CreateIdentityMap(final String namespace, final String id, final AuthenticatedState state,
-										 final boolean isPrimary) {
+	static IdentityMap CreateIdentityMap(
+		final String namespace,
+		final String id,
+		final AuthenticatedState state,
+		final boolean isPrimary
+	) {
 		IdentityMap map = new IdentityMap();
 		IdentityItem item = new IdentityItem(id, state, isPrimary);
 		map.addItem(item, namespace);

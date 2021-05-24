@@ -25,6 +25,7 @@ class MockIdentityState extends IdentityState {
 
 	int updateCustomerIdentifiersCalledTimes = 0;
 	List<IdentityMap> updateCustomerIdentifiersParams = new ArrayList<>();
+
 	@Override
 	void updateCustomerIdentifiers(final IdentityMap map) {
 		updateCustomerIdentifiersCalledTimes++;
@@ -33,6 +34,7 @@ class MockIdentityState extends IdentityState {
 
 	int removeCustomerIdentifiersCalledTimes = 0;
 	List<IdentityMap> removeCustomerIdentifiersParams = new ArrayList<>();
+
 	@Override
 	void removeCustomerIdentifiers(final IdentityMap map) {
 		removeCustomerIdentifiersCalledTimes++;
@@ -40,6 +42,7 @@ class MockIdentityState extends IdentityState {
 	}
 
 	boolean hasBooted = false;
+
 	@Override
 	boolean hasBooted() {
 		return hasBooted;

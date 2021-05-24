@@ -11,15 +11,14 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Defines a map containing a set of end user identities, keyed on either namespace integration
@@ -31,6 +30,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
  */
 @SuppressWarnings("unused")
 public class IdentityMap {
+
 	private final Map<String, List<IdentityItem>> identityItems = new HashMap<>();
 
 	/**
@@ -40,7 +40,7 @@ public class IdentityMap {
 	 * @param namespace namespace for the list of identities to retrieve
 	 * @return IdentityItem for the namespace
 	 */
-	public List<IdentityItem>  getIdentityItemsForNamespace(final String namespace) {
+	public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
 		final List<IdentityItem> copyItems = new ArrayList<>();
 
 		if (Utils.isNullOrEmpty(namespace)) {
@@ -88,13 +88,20 @@ public class IdentityMap {
 	 */
 	public void removeItem(final IdentityItem item, final String namespace) {
 		if (item == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap remove item ignored as must contain a non-null IdentityItem.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityMap remove item ignored as must contain a non-null IdentityItem."
+			);
 			return;
 		}
 
 		if (Utils.isNullOrEmpty(namespace)) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityMap remove item ignored as must contain a non-null/non-empty namespace.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityMap remove item ignored as must contain a non-null/non-empty namespace."
+			);
 			return;
 		}
 
@@ -152,13 +159,20 @@ public class IdentityMap {
 	 */
 	void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
 		if (item == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityMap - add item ignored as must contain a non-null IdentityItem.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityMap - add item ignored as must contain a non-null IdentityItem."
+			);
 			return;
 		}
 
 		if (Utils.isNullOrEmpty(namespace)) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityMap - add item ignored as must contain a non-null/non-empty namespace.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityMap - add item ignored as must contain a non-null/non-empty namespace."
+			);
 			return;
 		}
 
@@ -278,7 +292,9 @@ public class IdentityMap {
 			return null;
 		}
 
-		final Map<String, Object> identityMapDict = (HashMap<String, Object>) map.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
+		final Map<String, Object> identityMapDict = (HashMap<String, Object>) map.get(
+			IdentityConstants.XDMKeys.IDENTITY_MAP
+		);
 
 		if (identityMapDict == null) {
 			return null;
@@ -288,7 +304,9 @@ public class IdentityMap {
 
 		for (final String namespace : identityMapDict.keySet()) {
 			try {
-				final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(namespace);
+				final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(
+					namespace
+				);
 
 				for (Object idMap : idArr) {
 					final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);

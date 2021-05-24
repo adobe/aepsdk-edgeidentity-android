@@ -30,7 +30,6 @@ class ListenerEdgeIdentityRequestIdentity extends ExtensionListener {
 		super(extensionApi, type, source);
 	}
 
-
 	/**
 	 * Method that gets called when event with event type {@link IdentityConstants.EventType#GENERIC_IDENTITY}
 	 * and with event source {@link IdentityConstants.EventSource#REQUEST_CONTENT}  is dispatched through eventHub.
@@ -40,25 +39,35 @@ class ListenerEdgeIdentityRequestIdentity extends ExtensionListener {
 	@Override
 	public void hear(final Event event) {
 		if (event == null || event.getEventData() == null) {
-			MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-						   "ListenerEdgeIdentityRequestIdentity - Event or Event data is null. Ignoring the event.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerEdgeIdentityRequestIdentity - Event or Event data is null. Ignoring the event."
+			);
 			return;
 		}
 
 		final IdentityExtension parentExtension = getIdentityExtension();
 
 		if (parentExtension == null) {
-			MobileCore.log(LoggingMode.DEBUG, IdentityConstants.LOG_TAG,
-						   "ListenerEdgeIdentityRequestIdentity - The parent extension, associated with this listener is null. Ignoring the event.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerEdgeIdentityRequestIdentity - The parent extension, associated with this listener is null. Ignoring the event."
+			);
 			return;
 		}
 
-		parentExtension.getExecutor().execute(new Runnable() {
-			@Override
-			public void run() {
-				parentExtension.processAddEvent(event);
-			}
-		});
+		parentExtension
+			.getExecutor()
+			.execute(
+				new Runnable() {
+					@Override
+					public void run() {
+						parentExtension.processAddEvent(event);
+					}
+				}
+			);
 	}
 
 	/**

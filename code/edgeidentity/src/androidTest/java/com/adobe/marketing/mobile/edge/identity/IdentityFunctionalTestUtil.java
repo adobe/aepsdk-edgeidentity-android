@@ -9,19 +9,7 @@
   governing permissions and limitations under the License.
 */
 
-
 package com.adobe.marketing.mobile.edge.identity;
-
-import com.adobe.marketing.mobile.AdobeCallback;
-import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.TestHelper;
-import com.adobe.marketing.mobile.TestPersistenceHelper;
-
-import org.json.JSONObject;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.adobe.marketing.mobile.TestHelper.getXDMSharedStateFor;
 import static com.adobe.marketing.mobile.TestHelper.resetTestExpectations;
@@ -29,6 +17,15 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.flattenM
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.getExperienceCloudIdSync;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
+import com.adobe.marketing.mobile.AdobeCallback;
+import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.TestHelper;
+import com.adobe.marketing.mobile.TestPersistenceHelper;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.json.JSONObject;
 
 public class IdentityFunctionalTestUtil {
 
@@ -39,12 +36,14 @@ public class IdentityFunctionalTestUtil {
 		com.adobe.marketing.mobile.edge.identity.Identity.registerExtension();
 
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-		MobileCore.start(new AdobeCallback() {
-			@Override
-			public void call(Object o) {
-				latch.countDown();
+		MobileCore.start(
+			new AdobeCallback() {
+				@Override
+				public void call(Object o) {
+					latch.countDown();
+				}
 			}
-		});
+		);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 		TestHelper.waitForThreads(2000);
@@ -66,12 +65,14 @@ public class IdentityFunctionalTestUtil {
 		com.adobe.marketing.mobile.Identity.registerExtension();
 
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-		MobileCore.start(new AdobeCallback() {
-			@Override
-			public void call(Object o) {
-				latch.countDown();
+		MobileCore.start(
+			new AdobeCallback() {
+				@Override
+				public void call(Object o) {
+					latch.countDown();
+				}
 			}
-		});
+		);
 
 		latch.await(1000, TimeUnit.MILLISECONDS);
 		TestHelper.waitForThreads(2000);
@@ -95,12 +96,14 @@ public class IdentityFunctionalTestUtil {
 		com.adobe.marketing.mobile.Identity.registerExtension();
 
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-		MobileCore.start(new AdobeCallback() {
-			@Override
-			public void call(Object o) {
-				latch.countDown();
+		MobileCore.start(
+			new AdobeCallback() {
+				@Override
+				public void call(Object o) {
+					latch.countDown();
+				}
 			}
-		});
+		);
 
 		latch.await();
 		TestHelper.waitForThreads(2000);
@@ -111,8 +114,11 @@ public class IdentityFunctionalTestUtil {
 	 * Set the ECID in persistence for Identity Direct extension.
 	 */
 	static void setIdentityDirectPersistedECID(final String legacyECID) {
-		TestPersistenceHelper.updatePersistence(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-												IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, legacyECID);
+		TestPersistenceHelper.updatePersistence(
+			IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
+			legacyECID
+		);
 	}
 
 	/**
@@ -121,8 +127,11 @@ public class IdentityFunctionalTestUtil {
 	static void setEdgeIdentityPersistence(final Map<String, Object> persistedData) {
 		if (persistedData != null) {
 			final JSONObject persistedJSON = new JSONObject(persistedData);
-			TestPersistenceHelper.updatePersistence(IdentityConstants.DataStoreKey.DATASTORE_NAME,
-													IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, persistedJSON.toString());
+			TestPersistenceHelper.updatePersistence(
+				IdentityConstants.DataStoreKey.DATASTORE_NAME,
+				IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES,
+				persistedJSON.toString()
+			);
 		}
 	}
 
@@ -133,13 +142,15 @@ public class IdentityFunctionalTestUtil {
 		try {
 			final HashMap<String, String> getExperienceCloudIdResponse = new HashMap<>();
 			final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-			com.adobe.marketing.mobile.Identity.getExperienceCloudId(new AdobeCallback<String>() {
-				@Override
-				public void call(final String ecid) {
-					getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
-					latch.countDown();
+			com.adobe.marketing.mobile.Identity.getExperienceCloudId(
+				new AdobeCallback<String>() {
+					@Override
+					public void call(final String ecid) {
+						getExperienceCloudIdResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, ecid);
+						latch.countDown();
+					}
 				}
-			});
+			);
 			latch.await();
 
 			return getExperienceCloudIdResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
@@ -147,7 +158,6 @@ public class IdentityFunctionalTestUtil {
 			return null;
 		}
 	}
-
 
 	// --------------------------------------------------------------------------------------------
 	// Verifiers
@@ -179,8 +189,10 @@ public class IdentityFunctionalTestUtil {
 		assertEquals(primaryECID, xdmSharedState.get("identityMap.ECID[0].id"));
 
 		// verify primary ECID in persistence
-		final String persistedJson = TestPersistenceHelper.readPersistedData(IdentityConstants.DataStoreKey.DATASTORE_NAME,
-									 IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
 		Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
 		assertEquals(primaryECID, persistedMap.get("identityMap.ECID[0].id"));
 	}
@@ -195,8 +207,10 @@ public class IdentityFunctionalTestUtil {
 		assertEquals(secondaryECID, xdmSharedState.get("identityMap.ECID[1].id"));
 
 		// verify secondary ECID in persistence
-		final String persistedJson = TestPersistenceHelper.readPersistedData(IdentityConstants.DataStoreKey.DATASTORE_NAME,
-									 IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
 		Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
 		assertEquals(secondaryECID, persistedMap.get("identityMap.ECID[1].id"));
 	}

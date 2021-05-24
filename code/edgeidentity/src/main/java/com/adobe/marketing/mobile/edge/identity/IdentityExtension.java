@@ -11,6 +11,8 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.Extension;
 import com.adobe.marketing.mobile.ExtensionApi;
@@ -18,20 +20,16 @@ import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
-
 class IdentityExtension extends Extension {
+
 	private ExecutorService executorService;
 	private final Object executorMutex = new Object();
-	private final ConcurrentLinkedQueue<Event>
-	cachedEvents; // cached events in memory until required shared states are resolved
+	private final ConcurrentLinkedQueue<Event> cachedEvents; // cached events in memory until required shared states are resolved
 
 	// package private for testing
 	IdentityState state = new IdentityState(new IdentityProperties());
@@ -70,23 +68,50 @@ class IdentityExtension extends Extension {
 		ExtensionErrorCallback<ExtensionError> listenerErrorCallback = new ExtensionErrorCallback<ExtensionError>() {
 			@Override
 			public void error(final ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.ERROR, LOG_TAG, String.format("Failed to register listener, error: %s",
-							   extensionError.getErrorName()));
+				MobileCore.log(
+					LoggingMode.ERROR,
+					LOG_TAG,
+					String.format("Failed to register listener, error: %s", extensionError.getErrorName())
+				);
 			}
 		};
 
-		extensionApi.registerEventListener(IdentityConstants.EventType.HUB, IdentityConstants.EventSource.BOOTED,
-										   ListenerEventHubBoot.class, listenerErrorCallback);
-		extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY,
-										   IdentityConstants.EventSource.REQUEST_IDENTITY, ListenerEdgeIdentityRequestIdentity.class, listenerErrorCallback);
-		extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY,
-										   IdentityConstants.EventSource.UPDATE_IDENTITY, ListenerEdgeIdentityUpdateIdentity.class, listenerErrorCallback);
-		extensionApi.registerEventListener(IdentityConstants.EventType.EDGE_IDENTITY,
-										   IdentityConstants.EventSource.REMOVE_IDENTITY, ListenerEdgeIdentityRemoveIdentity.class, listenerErrorCallback);
-		extensionApi.registerEventListener(IdentityConstants.EventType.HUB, IdentityConstants.EventSource.SHARED_STATE,
-										   ListenerHubSharedState.class, listenerErrorCallback);
-		extensionApi.registerEventListener(IdentityConstants.EventType.GENERIC_IDENTITY,
-										   IdentityConstants.EventSource.REQUEST_RESET, ListenerIdentityRequestReset.class, listenerErrorCallback);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.HUB,
+			IdentityConstants.EventSource.BOOTED,
+			ListenerEventHubBoot.class,
+			listenerErrorCallback
+		);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY,
+			ListenerEdgeIdentityRequestIdentity.class,
+			listenerErrorCallback
+		);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.UPDATE_IDENTITY,
+			ListenerEdgeIdentityUpdateIdentity.class,
+			listenerErrorCallback
+		);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REMOVE_IDENTITY,
+			ListenerEdgeIdentityRemoveIdentity.class,
+			listenerErrorCallback
+		);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.HUB,
+			IdentityConstants.EventSource.SHARED_STATE,
+			ListenerHubSharedState.class,
+			listenerErrorCallback
+		);
+		extensionApi.registerEventListener(
+			IdentityConstants.EventType.GENERIC_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_RESET,
+			ListenerIdentityRequestReset.class,
+			listenerErrorCallback
+		);
 	}
 
 	/**
@@ -164,13 +189,21 @@ class IdentityExtension extends Extension {
 					return null;
 				}
 
-				return api.getSharedEventState(stateOwner, event, new ExtensionErrorCallback<ExtensionError>() {
-					@Override
-					public void error(ExtensionError extensionError) {
-						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
-									   "SharedStateCallback - Unable to fetch shared state, failed with error: " + extensionError.getErrorName());
+				return api.getSharedEventState(
+					stateOwner,
+					event,
+					new ExtensionErrorCallback<ExtensionError>() {
+						@Override
+						public void error(ExtensionError extensionError) {
+							MobileCore.log(
+								LoggingMode.WARNING,
+								LOG_TAG,
+								"SharedStateCallback - Unable to fetch shared state, failed with error: " +
+								extensionError.getErrorName()
+							);
+						}
 					}
-				});
+				);
 			}
 
 			@Override
@@ -181,13 +214,21 @@ class IdentityExtension extends Extension {
 					return false;
 				}
 
-				return api.setXDMSharedEventState(state, event, new ExtensionErrorCallback<ExtensionError>() {
-					@Override
-					public void error(ExtensionError extensionError) {
-						MobileCore.log(LoggingMode.WARNING, LOG_TAG,
-									   "SharedStateCallback - Unable to set XDM shared state, failed with error: " + extensionError.getErrorName());
+				return api.setXDMSharedEventState(
+					state,
+					event,
+					new ExtensionErrorCallback<ExtensionError>() {
+						@Override
+						public void error(ExtensionError extensionError) {
+							MobileCore.log(
+								LoggingMode.WARNING,
+								LOG_TAG,
+								"SharedStateCallback - Unable to set XDM shared state, failed with error: " +
+								extensionError.getErrorName()
+							);
+						}
 					}
-				});
+				);
 			}
 		};
 
@@ -200,13 +241,15 @@ class IdentityExtension extends Extension {
 	 * @param event the edge update identity {@link Event}
 	 */
 	void handleUpdateIdentities(final Event event) {
-		final Map<String, Object> eventData =
-			event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+		final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
 		final IdentityMap map = IdentityMap.fromXDMMap(eventData);
 
 		if (map == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - Failed to update identifiers as no identifiers were found in the event data.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityExtension - Failed to update identifiers as no identifiers were found in the event data."
+			);
 			return;
 		}
 
@@ -220,13 +263,15 @@ class IdentityExtension extends Extension {
 	 * @param event the edge remove identity request {@link Event}
 	 */
 	void handleRemoveIdentity(final Event event) {
-		final Map<String, Object> eventData =
-			event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+		final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
 		final IdentityMap map = IdentityMap.fromXDMMap(eventData);
 
 		if (map == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - Failed to remove identifiers as no identifiers were found in the event data.");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityExtension - Failed to remove identifiers as no identifiers were found in the event data."
+			);
 			return;
 		}
 
@@ -243,8 +288,10 @@ class IdentityExtension extends Extension {
 	 *              the event and its data should not be null, checked in listener
 	 */
 	void handleHubSharedState(final Event event) {
-		if (!EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.Hub.NAME, event) &&
-				!EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.IdentityDirect.NAME, event)) {
+		if (
+			!EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.Hub.NAME, event) &&
+			!EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.IdentityDirect.NAME, event)
+		) {
 			return;
 		}
 
@@ -265,22 +312,31 @@ class IdentityExtension extends Extension {
 	 */
 	void handleIdentityRequest(final Event event) {
 		Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
-		Event responseEvent = new Event.Builder(IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
-												IdentityConstants.EventType.EDGE_IDENTITY,
-												IdentityConstants.EventSource.RESPONSE_IDENTITY)
-		.setEventData(xdmData)
-		.build();
+		Event responseEvent = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESPONSE_IDENTITY
+		)
+			.setEventData(xdmData)
+			.build();
 
-		MobileCore.dispatchResponseEvent(responseEvent, event, new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   "IdentityExtension - Failed to dispatch Edge Identity response event for event " +
-							   event.getUniqueIdentifier() +
-							   " with error " +
-							   extensionError.getErrorName());
+		MobileCore.dispatchResponseEvent(
+			responseEvent,
+			event,
+			new ExtensionErrorCallback<ExtensionError>() {
+				@Override
+				public void error(ExtensionError extensionError) {
+					MobileCore.log(
+						LoggingMode.DEBUG,
+						LOG_TAG,
+						"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
+						event.getUniqueIdentifier() +
+						" with error " +
+						extensionError.getErrorName()
+					);
+				}
 			}
-		});
+		);
 	}
 
 	/**
@@ -293,20 +349,29 @@ class IdentityExtension extends Extension {
 		shareIdentityXDMSharedState(event);
 
 		// dispatch reset complete event
-		final Event responseEvent = new Event.Builder(IdentityConstants.EventNames.RESET_IDENTITIES_COMPLETE,
-				IdentityConstants.EventType.EDGE_IDENTITY,
-				IdentityConstants.EventSource.RESET_COMPLETE).build();
+		final Event responseEvent = new Event.Builder(
+			IdentityConstants.EventNames.RESET_IDENTITIES_COMPLETE,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESET_COMPLETE
+		)
+			.build();
 
-		MobileCore.dispatchEvent(responseEvent, new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   "IdentityExtension - Failed to dispatch Edge Identity reset response event for event " +
-							   event.getUniqueIdentifier() +
-							   " with error " +
-							   extensionError.getErrorName());
+		MobileCore.dispatchEvent(
+			responseEvent,
+			new ExtensionErrorCallback<ExtensionError>() {
+				@Override
+				public void error(ExtensionError extensionError) {
+					MobileCore.log(
+						LoggingMode.DEBUG,
+						LOG_TAG,
+						"IdentityExtension - Failed to dispatch Edge Identity reset response event for event " +
+						event.getUniqueIdentifier() +
+						" with error " +
+						extensionError.getErrorName()
+					);
+				}
 			}
-		});
+		);
 	}
 
 	/**
@@ -315,7 +380,10 @@ class IdentityExtension extends Extension {
 	 * @param event the shared state update {@link Event}
 	 */
 	void handleIdentityDirectECIDUpdate(final Event event) {
-		final Map<String, Object> identityState = getSharedState(IdentityConstants.SharedState.IdentityDirect.NAME, event);
+		final Map<String, Object> identityState = getSharedState(
+			IdentityConstants.SharedState.IdentityDirect.NAME,
+			event
+		);
 
 		if (identityState == null) {
 			return;
@@ -362,9 +430,14 @@ class IdentityExtension extends Extension {
 		final ExtensionErrorCallback<ExtensionError> getSharedStateCallback = new ExtensionErrorCallback<ExtensionError>() {
 			@Override
 			public void error(final ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   String.format("IdentityExtension - Failed getting direct Identity shared state. Error : %s.",
-											 extensionError.getErrorName()));
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					String.format(
+						"IdentityExtension - Failed getting direct Identity shared state. Error : %s.",
+						extensionError.getErrorName()
+					)
+				);
 			}
 		};
 
@@ -380,8 +453,11 @@ class IdentityExtension extends Extension {
 		final ExtensionApi extensionApi = super.getApi();
 
 		if (extensionApi == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "IdentityExtension - ExtensionApi is null, unable to share XDM shared state for reset identities");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityExtension - ExtensionApi is null, unable to share XDM shared state for reset identities"
+			);
 			return;
 		}
 
@@ -389,12 +465,17 @@ class IdentityExtension extends Extension {
 		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
 			@Override
 			public void error(final ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-							   String.format("IdentityExtension - Failed create XDM shared state. Error : %s.", extensionError.getErrorName()));
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					String.format(
+						"IdentityExtension - Failed create XDM shared state. Error : %s.",
+						extensionError.getErrorName()
+					)
+				);
 			}
 		};
 
 		extensionApi.setXDMSharedEventState(state.getIdentityProperties().toXDMData(false), event, errorCallback);
 	}
-
 }

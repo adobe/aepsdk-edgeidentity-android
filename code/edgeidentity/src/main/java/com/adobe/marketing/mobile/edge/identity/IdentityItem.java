@@ -11,14 +11,13 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Identity is used to clearly distinguish people that are interacting with digital experiences.
@@ -27,6 +26,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
  * @see <a href="https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md">Identity Item Schema</a>
  */
 public final class IdentityItem {
+
 	private final String id;
 	private final AuthenticatedState authenticatedState;
 	private final boolean primary;
@@ -159,8 +159,9 @@ public final class IdentityItem {
 
 		try {
 			final String id = (String) data.get(IdentityConstants.XDMKeys.ID);
-			AuthenticatedState authenticatedState = AuthenticatedState.fromString((String) data.get(
-					IdentityConstants.XDMKeys.AUTHENTICATED_STATE));
+			AuthenticatedState authenticatedState = AuthenticatedState.fromString(
+				(String) data.get(IdentityConstants.XDMKeys.AUTHENTICATED_STATE)
+			);
 
 			if (authenticatedState == null) {
 				authenticatedState = AuthenticatedState.AMBIGUOUS;

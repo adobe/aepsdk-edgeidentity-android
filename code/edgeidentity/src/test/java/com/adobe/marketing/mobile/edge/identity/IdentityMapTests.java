@@ -11,17 +11,15 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import org.json.JSONObject;
-import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.json.JSONObject;
+import org.junit.Test;
 
 public class IdentityMapTests {
 
@@ -50,8 +48,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_getIdentityItemsForNamespace() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test
 		List<IdentityItem> locationItems = sampleUserMap.getIdentityItemsForNamespace("location");
@@ -65,12 +62,10 @@ public class IdentityMapTests {
 		assertEquals(3, sampleUserMap.getIdentityItemsForNamespace("login").size());
 	}
 
-
 	@Test
 	public void test_getIdentityItemsForNamespace_InvalidInputs() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test 1
 		List<IdentityItem> items = sampleUserMap.getIdentityItemsForNamespace("");
@@ -85,17 +80,13 @@ public class IdentityMapTests {
 		assertEquals(0, items.size());
 	}
 
-
 	@Test
 	public void test_RemoveItem() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test
 		sampleUserMap.removeItem(new IdentityItem("California"), "location");
-
-
 
 		// verify
 		Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
@@ -115,8 +106,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_RemoveItem_InvalidInputs() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test
 		sampleUserMap.removeItem(new IdentityItem("California"), "");
@@ -129,12 +119,10 @@ public class IdentityMapTests {
 		assertEquals(3, castedMap.get("login").size());
 	}
 
-
 	@Test
 	public void test_merge() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test
 		IdentityMap newMap = new IdentityMap();
@@ -146,7 +134,6 @@ public class IdentityMapTests {
 		assertEquals(3, castedMap.get("location").size());
 		assertEquals(3, castedMap.get("login").size());
 	}
-
 
 	@Test
 	public void test_merge_sameItem_GetsReplaced() {
@@ -170,8 +157,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_merge_EmptyIdentityMap() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "Location", 3 items with namespace "Login"
 
 		// test
 		sampleUserMap.merge(new IdentityMap());
@@ -185,8 +171,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_merge_nullMap() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
 		// test
 		sampleUserMap.merge(null);
@@ -197,12 +182,10 @@ public class IdentityMapTests {
 		assertEquals(3, castedMap.get("login").size());
 	}
 
-
 	@Test
 	public void test_removeAllIdentityItemsForNamespace() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
 		// test
 		sampleUserMap.clearItemsForNamespace("location");
@@ -211,15 +194,12 @@ public class IdentityMapTests {
 		Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
 		assertNull(castedMap.get("location"));
 		assertEquals(3, castedMap.get("login").size());
-
 	}
-
 
 	@Test
 	public void test_removeAllIdentityItemsForNamespace_InvalidNamespace() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
 		// test
 		sampleUserMap.clearItemsForNamespace(null);
@@ -244,8 +224,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_remove() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap();  // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 		IdentityMap tobeRemovedMap = new IdentityMap();
 		tobeRemovedMap.addItem(new IdentityItem("Student"), "login");
 		tobeRemovedMap.addItem(new IdentityItem("California"), "location");
@@ -262,8 +241,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_remove_NullAndEmptyMap() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap();  // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 
 		// test
 		sampleUserMap.remove(null);
@@ -278,8 +256,7 @@ public class IdentityMapTests {
 	@Test
 	public void test_remove_nonexistentNamespaceAndItems() {
 		// setup
-		IdentityMap sampleUserMap =
-			buildSampleIdentityMap();  // 2 items with namespace "location", 3 items with namespace "login"
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
 		IdentityMap tobeRemovedMap = new IdentityMap();
 		tobeRemovedMap.addItem(new IdentityItem("California"), "nonexistentNamespace");
 		tobeRemovedMap.addItem(new IdentityItem("nonexistentID"), "login");
@@ -293,28 +270,32 @@ public class IdentityMapTests {
 		assertEquals(3, castedMap.get("login").size());
 	}
 
-
 	@Test
 	public void test_FromData() throws Exception {
 		// setup
-		final String jsonStr = "{\n" +
-							   "      \"identityMap\": {\n" +
-							   "        \"ECID\": [\n" +
-							   "          {\n" +
-							   "            \"id\":" + "randomECID" + ",\n" +
-							   "            \"authenticatedState\": \"ambiguous\",\n" +
-							   "            \"primary\": true\n" +
-							   "          }\n" +
-							   "        ],\n" +
-							   "        \"USERID\": [\n" +
-							   "          {\n" +
-							   "            \"id\":" + "someUserID" + ",\n" +
-							   "            \"authenticatedState\": \"authenticated\",\n" +
-							   "            \"primary\": false\n" +
-							   "          }\n" +
-							   "        ]\n" +
-							   "      }\n" +
-							   "}";
+		final String jsonStr =
+			"{\n" +
+			"      \"identityMap\": {\n" +
+			"        \"ECID\": [\n" +
+			"          {\n" +
+			"            \"id\":" +
+			"randomECID" +
+			",\n" +
+			"            \"authenticatedState\": \"ambiguous\",\n" +
+			"            \"primary\": true\n" +
+			"          }\n" +
+			"        ],\n" +
+			"        \"USERID\": [\n" +
+			"          {\n" +
+			"            \"id\":" +
+			"someUserID" +
+			",\n" +
+			"            \"authenticatedState\": \"authenticated\",\n" +
+			"            \"primary\": false\n" +
+			"          }\n" +
+			"        ]\n" +
+			"      }\n" +
+			"}";
 
 		final JSONObject jsonObject = new JSONObject(jsonStr);
 		final Map<String, Object> xdmData = Utils.toMap(jsonObject);
@@ -338,20 +319,20 @@ public class IdentityMapTests {
 		assertNull(IdentityMap.fromXDMMap(new HashMap<String, Object>()));
 	}
 
-
 	@Test
 	public void testFromXDMMap_InvalidXDMData() throws Exception {
 		// setup
 		// ECID is map instead of list
-		final String invalidJsonStr = "{\n" +
-									  "  \"identityMap\": {\n" +
-									  "    \"ECID\": {\n" +
-									  "        \"id\": \"randomECID\",\n" +
-									  "        \"authenticatedState\": \"ambiguous\",\n" +
-									  "        \"primary\": true\n" +
-									  "    }\n" +
-									  "  }\n" +
-									  "}";
+		final String invalidJsonStr =
+			"{\n" +
+			"  \"identityMap\": {\n" +
+			"    \"ECID\": {\n" +
+			"        \"id\": \"randomECID\",\n" +
+			"        \"authenticatedState\": \"ambiguous\",\n" +
+			"        \"primary\": true\n" +
+			"    }\n" +
+			"  }\n" +
+			"}";
 
 		final JSONObject jsonObject = new JSONObject(invalidJsonStr);
 		final Map<String, Object> xdmData = Utils.toMap(jsonObject);
@@ -385,7 +366,6 @@ public class IdentityMapTests {
 		return (Map<String, List<IdentityItem>>) xdmMap.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
 	}
 
-
 	private IdentityMap buildSampleIdentityMap() {
 		// User Login Identity Items
 		IdentityItem email = new IdentityItem("john@doe", AuthenticatedState.AUTHENTICATED, true);
@@ -405,5 +385,4 @@ public class IdentityMapTests {
 		adobeIdentityMap.addItem(state, "location");
 		return adobeIdentityMap;
 	}
-
 }

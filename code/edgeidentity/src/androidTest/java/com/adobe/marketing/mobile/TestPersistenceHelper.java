@@ -11,16 +11,13 @@
 
 package com.adobe.marketing.mobile;
 
+import static org.junit.Assert.fail;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-
-
 import com.adobe.marketing.mobile.edge.identity.IdentityTestConstants;
-
 import java.util.ArrayList;
-
-import static org.junit.Assert.fail;
 
 /**
  * Helper class to update and remove persisted data to extension concerned with testing Identity.
@@ -46,7 +43,9 @@ public class TestPersistenceHelper {
 		final Application application = TestHelper.defaultApplication;
 
 		if (application == null) {
-			fail("Unable to updatePersistence by TestPersistenceHelper. Application is null, fast failing the test case.");
+			fail(
+				"Unable to updatePersistence by TestPersistenceHelper. Application is null, fast failing the test case."
+			);
 		}
 
 		final Context context = application.getApplicationContext();
@@ -58,7 +57,9 @@ public class TestPersistenceHelper {
 		SharedPreferences sharedPreferences = context.getSharedPreferences(datastore, Context.MODE_PRIVATE);
 
 		if (sharedPreferences == null) {
-			fail("Unable to updatePersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case.");
+			fail(
+				"Unable to updatePersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
+			);
 		}
 
 		SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -77,7 +78,9 @@ public class TestPersistenceHelper {
 		final Application application = TestHelper.defaultApplication;
 
 		if (application == null) {
-			fail("Unable to readPersistedData by TestPersistenceHelper. Application is null, fast failing the test case.");
+			fail(
+				"Unable to readPersistedData by TestPersistenceHelper. Application is null, fast failing the test case."
+			);
 		}
 
 		final Context context = application.getApplicationContext();
@@ -89,7 +92,9 @@ public class TestPersistenceHelper {
 		SharedPreferences sharedPreferences = context.getSharedPreferences(datastore, Context.MODE_PRIVATE);
 
 		if (sharedPreferences == null) {
-			fail("Unable to readPersistedData by TestPersistenceHelper. sharedPreferences is null, fast failing the test case.");
+			fail(
+				"Unable to readPersistedData by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
+			);
 		}
 
 		return sharedPreferences.getString(key, null);
@@ -99,11 +104,12 @@ public class TestPersistenceHelper {
 	 * Clears the Configuration and Consent extension's persisted data
 	 */
 	public static void resetKnownPersistence() {
-
 		final Application application = TestHelper.defaultApplication;
 
 		if (application == null) {
-			fail("Unable to resetPersistence by TestPersistenceHelper. Application is null, fast failing the test case.");
+			fail(
+				"Unable to resetPersistence by TestPersistenceHelper. Application is null, fast failing the test case."
+			);
 		}
 
 		final Context context = application.getApplicationContext();
@@ -116,7 +122,9 @@ public class TestPersistenceHelper {
 			SharedPreferences sharedPreferences = context.getSharedPreferences(eachDatastore, Context.MODE_PRIVATE);
 
 			if (sharedPreferences == null) {
-				fail("Unable to resetPersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case.");
+				fail(
+					"Unable to resetPersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
+				);
 			}
 
 			SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -124,5 +132,4 @@ public class TestPersistenceHelper {
 			editor.apply();
 		}
 	}
-
 }

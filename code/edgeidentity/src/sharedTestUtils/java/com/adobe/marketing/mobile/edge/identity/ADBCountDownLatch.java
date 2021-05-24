@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBCountDownLatch {
+
 	private final CountDownLatch latch;
 	private final int initialCount;
 	private final AtomicInteger currentCount;
@@ -55,5 +56,4 @@ public class ADBCountDownLatch {
 	public String toString() {
 		return String.format("%s, initial: %d, current: %d", latch.toString(), initialCount, currentCount.get());
 	}
-
 }

@@ -11,14 +11,17 @@
 
 package com.adobe.marketing.mobile;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-
+import androidx.test.platform.app.InstrumentationRegistry;
+import com.adobe.marketing.mobile.MonitorExtension.EventSpec;
+import com.adobe.marketing.mobile.edge.identity.ADBCountDownLatch;
+import com.adobe.marketing.mobile.services.ServiceProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,21 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
-import com.adobe.marketing.mobile.MonitorExtension.EventSpec;
-import com.adobe.marketing.mobile.edge.identity.ADBCountDownLatch;
-import com.adobe.marketing.mobile.services.ServiceProvider;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /**
  * Test helper for functional testing to read, write, reset and assert against eventhub events, shared states and persistence data.
  */
 public class TestHelper {
+
 	private static final String TAG = "TestHelper";
 	static final int WAIT_TIMEOUT_MS = 1000;
 	static final int WAIT_EVENT_TIMEOUT_MS = 2000;
@@ -88,7 +85,11 @@ public class TestHelper {
 						throw e; // rethrow test failure
 					} finally {
 						// After test execution
-						MobileCore.log(LoggingMode.DEBUG, "SetupCoreRule", "Finished '" + description.getMethodName() + "'");
+						MobileCore.log(
+							LoggingMode.DEBUG,
+							"SetupCoreRule",
+							"Finished '" + description.getMethodName() + "'"
+						);
 						waitForThreads(5000); // wait to allow thread to run after test execution
 						Core core = MobileCore.getCore();
 
@@ -156,18 +157,27 @@ public class TestHelper {
 		Set<Thread> threadSet = getEligibleThreads();
 
 		while (threadSet.size() > 0 && ((System.currentTimeMillis() - startTime) < timeoutTestMillis)) {
-			MobileCore.log(LoggingMode.DEBUG, TAG, "waitForThreads - Still waiting for " + threadSet.size() + " thread(s)");
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				TAG,
+				"waitForThreads - Still waiting for " + threadSet.size() + " thread(s)"
+			);
 
 			for (Thread t : threadSet) {
-
-				MobileCore.log(LoggingMode.DEBUG, TAG, "waitForThreads - Waiting for thread " + t.getName() + " (" + t.getId() + ")");
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					TAG,
+					"waitForThreads - Waiting for thread " + t.getName() + " (" + t.getId() + ")"
+				);
 				boolean done = false;
 				boolean timedOut = false;
 
 				while (!done && !timedOut) {
-					if (t.getState().equals(Thread.State.TERMINATED)
-							|| t.getState().equals(Thread.State.TIMED_WAITING)
-							|| t.getState().equals(Thread.State.WAITING)) {
+					if (
+						t.getState().equals(Thread.State.TERMINATED) ||
+						t.getState().equals(Thread.State.TIMED_WAITING) ||
+						t.getState().equals(Thread.State.WAITING)
+					) {
 						//Cannot use the join() API since we use a cached thread pool, which
 						//means that we keep idle threads around for 60secs (default timeout).
 						done = true;
@@ -179,11 +189,17 @@ public class TestHelper {
 				}
 
 				if (timedOut) {
-					MobileCore.log(LoggingMode.DEBUG, TAG,
-								   "waitForThreads - Timeout out waiting for thread " + t.getName() + " (" + t.getId() + ")");
+					MobileCore.log(
+						LoggingMode.DEBUG,
+						TAG,
+						"waitForThreads - Timeout out waiting for thread " + t.getName() + " (" + t.getId() + ")"
+					);
 				} else {
-					MobileCore.log(LoggingMode.DEBUG, TAG,
-								   "waitForThreads - Done waiting for thread " + t.getName() + " (" + t.getId() + ")");
+					MobileCore.log(
+						LoggingMode.DEBUG,
+						TAG,
+						"waitForThreads - Done waiting for thread " + t.getName() + " (" + t.getId() + ")"
+					);
 				}
 			}
 
@@ -203,8 +219,12 @@ public class TestHelper {
 		Set<Thread> eligibleThreads = new HashSet<Thread>();
 
 		for (Thread t : threadSet) {
-			if (isAppThread(t) && !t.getState().equals(Thread.State.WAITING) && !t.getState().equals(Thread.State.TERMINATED)
-					&& !t.getState().equals(Thread.State.TIMED_WAITING)) {
+			if (
+				isAppThread(t) &&
+				!t.getState().equals(Thread.State.WAITING) &&
+				!t.getState().equals(Thread.State.TERMINATED) &&
+				!t.getState().equals(Thread.State.TIMED_WAITING)
+			) {
 				eligibleThreads.add(t);
 			}
 		}
@@ -232,7 +252,6 @@ public class TestHelper {
 
 		return false;
 	}
-
 
 	/**
 	 * Resets the network and event test expectations.
@@ -279,14 +298,22 @@ public class TestHelper {
 		}
 
 		for (Map.Entry<EventSpec, ADBCountDownLatch> expected : expectedEvents.entrySet()) {
-			boolean awaitResult = expected.getValue().await(WAIT_EVENT_TIMEOUT_MS,
-								  TimeUnit.MILLISECONDS);
-			assertTrue("Timed out waiting for event type " + expected.getKey().type + " and source " + expected.getKey().source,
-					   awaitResult);
+			boolean awaitResult = expected.getValue().await(WAIT_EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+			assertTrue(
+				"Timed out waiting for event type " +
+				expected.getKey().type +
+				" and source " +
+				expected.getKey().source,
+				awaitResult
+			);
 			int expectedCount = expected.getValue().getInitialCount();
 			int receivedCount = expected.getValue().getCurrentCount();
-			String failMessage = String.format("Expected %d events for '%s', but received %d", expectedCount, expected.getKey(),
-											   receivedCount);
+			String failMessage = String.format(
+				"Expected %d events for '%s', but received %d",
+				expectedCount,
+				expected.getKey(),
+				receivedCount
+			);
 			assertEquals(failMessage, expectedCount, receivedCount);
 		}
 
@@ -332,25 +359,43 @@ public class TestHelper {
 				expectedEventLatch.await(WAIT_EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 				int expectedCount = expectedEventLatch.getInitialCount();
 				int receivedCount = receivedEvent.getValue().size();
-				String failMessage = String.format("Expected %d events for '%s', but received %d", expectedCount,
-												   receivedEvent.getKey(), receivedCount);
+				String failMessage = String.format(
+					"Expected %d events for '%s', but received %d",
+					expectedCount,
+					receivedEvent.getKey(),
+					receivedCount
+				);
 				assertEquals(failMessage, expectedCount, receivedCount);
 			} else {
 				unexpectedEventsReceivedCount += receivedEvent.getValue().size();
-				unexpectedEventsErrorString.append(String.format("(%s,%s,%d)",
-												   receivedEvent.getKey().type,
-												   receivedEvent.getKey().source,
-												   receivedEvent.getValue().size())
-												  );
-				MobileCore.log(LoggingMode.DEBUG, TAG,
-							   "Received unexpected event with type: " + receivedEvent.getKey().type + " source: " +
-							   receivedEvent.getKey().source);
+				unexpectedEventsErrorString.append(
+					String.format(
+						"(%s,%s,%d)",
+						receivedEvent.getKey().type,
+						receivedEvent.getKey().source,
+						receivedEvent.getValue().size()
+					)
+				);
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					TAG,
+					"Received unexpected event with type: " +
+					receivedEvent.getKey().type +
+					" source: " +
+					receivedEvent.getKey().source
+				);
 			}
 		}
 
-		assertEquals(String.format("Received %d unexpected event(s): %s", unexpectedEventsReceivedCount,
-								   unexpectedEventsErrorString.toString()),
-					 0, unexpectedEventsReceivedCount);
+		assertEquals(
+			String.format(
+				"Received %d unexpected event(s): %s",
+				unexpectedEventsReceivedCount,
+				unexpectedEventsErrorString.toString()
+			),
+			0,
+			unexpectedEventsReceivedCount
+		);
 	}
 
 	/**
@@ -364,7 +409,8 @@ public class TestHelper {
 	 * @throws InterruptedException
 	 * @throws IllegalArgumentException if {@code type} or {@code source} are null or empty strings
 	 */
-	public static List<Event> getDispatchedEventsWith(final String type, final String source) throws InterruptedException {
+	public static List<Event> getDispatchedEventsWith(final String type, final String source)
+		throws InterruptedException {
 		return getDispatchedEventsWith(type, source, WAIT_EVENT_TIMEOUT_MS);
 	}
 
@@ -379,8 +425,8 @@ public class TestHelper {
 	 * @throws InterruptedException
 	 * @throws IllegalArgumentException if {@code type} or {@code source} are null or empty strings
 	 */
-	public static List<Event> getDispatchedEventsWith(final String type, final String source,
-			int timeout) throws InterruptedException {
+	public static List<Event> getDispatchedEventsWith(final String type, final String source, int timeout)
+		throws InterruptedException {
 		EventSpec eventSpec = new EventSpec(source, type);
 
 		Map<EventSpec, List<Event>> receivedEvents = MonitorExtension.getReceivedEvents();
@@ -390,14 +436,16 @@ public class TestHelper {
 
 		if (expectedEventLatch != null) {
 			boolean awaitResult = expectedEventLatch.await(timeout, TimeUnit.MILLISECONDS);
-			assertTrue("Timed out waiting for event type " + eventSpec.type + " and source " + eventSpec.source, awaitResult);
+			assertTrue(
+				"Timed out waiting for event type " + eventSpec.type + " and source " + eventSpec.source,
+				awaitResult
+			);
 		} else {
 			sleep(WAIT_TIMEOUT_MS);
 		}
 
 		return receivedEvents.containsKey(eventSpec) ? receivedEvents.get(eventSpec) : Collections.<Event>emptyList();
 	}
-
 
 	/**
 	 * Synchronous call to get the shared state for the specified {@code stateOwner}.
@@ -408,35 +456,47 @@ public class TestHelper {
 	 * @return latest shared state of the given {@code stateOwner} or null if no shared state was found
 	 * @throws InterruptedException
 	 */
-	public static Map<String, Object> getSharedStateFor(final String stateOwner, int timeout) throws InterruptedException {
-		Event event = new Event.Builder("Get Shared State Request", TestConstants.EventType.MONITOR,
-										TestConstants.EventSource.SHARED_STATE_REQUEST)
-		.setEventData(new HashMap<String, Object>() {
-			{
-				put(TestConstants.EventDataKey.STATE_OWNER, stateOwner);
-			}
-		})
-		.build();
+	public static Map<String, Object> getSharedStateFor(final String stateOwner, int timeout)
+		throws InterruptedException {
+		Event event = new Event.Builder(
+			"Get Shared State Request",
+			TestConstants.EventType.MONITOR,
+			TestConstants.EventSource.SHARED_STATE_REQUEST
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(TestConstants.EventDataKey.STATE_OWNER, stateOwner);
+					}
+				}
+			)
+			.build();
 
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
 		final Map<String, Object> sharedState = new HashMap<>();
-		MobileCore.dispatchEventWithResponseCallback(event,
-		new AdobeCallback<Event>() {
-			@Override
-			public void call(Event event) {
-				if (event.getEventData() != null) {
-					sharedState.putAll(event.getEventData());
-				}
+		MobileCore.dispatchEventWithResponseCallback(
+			event,
+			new AdobeCallback<Event>() {
+				@Override
+				public void call(Event event) {
+					if (event.getEventData() != null) {
+						sharedState.putAll(event.getEventData());
+					}
 
-				latch.countDown();
+					latch.countDown();
+				}
+			},
+			new ExtensionErrorCallback<ExtensionError>() {
+				@Override
+				public void error(ExtensionError extensionError) {
+					MobileCore.log(
+						LoggingMode.ERROR,
+						TAG,
+						"Failed to get shared state for " + stateOwner + ": " + extensionError
+					);
+				}
 			}
-		},
-		new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.ERROR, TAG, "Failed to get shared state for " + stateOwner + ": " + extensionError);
-			}
-		});
+		);
 
 		assertTrue("Timeout waiting for shared state " + stateOwner, latch.await(timeout, TimeUnit.MILLISECONDS));
 		return sharedState.isEmpty() ? null : sharedState;
@@ -451,41 +511,51 @@ public class TestHelper {
 	 * @return latest shared state of the given {@code stateOwner} or null if no shared state was found
 	 * @throws InterruptedException
 	 */
-	public static Map<String, Object> getXDMSharedStateFor(final String stateOwner,
-			int timeout) throws InterruptedException {
-		Event event = new Event.Builder("Get Shared State Request", TestConstants.EventType.MONITOR,
-										TestConstants.EventSource.XDM_SHARED_STATE_REQUEST)
-		.setEventData(new HashMap<String, Object>() {
-			{
-				put(TestConstants.EventDataKey.STATE_OWNER, stateOwner);
-			}
-		})
-		.build();
+	public static Map<String, Object> getXDMSharedStateFor(final String stateOwner, int timeout)
+		throws InterruptedException {
+		Event event = new Event.Builder(
+			"Get Shared State Request",
+			TestConstants.EventType.MONITOR,
+			TestConstants.EventSource.XDM_SHARED_STATE_REQUEST
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(TestConstants.EventDataKey.STATE_OWNER, stateOwner);
+					}
+				}
+			)
+			.build();
 
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
 		final Map<String, Object> sharedState = new HashMap<>();
-		MobileCore.dispatchEventWithResponseCallback(event,
-		new AdobeCallback<Event>() {
-			@Override
-			public void call(Event event) {
-				if (event.getEventData() != null) {
-					sharedState.putAll(event.getEventData());
-				}
+		MobileCore.dispatchEventWithResponseCallback(
+			event,
+			new AdobeCallback<Event>() {
+				@Override
+				public void call(Event event) {
+					if (event.getEventData() != null) {
+						sharedState.putAll(event.getEventData());
+					}
 
-				latch.countDown();
+					latch.countDown();
+				}
+			},
+			new ExtensionErrorCallback<ExtensionError>() {
+				@Override
+				public void error(ExtensionError extensionError) {
+					MobileCore.log(
+						LoggingMode.ERROR,
+						TAG,
+						"Failed to get shared state for " + stateOwner + ": " + extensionError
+					);
+				}
 			}
-		},
-		new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				MobileCore.log(LoggingMode.ERROR, TAG, "Failed to get shared state for " + stateOwner + ": " + extensionError);
-			}
-		});
+		);
 
 		assertTrue("Timeout waiting for shared state " + stateOwner, latch.await(timeout, TimeUnit.MILLISECONDS));
 		return sharedState.isEmpty() ? null : sharedState;
 	}
-
 
 	/**
 	 * Pause test execution for the given {@code milliseconds}
@@ -504,8 +574,7 @@ public class TestHelper {
 	 * Dummy Application for the test instrumentation
 	 */
 	public static class CustomApplication extends Application {
-		public CustomApplication() {
-		}
-	}
 
+		public CustomApplication() {}
+	}
 }

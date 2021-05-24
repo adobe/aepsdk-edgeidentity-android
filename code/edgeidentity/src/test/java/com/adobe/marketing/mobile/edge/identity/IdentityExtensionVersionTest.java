@@ -11,18 +11,18 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Test;
 
 public class IdentityExtensionVersionTest {
+
 	private static String GRADLE_PROPERTIES_PATH = "../gradle.properties";
 	private static String PROPERTY_MODULE_VERSION = "moduleVersion";
 
@@ -37,11 +37,16 @@ public class IdentityExtensionVersionTest {
 		assertNotNull(moduleVersion);
 		assertFalse(moduleVersion.isEmpty());
 
-		assertEquals(String.format("Expected version to match in gradle.properties (%s) and extensionVersion API (%s)",
-								   moduleVersion, Identity.extensionVersion()),
-					 moduleVersion, Identity.extensionVersion());
+		assertEquals(
+			String.format(
+				"Expected version to match in gradle.properties (%s) and extensionVersion API (%s)",
+				moduleVersion,
+				Identity.extensionVersion()
+			),
+			moduleVersion,
+			Identity.extensionVersion()
+		);
 	}
-
 
 	private Properties loadProperties(final String filepath) {
 		Properties properties = new Properties();
@@ -65,5 +70,4 @@ public class IdentityExtensionVersionTest {
 
 		return properties;
 	}
-
 }

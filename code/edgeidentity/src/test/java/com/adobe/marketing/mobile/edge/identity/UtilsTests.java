@@ -11,25 +11,24 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.Test;
+
 @SuppressWarnings("unchecked")
 public class UtilsTests {
 
 	@Test
 	public void testUtils_deepCopyNull() {
-		assertNull(Utils.deepCopy((Map)null));
+		assertNull(Utils.deepCopy((Map) null));
 	}
 
 	@Test
@@ -107,7 +106,7 @@ public class UtilsTests {
 
 	@Test
 	public void testUtils_deepCopyListOfMaps_Null() {
-		assertNull(Utils.deepCopy((List)null));
+		assertNull(Utils.deepCopy((List) null));
 	}
 
 	@Test
@@ -150,13 +149,12 @@ public class UtilsTests {
 		Map<String, Object> deepCopy = Utils.deepCopy(map);
 		List<Map<String, Object>> nestedDeepCopy = Utils.deepCopy(list);
 		nestedDeepCopy.get(0).put("newKey", "newValue");
-		((Map<String, Object>)nestedDeepCopy.get(0).get("nestedMap")).put("nestedKey2", 2222);
+		((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).put("nestedKey2", 2222);
 
 		assertEquals(3, nestedDeepCopy.get(0).size());
 		assertEquals(2, list.get(0).size());
 		assertTrue(list.get(0).containsKey("key1"));
-		assertEquals(1, ((Map<String, Object>)list.get(0).get("nestedMap")).size());
-		assertEquals(2, ((Map<String, Object>)nestedDeepCopy.get(0).get("nestedMap")).size());
+		assertEquals(1, ((Map<String, Object>) list.get(0).get("nestedMap")).size());
+		assertEquals(2, ((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).size());
 	}
-
 }

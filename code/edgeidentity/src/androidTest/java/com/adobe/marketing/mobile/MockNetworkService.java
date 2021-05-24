@@ -15,7 +15,6 @@ import com.adobe.marketing.mobile.services.HttpConnecting;
 import com.adobe.marketing.mobile.services.NetworkCallback;
 import com.adobe.marketing.mobile.services.NetworkRequest;
 import com.adobe.marketing.mobile.services.Networking;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
@@ -24,6 +23,7 @@ import java.io.InputStream;
  * This network service returns '200' HttpConnection responses for every request.
  */
 class MockNetworkService implements Networking {
+
 	private static String TAG = "MockNetworkService";
 
 	private static HttpConnecting dummyConnection = new HttpConnecting() {
@@ -53,9 +53,7 @@ class MockNetworkService implements Networking {
 		}
 
 		@Override
-		public void close() {
-
-		}
+		public void close() {}
 	};
 
 	@Override

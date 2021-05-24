@@ -11,30 +11,29 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.TestHelper.*;
+import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.registerEdgeIdentityExtension;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
+import static org.junit.Assert.*;
+
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.TestHelper;
 import com.adobe.marketing.mobile.TestPersistenceHelper;
-
+import java.util.List;
+import java.util.Map;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
-import java.util.List;
-import java.util.Map;
-
-import static com.adobe.marketing.mobile.TestHelper.*;
-import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.registerEdgeIdentityExtension;
-import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
-import static org.junit.Assert.*;
-
 public class IdentityResetHandlingTest {
 
 	@Rule
-	public RuleChain rule = RuleChain.outerRule(new TestHelper.SetupCoreRule())
-							.around(new TestHelper.RegisterMonitorExtensionRule());
+	public RuleChain rule = RuleChain
+		.outerRule(new TestHelper.SetupCoreRule())
+		.around(new TestHelper.RegisterMonitorExtensionRule());
 
 	// --------------------------------------------------------------------------------------------
 	// Setup
@@ -69,21 +68,24 @@ public class IdentityResetHandlingTest {
 		assertNotEquals(beforeResetECID, newECID);
 
 		// verify edge reset complete event dispatched
-		List<Event> resetCompleteEvent = getDispatchedEventsWith(IdentityConstants.EventType.EDGE_IDENTITY,
-										 IdentityConstants.EventSource.RESET_COMPLETE);
+		List<Event> resetCompleteEvent = getDispatchedEventsWith(
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESET_COMPLETE
+		);
 		assertEquals(1, resetCompleteEvent.size());
 
 		// verify shared state is updated
 		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		assertEquals(3, xdmSharedState.size());  // 3 for ECID still exists
+		assertEquals(3, xdmSharedState.size()); // 3 for ECID still exists
 		assertEquals(newECID, xdmSharedState.get("identityMap.ECID[0].id"));
 
 		// verify persistence is updated
-		final String persistedJson = TestPersistenceHelper.readPersistedData(IdentityConstants.DataStoreKey.DATASTORE_NAME,
-									 IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
 		Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
-		assertEquals(3, persistedMap.size());  // 3 for ECID
+		assertEquals(3, persistedMap.size()); // 3 for ECID
 		assertEquals(newECID, persistedMap.get("identityMap.ECID[0].id"));
 	}
-
 }

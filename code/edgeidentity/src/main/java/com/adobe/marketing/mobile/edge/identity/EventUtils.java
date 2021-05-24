@@ -11,13 +11,12 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
+
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
-
 import java.util.Map;
-
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
 /**
  * Class for Event / Event data specific helpers.
@@ -31,8 +30,11 @@ final class EventUtils {
 	 * @return true if both type and source match
 	 */
 	static boolean isRemoveIdentityEvent(final Event event) {
-		return event != null && IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType())
-			   && IdentityConstants.EventSource.REMOVE_IDENTITY.equalsIgnoreCase(event.getSource());
+		return (
+			event != null &&
+			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
+			IdentityConstants.EventSource.REMOVE_IDENTITY.equalsIgnoreCase(event.getSource())
+		);
 	}
 
 	/**
@@ -42,8 +44,11 @@ final class EventUtils {
 	 * @return true if both type and source match
 	 */
 	static boolean isUpdateIdentityEvent(final Event event) {
-		return event != null && IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType())
-			   && IdentityConstants.EventSource.UPDATE_IDENTITY.equalsIgnoreCase(event.getSource());
+		return (
+			event != null &&
+			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
+			IdentityConstants.EventSource.UPDATE_IDENTITY.equalsIgnoreCase(event.getSource())
+		);
 	}
 
 	/**
@@ -53,8 +58,11 @@ final class EventUtils {
 	 * @return true if both type and source match
 	 */
 	static boolean isRequestIdentityEvent(final Event event) {
-		return event != null && IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType())
-			   && IdentityConstants.EventSource.REQUEST_IDENTITY.equalsIgnoreCase(event.getSource());
+		return (
+			event != null &&
+			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
+			IdentityConstants.EventSource.REQUEST_IDENTITY.equalsIgnoreCase(event.getSource())
+		);
 	}
 
 	/**
@@ -64,8 +72,11 @@ final class EventUtils {
 	 * @return true if both type and source match
 	 */
 	static boolean isRequestResetEvent(final Event event) {
-		return event != null && IdentityConstants.EventType.GENERIC_IDENTITY.equalsIgnoreCase(event.getType())
-			   && IdentityConstants.EventSource.REQUEST_RESET.equalsIgnoreCase(event.getSource());
+		return (
+			event != null &&
+			IdentityConstants.EventType.GENERIC_IDENTITY.equalsIgnoreCase(event.getType()) &&
+			IdentityConstants.EventSource.REQUEST_RESET.equalsIgnoreCase(event.getSource())
+		);
 	}
 
 	/**
@@ -102,12 +113,16 @@ final class EventUtils {
 
 		try {
 			final String legacyEcidString = (String) identityDirectSharedState.get(
-												IdentityConstants.SharedState.IdentityDirect.ECID);
+				IdentityConstants.SharedState.IdentityDirect.ECID
+			);
 			legacyEcid = legacyEcidString == null ? null : new ECID(legacyEcidString);
 		} catch (ClassCastException e) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG,
-						   "EventUtils - Failed to extract ECID from Identity direct shared state, expected String: "
-						   + e.getLocalizedMessage());
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"EventUtils - Failed to extract ECID from Identity direct shared state, expected String: " +
+				e.getLocalizedMessage()
+			);
 		}
 
 		return legacyEcid;

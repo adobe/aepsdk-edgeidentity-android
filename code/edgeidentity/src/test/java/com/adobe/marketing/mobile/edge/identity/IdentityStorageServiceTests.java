@@ -11,12 +11,15 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-
 import com.adobe.marketing.mobile.MobileCore;
-
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,13 +30,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({MobileCore.class})
+@PrepareForTest({ MobileCore.class })
 public class IdentityStorageServiceTests {
 
 	@Mock
@@ -54,8 +52,9 @@ public class IdentityStorageServiceTests {
 
 		Mockito.when(MobileCore.getApplication()).thenReturn(mockApplication);
 		Mockito.when(mockApplication.getApplicationContext()).thenReturn(mockContext);
-		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.DATASTORE_NAME,
-					 0)).thenReturn(mockSharedPreference);
+		Mockito
+			.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.DATASTORE_NAME, 0))
+			.thenReturn(mockSharedPreference);
 		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
 	}
 
@@ -74,7 +73,9 @@ public class IdentityStorageServiceTests {
 	@Test
 	public void testLoadPropertiesFromPersistence_emptyPrefs() {
 		// setup
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn(null);
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null))
+			.thenReturn(null);
 
 		// test
 		IdentityProperties props = IdentityStorageService.loadPropertiesFromPersistence();
@@ -86,7 +87,9 @@ public class IdentityStorageServiceTests {
 	@Test
 	public void testLoadPropertiesFromPersistence_invalidJSON() {
 		// setup
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null)).thenReturn("{");
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null))
+			.thenReturn("{");
 
 		// test
 		IdentityProperties props = IdentityStorageService.loadPropertiesFromPersistence();
@@ -102,8 +105,9 @@ public class IdentityStorageServiceTests {
 		persistedProps.setECID(new ECID());
 		final JSONObject jsonObject = new JSONObject(persistedProps.toXDMData(false));
 		final String propsJSON = jsonObject.toString();
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES,
-					 null)).thenReturn(propsJSON);
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null))
+			.thenReturn(propsJSON);
 
 		// test
 		IdentityProperties props = IdentityStorageService.loadPropertiesFromPersistence();
@@ -158,40 +162,45 @@ public class IdentityStorageServiceTests {
 		// verify
 		final JSONObject jsonObject = new JSONObject(props.toXDMData(false));
 		final String expectedJSON = jsonObject.toString();
-		verify(mockSharedPreferenceEditor, Mockito.times(1)).putString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES,
-				expectedJSON);
+		verify(mockSharedPreferenceEditor, Mockito.times(1))
+			.putString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, expectedJSON);
 		verify(mockSharedPreferenceEditor, Mockito.times(1)).apply();
 	}
 
 	@Test
 	public void testLoadEcidFromDirectIdentityPersistence_loadECID() {
 		ECID ecid = new ECID();
-		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-					 0)).thenReturn(mockSharedPreference);
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-					 null)).thenReturn(ecid.toString());
+		Mockito
+			.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0))
+			.thenReturn(mockSharedPreference);
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null))
+			.thenReturn(ecid.toString());
 
 		assertEquals(ecid, IdentityStorageService.loadEcidFromDirectIdentityPersistence());
 	}
 
 	@Test
 	public void testLoadEcidFromDirectIdentityPersistence_whenNullECID() {
-		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-					 0)).thenReturn(mockSharedPreference);
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-					 null)).thenReturn(null);
+		Mockito
+			.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0))
+			.thenReturn(mockSharedPreference);
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null))
+			.thenReturn(null);
 
 		assertNull(IdentityStorageService.loadEcidFromDirectIdentityPersistence());
 	}
 
 	@Test
 	public void testLoadEcidFromDirectIdentityPersistence_whenEmptyECID() {
-		Mockito.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME,
-					 0)).thenReturn(mockSharedPreference);
-		Mockito.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-					 null)).thenReturn("");
+		Mockito
+			.when(mockContext.getSharedPreferences(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME, 0))
+			.thenReturn(mockSharedPreference);
+		Mockito
+			.when(mockSharedPreference.getString(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY, null))
+			.thenReturn("");
 
 		assertNull(IdentityStorageService.loadEcidFromDirectIdentityPersistence());
 	}
-
 }
