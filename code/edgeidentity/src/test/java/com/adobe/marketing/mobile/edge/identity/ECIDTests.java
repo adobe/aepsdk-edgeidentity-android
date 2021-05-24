@@ -26,109 +26,109 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class ECIDTests {
 
-	@Test
-	public void testECID_correctLength() {
-		assertEquals(38, new ECID().toString().length());
-	}
+    @Test
+    public void testECID_correctLength() {
+        assertEquals(38, new ECID().toString().length());
+    }
 
-	@Test
-	public void testECID_correctWithConstructor() {
-		// setup
-		ECID ecid = new ECID();
+    @Test
+    public void testECID_correctWithConstructor() {
+        // setup
+        ECID ecid = new ECID();
 
-		// test
-		ECID constructedEcid = new ECID(ecid.toString());
-		assertEquals(ecid.toString(), constructedEcid.toString());
-	}
+        // test
+        ECID constructedEcid = new ECID(ecid.toString());
+        assertEquals(ecid.toString(), constructedEcid.toString());
+    }
 
-	@Test
-	public void testECID_correctWithConstructor_null() {
-		// test
-		ECID constructedEcid = new ECID(null);
-		assertNotNull(constructedEcid.toString());
-	}
+    @Test
+    public void testECID_correctWithConstructor_null() {
+        // test
+        ECID constructedEcid = new ECID(null);
+        assertNotNull(constructedEcid.toString());
+    }
 
-	@Test
-	public void testECID_correctWithConstructor_emptyString() {
-		// test
-		ECID constructedEcid = new ECID(null);
-		assertNotNull(constructedEcid.toString());
-	}
+    @Test
+    public void testECID_correctWithConstructor_emptyString() {
+        // test
+        ECID constructedEcid = new ECID(null);
+        assertNotNull(constructedEcid.toString());
+    }
 
-	@Test
-	public void testECID_onlyContainsNumbers() {
-		// contains only digits
-		String regex = "[0-9]+";
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(new ECID().toString());
+    @Test
+    public void testECID_onlyContainsNumbers() {
+        // contains only digits
+        String regex = "[0-9]+";
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(new ECID().toString());
 
-		assertTrue(m.matches());
-	}
+        assertTrue(m.matches());
+    }
 
-	@Test
-	public void testECID_ReasonablyRandom() {
-		// setup
-		int count = 1000;
-		Set<String> ecids = new HashSet<String>();
+    @Test
+    public void testECID_ReasonablyRandom() {
+        // setup
+        int count = 1000;
+        Set<String> ecids = new HashSet<String>();
 
-		// test
-		for (int i = 0; i < count; i++) {
-			ecids.add(new ECID().toString());
-		}
+        // test
+        for (int i = 0; i < count; i++) {
+            ecids.add(new ECID().toString());
+        }
 
-		// verify
-		assertEquals(count, ecids.size());
-	}
+        // verify
+        assertEquals(count, ecids.size());
+    }
 
-	@Test
-	public void testECID_hashCode_reasonablyRandom() {
-		// setup
-		int count = 1000;
-		Set<ECID> ecids = new HashSet<ECID>(count);
+    @Test
+    public void testECID_hashCode_reasonablyRandom() {
+        // setup
+        int count = 1000;
+        Set<ECID> ecids = new HashSet<ECID>(count);
 
-		// test
-		for (int i = 0; i < count; i++) {
-			ecids.add(new ECID());
-		}
+        // test
+        for (int i = 0; i < count; i++) {
+            ecids.add(new ECID());
+        }
 
-		// verify
-		assertEquals(count, ecids.size());
-	}
+        // verify
+        assertEquals(count, ecids.size());
+    }
 
-	@Test
-	public void testECID_hashCode() {
-		ECID a = new ECID();
-		ECID b = new ECID(a.toString());
+    @Test
+    public void testECID_hashCode() {
+        ECID a = new ECID();
+        ECID b = new ECID(a.toString());
 
-		assertEquals(a.hashCode(), b.hashCode());
-		assertEquals(a.hashCode(), a.hashCode());
+        assertEquals(a.hashCode(), b.hashCode());
+        assertEquals(a.hashCode(), a.hashCode());
 
-		assertNotEquals(a.hashCode(), new ECID().hashCode());
-		assertNotEquals(a.hashCode(), new NotECID(a.toString()).hashCode());
-	}
+        assertNotEquals(a.hashCode(), new ECID().hashCode());
+        assertNotEquals(a.hashCode(), new NotECID(a.toString()).hashCode());
+    }
 
-	@Test
-	public void testECID_equals() {
-		ECID a = new ECID();
-		ECID b = new ECID(a.toString());
+    @Test
+    public void testECID_equals() {
+        ECID a = new ECID();
+        ECID b = new ECID(a.toString());
 
-		assertTrue(a.equals(b));
-		assertTrue(b.equals(a));
-		assertTrue(a.equals(a));
-		assertTrue(b.equals(b));
+        assertTrue(a.equals(b));
+        assertTrue(b.equals(a));
+        assertTrue(a.equals(a));
+        assertTrue(b.equals(b));
 
-		assertFalse(a.equals(null));
-		assertFalse(a.equals(new ECID()));
+        assertFalse(a.equals(null));
+        assertFalse(a.equals(new ECID()));
 
-		assertFalse(a.equals(new NotECID(a.toString())));
-	}
+        assertFalse(a.equals(new NotECID(a.toString())));
+    }
 
-	private class NotECID {
+    private class NotECID {
 
-		private final String ecidString;
+        private final String ecidString;
 
-		NotECID(final String s) {
-			this.ecidString = s;
-		}
-	}
+        NotECID(final String s) {
+            this.ecidString = s;
+        }
+    }
 }

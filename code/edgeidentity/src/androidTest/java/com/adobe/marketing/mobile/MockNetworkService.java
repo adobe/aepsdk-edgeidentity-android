@@ -24,48 +24,48 @@ import java.io.InputStream;
  */
 class MockNetworkService implements Networking {
 
-	private static String TAG = "MockNetworkService";
+    private static String TAG = "MockNetworkService";
 
-	private static HttpConnecting dummyConnection = new HttpConnecting() {
-		@Override
-		public InputStream getInputStream() {
-			return new ByteArrayInputStream("{}".getBytes());
-		}
+    private static HttpConnecting dummyConnection = new HttpConnecting() {
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream("{}".getBytes());
+        }
 
-		@Override
-		public InputStream getErrorStream() {
-			return null;
-		}
+        @Override
+        public InputStream getErrorStream() {
+            return null;
+        }
 
-		@Override
-		public int getResponseCode() {
-			return 200;
-		}
+        @Override
+        public int getResponseCode() {
+            return 200;
+        }
 
-		@Override
-		public String getResponseMessage() {
-			return null;
-		}
+        @Override
+        public String getResponseMessage() {
+            return null;
+        }
 
-		@Override
-		public String getResponsePropertyValue(String s) {
-			return null;
-		}
+        @Override
+        public String getResponsePropertyValue(String s) {
+            return null;
+        }
 
-		@Override
-		public void close() {}
-	};
+        @Override
+        public void close() {}
+    };
 
-	@Override
-	public void connectAsync(NetworkRequest networkRequest, NetworkCallback networkCallback) {
-		if (networkRequest == null) {
-			return;
-		}
+    @Override
+    public void connectAsync(NetworkRequest networkRequest, NetworkCallback networkCallback) {
+        if (networkRequest == null) {
+            return;
+        }
 
-		MobileCore.log(LoggingMode.DEBUG, TAG, "Received async request '" + networkRequest.getUrl() + "', ignoring.");
+        MobileCore.log(LoggingMode.DEBUG, TAG, "Received async request '" + networkRequest.getUrl() + "', ignoring.");
 
-		if (networkCallback != null) {
-			networkCallback.call(dummyConnection);
-		}
-	}
+        if (networkCallback != null) {
+            networkCallback.call(dummyConnection);
+        }
+    }
 }

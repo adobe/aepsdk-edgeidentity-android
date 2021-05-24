@@ -28,293 +28,293 @@ import java.util.List;
  */
 public class Identity {
 
-	private Identity() {}
+    private Identity() {}
 
-	/**
-	 * Returns the version of the {@link Identity} extension
-	 *
-	 * @return The version as {@code String}
-	 */
-	public static String extensionVersion() {
-		return IdentityConstants.EXTENSION_VERSION;
-	}
+    /**
+     * Returns the version of the {@link Identity} extension
+     *
+     * @return The version as {@code String}
+     */
+    public static String extensionVersion() {
+        return IdentityConstants.EXTENSION_VERSION;
+    }
 
-	/**
-	 * Registers the extension with the Mobile SDK. This method should be called only once in your application class.
-	 */
-	public static void registerExtension() {
-		MobileCore.registerExtension(
-			IdentityExtension.class,
-			new ExtensionErrorCallback<ExtensionError>() {
-				@Override
-				public void error(ExtensionError extensionError) {
-					MobileCore.log(
-						LoggingMode.ERROR,
-						LOG_TAG,
-						"Identity - There was an error registering the Edge Identity extension: " +
-						extensionError.getErrorName()
-					);
-				}
-			}
-		);
-	}
+    /**
+     * Registers the extension with the Mobile SDK. This method should be called only once in your application class.
+     */
+    public static void registerExtension() {
+        MobileCore.registerExtension(
+            IdentityExtension.class,
+            new ExtensionErrorCallback<ExtensionError>() {
+                @Override
+                public void error(ExtensionError extensionError) {
+                    MobileCore.log(
+                        LoggingMode.ERROR,
+                        LOG_TAG,
+                        "Identity - There was an error registering the Edge Identity extension: " +
+                        extensionError.getErrorName()
+                    );
+                }
+            }
+        );
+    }
 
-	/**
-	 * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
-	 *
-	 * @param callback {@link AdobeCallback} of {@code String} invoked with the Experience Cloud ID
-	 *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
-	 *                 eventuality of any error that occurred while getting the Experience Cloud ID
-	 */
-	public static void getExperienceCloudId(final AdobeCallback<String> callback) {
-		if (callback == null) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				"Identity - Unexpected null callback, provide a callback to retrieve current ECID."
-			);
-			return;
-		}
+    /**
+     * Returns the Experience Cloud ID. An empty string is returned if the Experience Cloud ID was previously cleared.
+     *
+     * @param callback {@link AdobeCallback} of {@code String} invoked with the Experience Cloud ID
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the Experience Cloud ID
+     */
+    public static void getExperienceCloudId(final AdobeCallback<String> callback) {
+        if (callback == null) {
+            MobileCore.log(
+                LoggingMode.DEBUG,
+                LOG_TAG,
+                "Identity - Unexpected null callback, provide a callback to retrieve current ECID."
+            );
+            return;
+        }
 
-		final Event event = new Event.Builder(
-			IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
-			.build();
+        final Event event = new Event.Builder(
+            IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
+            IdentityConstants.EventType.EDGE_IDENTITY,
+            IdentityConstants.EventSource.REQUEST_IDENTITY
+        )
+            .build();
 
-		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(final ExtensionError extensionError) {
-				returnError(callback, extensionError);
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					String.format(
-						"Identity - Failed to dispatch %s event: Error : %s.",
-						IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-						extensionError.getErrorName()
-					)
-				);
-			}
-		};
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                returnError(callback, extensionError);
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    String.format(
+                        "Identity - Failed to dispatch %s event: Error : %s.",
+                        IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
+                        extensionError.getErrorName()
+                    )
+                );
+            }
+        };
 
-		MobileCore.dispatchEventWithResponseCallback(
-			event,
-			new AdobeCallback<Event>() {
-				@Override
-				public void call(Event responseEvent) {
-					if (responseEvent == null || responseEvent.getEventData() == null) {
-						returnError(callback, AdobeError.UNEXPECTED_ERROR);
-						return;
-					}
+        MobileCore.dispatchEventWithResponseCallback(
+            event,
+            new AdobeCallback<Event>() {
+                @Override
+                public void call(Event responseEvent) {
+                    if (responseEvent == null || responseEvent.getEventData() == null) {
+                        returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                        return;
+                    }
 
-					final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
+                    final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
 
-					if (identityMap == null) {
-						MobileCore.log(
-							LoggingMode.DEBUG,
-							LOG_TAG,
-							"Identity - Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
-						);
-						returnError(callback, AdobeError.UNEXPECTED_ERROR);
-						return;
-					}
+                    if (identityMap == null) {
+                        MobileCore.log(
+                            LoggingMode.DEBUG,
+                            LOG_TAG,
+                            "Identity - Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
+                        );
+                        returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                        return;
+                    }
 
-					final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(
-						IdentityConstants.Namespaces.ECID
-					);
+                    final List<IdentityItem> ecidItems = identityMap.getIdentityItemsForNamespace(
+                        IdentityConstants.Namespaces.ECID
+                    );
 
-					if (ecidItems == null || ecidItems.isEmpty() || ecidItems.get(0).getId() == null) {
-						callback.call("");
-					} else {
-						callback.call(ecidItems.get(0).getId());
-					}
-				}
-			},
-			errorCallback
-		);
-	}
+                    if (ecidItems == null || ecidItems.isEmpty() || ecidItems.get(0).getId() == null) {
+                        callback.call("");
+                    } else {
+                        callback.call(ecidItems.get(0).getId());
+                    }
+                }
+            },
+            errorCallback
+        );
+    }
 
-	/**
-	 * Updates the currently known {@link IdentityMap} within the SDK.
-	 * The Identity extension will merge the received identifiers with the previously saved one in an additive manner,
-	 * no identifiers will be removed using this API.
-	 * Identifiers which have an empty {@code id} or empty {@code namespace} are not allowed and are ignored.
-	 *
-	 * @param identityMap The identifiers to add or update.
-	 */
-	public static void updateIdentities(final IdentityMap identityMap) {
-		if (identityMap == null || identityMap.isEmpty()) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				"Identity - Unable to updateIdentities, IdentityMap is null or empty"
-			);
-			return;
-		}
+    /**
+     * Updates the currently known {@link IdentityMap} within the SDK.
+     * The Identity extension will merge the received identifiers with the previously saved one in an additive manner,
+     * no identifiers will be removed using this API.
+     * Identifiers which have an empty {@code id} or empty {@code namespace} are not allowed and are ignored.
+     *
+     * @param identityMap The identifiers to add or update.
+     */
+    public static void updateIdentities(final IdentityMap identityMap) {
+        if (identityMap == null || identityMap.isEmpty()) {
+            MobileCore.log(
+                LoggingMode.DEBUG,
+                LOG_TAG,
+                "Identity - Unable to updateIdentities, IdentityMap is null or empty"
+            );
+            return;
+        }
 
-		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(final ExtensionError extensionError) {
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					String.format(
-						"Identity - Update Identities API. Failed to dispatch %s event: Error : %s.",
-						IdentityConstants.EventNames.UPDATE_IDENTITIES,
-						extensionError.getErrorName()
-					)
-				);
-			}
-		};
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    String.format(
+                        "Identity - Update Identities API. Failed to dispatch %s event: Error : %s.",
+                        IdentityConstants.EventNames.UPDATE_IDENTITIES,
+                        extensionError.getErrorName()
+                    )
+                );
+            }
+        };
 
-		final Event updateIdentitiesEvent = new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
-		)
-			.setEventData(identityMap.asXDMMap(false))
-			.build();
-		MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
-	}
+        final Event updateIdentitiesEvent = new Event.Builder(
+            IdentityConstants.EventNames.UPDATE_IDENTITIES,
+            IdentityConstants.EventType.EDGE_IDENTITY,
+            IdentityConstants.EventSource.UPDATE_IDENTITY
+        )
+            .setEventData(identityMap.asXDMMap(false))
+            .build();
+        MobileCore.dispatchEvent(updateIdentitiesEvent, errorCallback);
+    }
 
-	/**
-	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
-	 * This does not clear the identifier from the User Profile Graph.
-	 *
-	 * @param item the {@link IdentityItem} to remove.
-	 * @param namespace The namespace of the identity to remove.
-	 */
-	public static void removeIdentity(final IdentityItem item, final String namespace) {
-		if (Utils.isNullOrEmpty(namespace)) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				"Identity - Unable to removeIdentity, namespace is null or empty"
-			);
-			return;
-		}
+    /**
+     * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
+     * This does not clear the identifier from the User Profile Graph.
+     *
+     * @param item the {@link IdentityItem} to remove.
+     * @param namespace The namespace of the identity to remove.
+     */
+    public static void removeIdentity(final IdentityItem item, final String namespace) {
+        if (Utils.isNullOrEmpty(namespace)) {
+            MobileCore.log(
+                LoggingMode.DEBUG,
+                LOG_TAG,
+                "Identity - Unable to removeIdentity, namespace is null or empty"
+            );
+            return;
+        }
 
-		if (item == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity - Unable to removeIdentity, IdentityItem is null");
-			return;
-		}
+        if (item == null) {
+            MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Identity - Unable to removeIdentity, IdentityItem is null");
+            return;
+        }
 
-		IdentityMap identityMap = new IdentityMap();
-		identityMap.addItem(item, namespace);
+        IdentityMap identityMap = new IdentityMap();
+        identityMap.addItem(item, namespace);
 
-		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(final ExtensionError extensionError) {
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					String.format(
-						"Identity - removeIdentity API. Failed to dispatch %s event: Error : %s.",
-						IdentityConstants.EventNames.REMOVE_IDENTITIES,
-						extensionError.getErrorName()
-					)
-				);
-			}
-		};
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    String.format(
+                        "Identity - removeIdentity API. Failed to dispatch %s event: Error : %s.",
+                        IdentityConstants.EventNames.REMOVE_IDENTITIES,
+                        extensionError.getErrorName()
+                    )
+                );
+            }
+        };
 
-		final Event removeIdentitiesEvent = new Event.Builder(
-			IdentityConstants.EventNames.REMOVE_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REMOVE_IDENTITY
-		)
-			.setEventData(identityMap.asXDMMap(false))
-			.build();
-		MobileCore.dispatchEvent(removeIdentitiesEvent, errorCallback);
-	}
+        final Event removeIdentitiesEvent = new Event.Builder(
+            IdentityConstants.EventNames.REMOVE_IDENTITIES,
+            IdentityConstants.EventType.EDGE_IDENTITY,
+            IdentityConstants.EventSource.REMOVE_IDENTITY
+        )
+            .setEventData(identityMap.asXDMMap(false))
+            .build();
+        MobileCore.dispatchEvent(removeIdentitiesEvent, errorCallback);
+    }
 
-	/**
-	 * Returns all identifiers, including customer identifiers which were previously added.
-	 *
-	 * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
-	 *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
-	 *                 eventuality of any error that occurred while getting the stored identities.
-	 */
-	public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
-		if (callback == null) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				"Identity - Unexpected null callback, provide a callback to retrieve current IdentityMap."
-			);
-			return;
-		}
+    /**
+     * Returns all identifiers, including customer identifiers which were previously added.
+     *
+     * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
+     *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+     *                 eventuality of any error that occurred while getting the stored identities.
+     */
+    public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
+        if (callback == null) {
+            MobileCore.log(
+                LoggingMode.DEBUG,
+                LOG_TAG,
+                "Identity - Unexpected null callback, provide a callback to retrieve current IdentityMap."
+            );
+            return;
+        }
 
-		final Event event = new Event.Builder(
-			IdentityConstants.EventNames.REQUEST_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
-			.build();
+        final Event event = new Event.Builder(
+            IdentityConstants.EventNames.REQUEST_IDENTITIES,
+            IdentityConstants.EventType.EDGE_IDENTITY,
+            IdentityConstants.EventSource.REQUEST_IDENTITY
+        )
+            .build();
 
-		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(final ExtensionError extensionError) {
-				returnError(callback, extensionError);
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					String.format(
-						"Identity - Failed to dispatch %s event: Error : %s.",
-						IdentityConstants.EventNames.REQUEST_IDENTITIES,
-						extensionError.getErrorName()
-					)
-				);
-			}
-		};
+        final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+            @Override
+            public void error(final ExtensionError extensionError) {
+                returnError(callback, extensionError);
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    String.format(
+                        "Identity - Failed to dispatch %s event: Error : %s.",
+                        IdentityConstants.EventNames.REQUEST_IDENTITIES,
+                        extensionError.getErrorName()
+                    )
+                );
+            }
+        };
 
-		MobileCore.dispatchEventWithResponseCallback(
-			event,
-			new AdobeCallback<Event>() {
-				@Override
-				public void call(Event responseEvent) {
-					if (responseEvent == null || responseEvent.getEventData() == null) {
-						returnError(callback, AdobeError.UNEXPECTED_ERROR);
-						return;
-					}
+        MobileCore.dispatchEventWithResponseCallback(
+            event,
+            new AdobeCallback<Event>() {
+                @Override
+                public void call(Event responseEvent) {
+                    if (responseEvent == null || responseEvent.getEventData() == null) {
+                        returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                        return;
+                    }
 
-					final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
+                    final IdentityMap identityMap = IdentityMap.fromXDMMap(responseEvent.getEventData());
 
-					if (identityMap == null) {
-						MobileCore.log(
-							LoggingMode.DEBUG,
-							LOG_TAG,
-							"Identity - Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
-						);
-						returnError(callback, AdobeError.UNEXPECTED_ERROR);
-						return;
-					}
+                    if (identityMap == null) {
+                        MobileCore.log(
+                            LoggingMode.DEBUG,
+                            LOG_TAG,
+                            "Identity - Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
+                        );
+                        returnError(callback, AdobeError.UNEXPECTED_ERROR);
+                        return;
+                    }
 
-					callback.call(identityMap);
-				}
-			},
-			errorCallback
-		);
-	}
+                    callback.call(identityMap);
+                }
+            },
+            errorCallback
+        );
+    }
 
-	/**
-	 * When an {@link AdobeCallbackWithError} is provided, the fail method will be called with provided {@link AdobeError}.
-	 *
-	 * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
-	 * @param error    the {@code AdobeError} returned back in the callback
-	 */
-	private static <T> void returnError(final AdobeCallback<T> callback, final AdobeError error) {
-		if (callback == null) {
-			return;
-		}
+    /**
+     * When an {@link AdobeCallbackWithError} is provided, the fail method will be called with provided {@link AdobeError}.
+     *
+     * @param callback should not be null, should be instance of {@code AdobeCallbackWithError}
+     * @param error    the {@code AdobeError} returned back in the callback
+     */
+    private static <T> void returnError(final AdobeCallback<T> callback, final AdobeError error) {
+        if (callback == null) {
+            return;
+        }
 
-		final AdobeCallbackWithError<T> adobeCallbackWithError = callback instanceof AdobeCallbackWithError
-			? (AdobeCallbackWithError<T>) callback
-			: null;
+        final AdobeCallbackWithError<T> adobeCallbackWithError = callback instanceof AdobeCallbackWithError
+            ? (AdobeCallbackWithError<T>) callback
+            : null;
 
-		if (adobeCallbackWithError != null) {
-			adobeCallbackWithError.fail(error);
-		}
-	}
+        if (adobeCallbackWithError != null) {
+            adobeCallbackWithError.fail(error);
+        }
+    }
 }

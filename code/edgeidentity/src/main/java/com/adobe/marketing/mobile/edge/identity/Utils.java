@@ -26,175 +26,175 @@ import org.json.JSONObject;
 
 class Utils {
 
-	private Utils() {}
+    private Utils() {}
 
-	static boolean isNullOrEmpty(final String str) {
-		return str == null || str.isEmpty();
-	}
+    static boolean isNullOrEmpty(final String str) {
+        return str == null || str.isEmpty();
+    }
 
-	static boolean isNullOrEmpty(final Map<String, Object> map) {
-		return map == null || map.isEmpty();
-	}
+    static boolean isNullOrEmpty(final Map<String, Object> map) {
+        return map == null || map.isEmpty();
+    }
 
-	/**
-	 * Adds {@code key}/{@code value} to {@code map} if {@code value} is not null or an
-	 * empty collection.
-	 *
-	 * @param map collection to put {@code value} mapped to {@code key} if {@code value} is
-	 *            non-null and contains at least one entry
-	 * @param key key used to map {@code value} in {@code map}
-	 * @param value a Object to add to {@code map} if not null
-	 */
-	static void putIfNotNull(final Map<String, Object> map, final String key, final Object value) {
-		boolean addValues = map != null && key != null && value != null;
+    /**
+     * Adds {@code key}/{@code value} to {@code map} if {@code value} is not null or an
+     * empty collection.
+     *
+     * @param map collection to put {@code value} mapped to {@code key} if {@code value} is
+     *            non-null and contains at least one entry
+     * @param key key used to map {@code value} in {@code map}
+     * @param value a Object to add to {@code map} if not null
+     */
+    static void putIfNotNull(final Map<String, Object> map, final String key, final Object value) {
+        boolean addValues = map != null && key != null && value != null;
 
-		if (addValues) {
-			map.put(key, value);
-		}
-	}
+        if (addValues) {
+            map.put(key, value);
+        }
+    }
 
-	/* JSON - Map conversion helpers */
-	// TODO: add tests / replace with third party library for json conversion; test more around jsonObject/jsonArray with null nodes
-	// TODO: check what should be the expected behavior with the konductor team (e.g. don't add the null nodes or add them with null values)
-	/**
-	 * Converts provided {@link JSONObject} into {@link Map} for any number of levels, which can be used as event data
-	 * This method is recursive.
-	 * The elements for which the conversion fails will be skipped.
-	 *
-	 * @param jsonObject to be converted
-	 * @return {@link Map} containing the elements from the provided json, null if {@code jsonObject} is null
-	 */
-	static Map<String, Object> toMap(final JSONObject jsonObject) {
-		if (jsonObject == null) {
-			return null;
-		}
+    /* JSON - Map conversion helpers */
+    // TODO: add tests / replace with third party library for json conversion; test more around jsonObject/jsonArray with null nodes
+    // TODO: check what should be the expected behavior with the konductor team (e.g. don't add the null nodes or add them with null values)
+    /**
+     * Converts provided {@link JSONObject} into {@link Map} for any number of levels, which can be used as event data
+     * This method is recursive.
+     * The elements for which the conversion fails will be skipped.
+     *
+     * @param jsonObject to be converted
+     * @return {@link Map} containing the elements from the provided json, null if {@code jsonObject} is null
+     */
+    static Map<String, Object> toMap(final JSONObject jsonObject) {
+        if (jsonObject == null) {
+            return null;
+        }
 
-		Map<String, Object> jsonAsMap = new HashMap<>();
-		Iterator<String> keysIterator = jsonObject.keys();
+        Map<String, Object> jsonAsMap = new HashMap<>();
+        Iterator<String> keysIterator = jsonObject.keys();
 
-		while (keysIterator.hasNext()) {
-			String nextKey = keysIterator.next();
-			Object value = null;
-			Object returnValue;
+        while (keysIterator.hasNext()) {
+            String nextKey = keysIterator.next();
+            Object value = null;
+            Object returnValue;
 
-			try {
-				value = jsonObject.get(nextKey);
-			} catch (JSONException e) {
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					"Utils(toMap) - Unable to convert jsonObject to Map for key " + nextKey + ", skipping."
-				);
-			}
+            try {
+                value = jsonObject.get(nextKey);
+            } catch (JSONException e) {
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    "Utils(toMap) - Unable to convert jsonObject to Map for key " + nextKey + ", skipping."
+                );
+            }
 
-			if (value == null) {
-				continue;
-			}
+            if (value == null) {
+                continue;
+            }
 
-			if (value instanceof JSONObject) {
-				returnValue = toMap((JSONObject) value);
-			} else if (value instanceof JSONArray) {
-				returnValue = toList((JSONArray) value);
-			} else {
-				returnValue = value;
-			}
+            if (value instanceof JSONObject) {
+                returnValue = toMap((JSONObject) value);
+            } else if (value instanceof JSONArray) {
+                returnValue = toList((JSONArray) value);
+            } else {
+                returnValue = value;
+            }
 
-			jsonAsMap.put(nextKey, returnValue);
-		}
+            jsonAsMap.put(nextKey, returnValue);
+        }
 
-		return jsonAsMap;
-	}
+        return jsonAsMap;
+    }
 
-	/**
-	 * Converts provided {@link JSONArray} into {@link List} for any number of levels which can be used as event data
-	 * This method is recursive.
-	 * The elements for which the conversion fails will be skipped.
-	 *
-	 * @param jsonArray to be converted
-	 * @return {@link List} containing the elements from the provided json, null if {@code jsonArray} is null
-	 */
-	static List<Object> toList(final JSONArray jsonArray) {
-		if (jsonArray == null) {
-			return null;
-		}
+    /**
+     * Converts provided {@link JSONArray} into {@link List} for any number of levels which can be used as event data
+     * This method is recursive.
+     * The elements for which the conversion fails will be skipped.
+     *
+     * @param jsonArray to be converted
+     * @return {@link List} containing the elements from the provided json, null if {@code jsonArray} is null
+     */
+    static List<Object> toList(final JSONArray jsonArray) {
+        if (jsonArray == null) {
+            return null;
+        }
 
-		List<Object> jsonArrayAsList = new ArrayList<>();
-		int size = jsonArray.length();
+        List<Object> jsonArrayAsList = new ArrayList<>();
+        int size = jsonArray.length();
 
-		for (int i = 0; i < size; i++) {
-			Object value = null;
-			Object returnValue = null;
+        for (int i = 0; i < size; i++) {
+            Object value = null;
+            Object returnValue = null;
 
-			try {
-				value = jsonArray.get(i);
-			} catch (JSONException e) {
-				MobileCore.log(
-					LoggingMode.DEBUG,
-					LOG_TAG,
-					"Utils(toList) - Unable to convert jsonObject to List for index " + i + ", skipping."
-				);
-			}
+            try {
+                value = jsonArray.get(i);
+            } catch (JSONException e) {
+                MobileCore.log(
+                    LoggingMode.DEBUG,
+                    LOG_TAG,
+                    "Utils(toList) - Unable to convert jsonObject to List for index " + i + ", skipping."
+                );
+            }
 
-			if (value == null) {
-				continue;
-			}
+            if (value == null) {
+                continue;
+            }
 
-			if (value instanceof JSONObject) {
-				returnValue = toMap((JSONObject) value);
-			} else if (value instanceof JSONArray) {
-				returnValue = toList((JSONArray) value);
-			} else {
-				returnValue = value;
-			}
+            if (value instanceof JSONObject) {
+                returnValue = toMap((JSONObject) value);
+            } else if (value instanceof JSONArray) {
+                returnValue = toList((JSONArray) value);
+            } else {
+                returnValue = value;
+            }
 
-			jsonArrayAsList.add(returnValue);
-		}
+            jsonArrayAsList.add(returnValue);
+        }
 
-		return jsonArrayAsList;
-	}
+        return jsonArrayAsList;
+    }
 
-	/**
-	 * Creates a deep copy of the provided {@link Map}.
-	 *
-	 * @param map to be copied
-	 * @return {@link Map} containing a deep copy of all the elements in {@code map}
-	 */
-	static Map<String, Object> deepCopy(final Map<String, Object> map) {
-		if (map == null) {
-			return null;
-		}
+    /**
+     * Creates a deep copy of the provided {@link Map}.
+     *
+     * @param map to be copied
+     * @return {@link Map} containing a deep copy of all the elements in {@code map}
+     */
+    static Map<String, Object> deepCopy(final Map<String, Object> map) {
+        if (map == null) {
+            return null;
+        }
 
-		try {
-			return Utils.toMap(new JSONObject(map));
-		} catch (NullPointerException e) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				"Utils(deepCopy) - Unable to deep copy map, json string invalid."
-			);
-		}
+        try {
+            return Utils.toMap(new JSONObject(map));
+        } catch (NullPointerException e) {
+            MobileCore.log(
+                LoggingMode.DEBUG,
+                LOG_TAG,
+                "Utils(deepCopy) - Unable to deep copy map, json string invalid."
+            );
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * Creates a deep copy of the provided {@code listOfMaps}.
-	 *
-	 * @param listOfMaps to be copied
-	 * @return {@link List} containing a deep copy of all the elements in {@code listOfMaps}
-	 * @see {@link #deepCopy(Map)}
-	 */
-	static List<Map<String, Object>> deepCopy(final List<Map<String, Object>> listOfMaps) {
-		if (listOfMaps == null) {
-			return null;
-		}
+    /**
+     * Creates a deep copy of the provided {@code listOfMaps}.
+     *
+     * @param listOfMaps to be copied
+     * @return {@link List} containing a deep copy of all the elements in {@code listOfMaps}
+     * @see {@link #deepCopy(Map)}
+     */
+    static List<Map<String, Object>> deepCopy(final List<Map<String, Object>> listOfMaps) {
+        if (listOfMaps == null) {
+            return null;
+        }
 
-		List<Map<String, Object>> deepCopy = new ArrayList<>();
+        List<Map<String, Object>> deepCopy = new ArrayList<>();
 
-		for (Map<String, Object> map : listOfMaps) {
-			deepCopy.add(deepCopy(map));
-		}
+        for (Map<String, Object> map : listOfMaps) {
+            deepCopy.add(deepCopy(map));
+        }
 
-		return deepCopy;
-	}
+        return deepCopy;
+    }
 }

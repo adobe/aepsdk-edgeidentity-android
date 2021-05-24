@@ -13,98 +13,98 @@ package com.adobe.marketing.mobile.edge.identity;
 
 final class IdentityConstants {
 
-	static final String LOG_TAG = "EdgeIdentity";
-	static final String EXTENSION_NAME = "com.adobe.edge.identity";
-	static final String EXTENSION_VERSION = "1.0.0";
+    static final String LOG_TAG = "EdgeIdentity";
+    static final String EXTENSION_NAME = "com.adobe.edge.identity";
+    static final String EXTENSION_VERSION = "1.0.0";
 
-	final class EventSource {
+    final class EventSource {
 
-		static final String REQUEST_IDENTITY = "com.adobe.eventSource.requestIdentity";
-		static final String REQUEST_CONTENT = "com.adobe.eventSource.requestContent";
-		static final String RESPONSE_IDENTITY = "com.adobe.eventSource.responseIdentity";
-		static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
-		static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
-		static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
-		static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
-		static final String RESET_COMPLETE = "com.adobe.eventSource.resetComplete";
-		static final String BOOTED = "com.adobe.eventSource.booted";
+        static final String REQUEST_IDENTITY = "com.adobe.eventSource.requestIdentity";
+        static final String REQUEST_CONTENT = "com.adobe.eventSource.requestContent";
+        static final String RESPONSE_IDENTITY = "com.adobe.eventSource.responseIdentity";
+        static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
+        static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
+        static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
+        static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
+        static final String RESET_COMPLETE = "com.adobe.eventSource.resetComplete";
+        static final String BOOTED = "com.adobe.eventSource.booted";
 
-		private EventSource() {}
-	}
+        private EventSource() {}
+    }
 
-	final class EventType {
+    final class EventType {
 
-		static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
-		static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
-		static final String IDENTITY = "com.adobe.eventType.identity";
-		static final String HUB = "com.adobe.eventType.hub";
+        static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
+        static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
+        static final String IDENTITY = "com.adobe.eventType.identity";
+        static final String HUB = "com.adobe.eventType.hub";
 
-		private EventType() {}
-	}
+        private EventType() {}
+    }
 
-	final class EventNames {
+    final class EventNames {
 
-		static final String IDENTITY_REQUEST_IDENTITY_ECID = "Edge Identity Request ECID";
-		static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Edge Identity Response Content One Time";
-		static final String UPDATE_IDENTITIES = "Edge Identity Update Identities";
-		static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
-		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
-		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
+        static final String IDENTITY_REQUEST_IDENTITY_ECID = "Edge Identity Request ECID";
+        static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Edge Identity Response Content One Time";
+        static final String UPDATE_IDENTITIES = "Edge Identity Update Identities";
+        static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
+        static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
+        static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
 
-		private EventNames() {}
-	}
+        private EventNames() {}
+    }
 
-	final class SharedState {
+    final class SharedState {
 
-		static final String STATE_OWNER = "stateowner";
+        static final String STATE_OWNER = "stateowner";
 
-		final class Hub {
+        final class Hub {
 
-			static final String NAME = "com.adobe.module.eventhub";
-			static final String EXTENSIONS = "extensions";
+            static final String NAME = "com.adobe.module.eventhub";
+            static final String EXTENSIONS = "extensions";
 
-			private Hub() {}
-		}
+            private Hub() {}
+        }
 
-		final class IdentityDirect {
+        final class IdentityDirect {
 
-			static final String NAME = "com.adobe.module.identity";
-			static final String ECID = "mid";
+            static final String NAME = "com.adobe.module.identity";
+            static final String ECID = "mid";
 
-			private IdentityDirect() {}
-		}
+            private IdentityDirect() {}
+        }
 
-		private SharedState() {}
-	}
+        private SharedState() {}
+    }
 
-	final class Namespaces {
+    final class Namespaces {
 
-		static final String ECID = "ECID";
-		static final String IDFA = "IDFA";
-		static final String GAID = "GAID";
+        static final String ECID = "ECID";
+        static final String IDFA = "IDFA";
+        static final String GAID = "GAID";
 
-		private Namespaces() {}
-	}
+        private Namespaces() {}
+    }
 
-	final class XDMKeys {
+    final class XDMKeys {
 
-		static final String IDENTITY_MAP = "identityMap";
-		static final String ID = "id";
-		static final String AUTHENTICATED_STATE = "authenticatedState";
-		static final String PRIMARY = "primary";
+        static final String IDENTITY_MAP = "identityMap";
+        static final String ID = "id";
+        static final String AUTHENTICATED_STATE = "authenticatedState";
+        static final String PRIMARY = "primary";
 
-		private XDMKeys() {}
-	}
+        private XDMKeys() {}
+    }
 
-	final class DataStoreKey {
+    final class DataStoreKey {
 
-		static final String DATASTORE_NAME = EXTENSION_NAME;
-		static final String IDENTITY_PROPERTIES = "identity.properties";
-		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
-		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
+        static final String DATASTORE_NAME = EXTENSION_NAME;
+        static final String IDENTITY_PROPERTIES = "identity.properties";
+        static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
+        static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 
-		private DataStoreKey() {}
-	}
+        private DataStoreKey() {}
+    }
 
-	private IdentityConstants() {}
+    private IdentityConstants() {}
 }
