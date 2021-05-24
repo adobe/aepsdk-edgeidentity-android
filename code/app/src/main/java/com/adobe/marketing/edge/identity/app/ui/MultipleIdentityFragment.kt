@@ -1,13 +1,13 @@
 /*
- Copyright 2021 Adobe. All rights reserved.
- This file is licensed to you under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License. You may obtain a copy
- of the License at http://www.apache.org/licenses/LICENSE-2.0
- Unless required by applicable law or agreed to in writing, software distributed under
- the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
- OF ANY KIND, either express or implied. See the License for the specific language
- governing permissions and limitations under the License.
- */
+  Copyright 2021 Adobe. All rights reserved.
+  This file is licensed to you under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License. You may obtain a copy
+  of the License at http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software distributed under
+  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+  OF ANY KIND, either express or implied. See the License for the specific language
+  governing permissions and limitations under the License.
+*/
 
 package com.adobe.marketing.edge.identity.app.ui
 
@@ -23,15 +23,19 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import com.adobe.marketing.edge.identity.app.R
 import com.adobe.marketing.edge.identity.app.model.SharedViewModel
-import com.adobe.marketing.mobile.*
+import com.adobe.marketing.mobile.Edge
+import com.adobe.marketing.mobile.ExperienceEvent
+import com.adobe.marketing.mobile.MobileCore
+import com.adobe.marketing.mobile.MobilePrivacyStatus
+import com.adobe.marketing.mobile.VisitorID
 import kotlin.random.Random
 
 class MultipleIdentityFragment : Fragment() {
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         val sharedViewModel by activityViewModels<SharedViewModel>()
 
@@ -41,23 +45,35 @@ class MultipleIdentityFragment : Fragment() {
         val edgeRegisteredRadioButton = root.findViewById<RadioButton>(R.id.radio_edge_identity_registered)
         edgeRegisteredRadioButton.isChecked = sharedViewModel.isEdgeIdentityRegistered.value ?: true
         edgeRegisteredRadioButton.text = sharedViewModel.edgeIdentityRegisteredText.value
-        sharedViewModel.isEdgeIdentityRegistered.observe(viewLifecycleOwner, Observer {
-            edgeRegisteredRadioButton.isChecked = it
-        })
-        sharedViewModel.edgeIdentityRegisteredText.observe(viewLifecycleOwner, Observer {
-            edgeRegisteredRadioButton.text = it
-        })
+        sharedViewModel.isEdgeIdentityRegistered.observe(
+            viewLifecycleOwner,
+            Observer {
+                edgeRegisteredRadioButton.isChecked = it
+            }
+        )
+        sharedViewModel.edgeIdentityRegisteredText.observe(
+            viewLifecycleOwner,
+            Observer {
+                edgeRegisteredRadioButton.text = it
+            }
+        )
 
         // Setup radio button for direct Identity which attaches observes to change click and text label
         val directRegisteredRadioButton = root.findViewById<RadioButton>(R.id.radio_direct_identity_registered)
         directRegisteredRadioButton.isChecked = sharedViewModel.isDirectIdentityRegistered.value ?: false
         directRegisteredRadioButton.text = sharedViewModel.directIdentityRegisteredText.value
-        sharedViewModel.isDirectIdentityRegistered.observe(viewLifecycleOwner, Observer {
-            directRegisteredRadioButton.isChecked = it
-        })
-        sharedViewModel.directIdentityRegisteredText.observe(viewLifecycleOwner, Observer {
-            directRegisteredRadioButton.text = it
-        })
+        sharedViewModel.isDirectIdentityRegistered.observe(
+            viewLifecycleOwner,
+            Observer {
+                directRegisteredRadioButton.isChecked = it
+            }
+        )
+        sharedViewModel.directIdentityRegisteredText.observe(
+            viewLifecycleOwner,
+            Observer {
+                directRegisteredRadioButton.text = it
+            }
+        )
         directRegisteredRadioButton.setOnClickListener {
             // There is no API to unregister an extension, so only handle registration case
             if (sharedViewModel.isDirectIdentityRegistered.value == false) {
@@ -85,7 +101,7 @@ class MultipleIdentityFragment : Fragment() {
         val edgeClearPersistence = root.findViewById<Button>(R.id.btn_edge_clear_persistence)
         edgeClearPersistence.setOnClickListener {
             val sharedPreferences = activity?.getSharedPreferences("com.adobe.edge.identity", Context.MODE_PRIVATE) ?: return@setOnClickListener
-            with (sharedPreferences.edit()) {
+            with(sharedPreferences.edit()) {
                 clear()
                 commit()
             }
@@ -95,7 +111,7 @@ class MultipleIdentityFragment : Fragment() {
         val directClearPersistence = root.findViewById<Button>(R.id.btn_direct_clear_persistence)
         directClearPersistence.setOnClickListener {
             val sharedPreferences = activity?.getSharedPreferences("visitorIDServiceDataStore", Context.MODE_PRIVATE) ?: return@setOnClickListener
-            with (sharedPreferences.edit()) {
+            with(sharedPreferences.edit()) {
                 clear()
                 commit()
             }
