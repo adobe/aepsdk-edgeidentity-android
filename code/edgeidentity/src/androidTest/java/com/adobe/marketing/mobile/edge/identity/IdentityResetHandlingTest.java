@@ -30,62 +30,62 @@ import org.junit.rules.RuleChain;
 
 public class IdentityResetHandlingTest {
 
-    @Rule
-    public RuleChain rule = RuleChain
-        .outerRule(new TestHelper.SetupCoreRule())
-        .around(new TestHelper.RegisterMonitorExtensionRule());
+	@Rule
+	public RuleChain rule = RuleChain
+		.outerRule(new TestHelper.SetupCoreRule())
+		.around(new TestHelper.RegisterMonitorExtensionRule());
 
-    // --------------------------------------------------------------------------------------------
-    // Setup
-    // --------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------
+	// Setup
+	// --------------------------------------------------------------------------------------------
 
-    @Before
-    public void setup() throws Exception {
-        registerEdgeIdentityExtension();
-    }
+	@Before
+	public void setup() throws Exception {
+		registerEdgeIdentityExtension();
+	}
 
-    // --------------------------------------------------------------------------------------------
-    // Reset Handling
-    // --------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------
+	// Reset Handling
+	// --------------------------------------------------------------------------------------------
 
-    @Test
-    public void testReset_ClearsAllIDAndDispatchesResetComplete() throws Exception {
-        // setup
-        IdentityMap map = new IdentityMap();
-        map.addItem(new IdentityItem("primary@email.com"), "Email");
-        map.addItem(new IdentityItem("secondary@email.com"), "Email");
-        map.addItem(new IdentityItem("zzzyyyxxx"), "UserId");
-        map.addItem(new IdentityItem("John Doe"), "UserName");
-        Identity.updateIdentities(map);
-        String beforeResetECID = getExperienceCloudIdSync();
+	@Test
+	public void testReset_ClearsAllIDAndDispatchesResetComplete() throws Exception {
+		// setup
+		IdentityMap map = new IdentityMap();
+		map.addItem(new IdentityItem("primary@email.com"), "Email");
+		map.addItem(new IdentityItem("secondary@email.com"), "Email");
+		map.addItem(new IdentityItem("zzzyyyxxx"), "UserId");
+		map.addItem(new IdentityItem("John Doe"), "UserName");
+		Identity.updateIdentities(map);
+		String beforeResetECID = getExperienceCloudIdSync();
 
-        // test
-        MobileCore.resetIdentities();
+		// test
+		MobileCore.resetIdentities();
 
-        // verify
-        String newECID = getExperienceCloudIdSync();
-        assertNotNull(newECID);
-        assertNotEquals(beforeResetECID, newECID);
+		// verify
+		String newECID = getExperienceCloudIdSync();
+		assertNotNull(newECID);
+		assertNotEquals(beforeResetECID, newECID);
 
-        // verify edge reset complete event dispatched
-        List<Event> resetCompleteEvent = getDispatchedEventsWith(
-            IdentityConstants.EventType.EDGE_IDENTITY,
-            IdentityConstants.EventSource.RESET_COMPLETE
-        );
-        assertEquals(1, resetCompleteEvent.size());
+		// verify edge reset complete event dispatched
+		List<Event> resetCompleteEvent = getDispatchedEventsWith(
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESET_COMPLETE
+		);
+		assertEquals(1, resetCompleteEvent.size());
 
-        // verify shared state is updated
-        Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-        assertEquals(3, xdmSharedState.size()); // 3 for ECID still exists
-        assertEquals(newECID, xdmSharedState.get("identityMap.ECID[0].id"));
+		// verify shared state is updated
+		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
+		assertEquals(3, xdmSharedState.size()); // 3 for ECID still exists
+		assertEquals(newECID, xdmSharedState.get("identityMap.ECID[0].id"));
 
-        // verify persistence is updated
-        final String persistedJson = TestPersistenceHelper.readPersistedData(
-            IdentityConstants.DataStoreKey.DATASTORE_NAME,
-            IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
-        );
-        Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
-        assertEquals(3, persistedMap.size()); // 3 for ECID
-        assertEquals(newECID, persistedMap.get("identityMap.ECID[0].id"));
-    }
+		// verify persistence is updated
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
+		Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
+		assertEquals(3, persistedMap.size()); // 3 for ECID
+		assertEquals(newECID, persistedMap.get("identityMap.ECID[0].id"));
+	}
 }

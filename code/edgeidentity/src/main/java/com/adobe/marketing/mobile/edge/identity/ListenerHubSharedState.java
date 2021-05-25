@@ -19,63 +19,63 @@ import com.adobe.marketing.mobile.MobileCore;
 
 class ListenerHubSharedState extends ExtensionListener {
 
-    /**
-     * Constructor.
-     *
-     * @param extensionApi an instance of {@link ExtensionApi}
-     * @param type         the {@link String} eventType this listener is registered to handle
-     * @param source       the {@link String} eventSource this listener is registered to handle
-     */
-    ListenerHubSharedState(final ExtensionApi extensionApi, final String type, final String source) {
-        super(extensionApi, type, source);
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param extensionApi an instance of {@link ExtensionApi}
+	 * @param type         the {@link String} eventType this listener is registered to handle
+	 * @param source       the {@link String} eventSource this listener is registered to handle
+	 */
+	ListenerHubSharedState(final ExtensionApi extensionApi, final String type, final String source) {
+		super(extensionApi, type, source);
+	}
 
-    /**
-     * Method that gets called when event with event type {@link IdentityConstants.EventType#HUB}
-     * and with event source {@link IdentityConstants.EventSource#SHARED_STATE} is dispatched through eventHub.
-     *
-     * @param event the hub shared state change {@link Event} to be processed
-     */
-    @Override
-    public void hear(final Event event) {
-        if (event == null || event.getEventData() == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                IdentityConstants.LOG_TAG,
-                "ListenerHubSharedState - Event / EventData is null. Ignoring the event."
-            );
-            return;
-        }
+	/**
+	 * Method that gets called when event with event type {@link IdentityConstants.EventType#HUB}
+	 * and with event source {@link IdentityConstants.EventSource#SHARED_STATE} is dispatched through eventHub.
+	 *
+	 * @param event the hub shared state change {@link Event} to be processed
+	 */
+	@Override
+	public void hear(final Event event) {
+		if (event == null || event.getEventData() == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerHubSharedState - Event / EventData is null. Ignoring the event."
+			);
+			return;
+		}
 
-        final IdentityExtension parentExtension = getIdentityExtension();
+		final IdentityExtension parentExtension = getIdentityExtension();
 
-        if (parentExtension == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                IdentityConstants.LOG_TAG,
-                "ListenerHubSharedState - The parent extension, associated with this listener is null, ignoring the event."
-            );
-            return;
-        }
+		if (parentExtension == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerHubSharedState - The parent extension, associated with this listener is null, ignoring the event."
+			);
+			return;
+		}
 
-        parentExtension
-            .getExecutor()
-            .execute(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        parentExtension.handleHubSharedState(event);
-                    }
-                }
-            );
-    }
+		parentExtension
+			.getExecutor()
+			.execute(
+				new Runnable() {
+					@Override
+					public void run() {
+						parentExtension.handleHubSharedState(event);
+					}
+				}
+			);
+	}
 
-    /**
-     * Returns the parent extension associated with the listener.
-     *
-     * @return a {@link IdentityExtension} object registered with the eventHub
-     */
-    IdentityExtension getIdentityExtension() {
-        return (IdentityExtension) getParentExtension();
-    }
+	/**
+	 * Returns the parent extension associated with the listener.
+	 *
+	 * @return a {@link IdentityExtension} object registered with the eventHub
+	 */
+	IdentityExtension getIdentityExtension() {
+		return (IdentityExtension) getParentExtension();
+	}
 }

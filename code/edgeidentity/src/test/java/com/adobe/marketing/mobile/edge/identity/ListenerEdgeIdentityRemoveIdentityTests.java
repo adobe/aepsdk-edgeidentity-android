@@ -29,77 +29,77 @@ import org.mockito.Mockito;
 
 public class ListenerEdgeIdentityRemoveIdentityTests {
 
-    @Mock
-    private IdentityExtension mockIdentityExtension;
+	@Mock
+	private IdentityExtension mockIdentityExtension;
 
-    private ListenerEdgeIdentityRemoveIdentity listener;
-    private ExecutorService testExecutor;
+	private ListenerEdgeIdentityRemoveIdentity listener;
+	private ExecutorService testExecutor;
 
-    @Before
-    public void setup() {
-        testExecutor = Executors.newSingleThreadExecutor();
-        mockIdentityExtension = Mockito.mock(IdentityExtension.class);
-        doReturn(testExecutor).when(mockIdentityExtension).getExecutor();
-        MobileCore.start(null);
-        listener =
-            spy(
-                new ListenerEdgeIdentityRemoveIdentity(
-                    null,
-                    IdentityConstants.EventType.EDGE_IDENTITY,
-                    IdentityConstants.EventSource.REMOVE_IDENTITY
-                )
-            );
-    }
+	@Before
+	public void setup() {
+		testExecutor = Executors.newSingleThreadExecutor();
+		mockIdentityExtension = Mockito.mock(IdentityExtension.class);
+		doReturn(testExecutor).when(mockIdentityExtension).getExecutor();
+		MobileCore.start(null);
+		listener =
+			spy(
+				new ListenerEdgeIdentityRemoveIdentity(
+					null,
+					IdentityConstants.EventType.EDGE_IDENTITY,
+					IdentityConstants.EventSource.REMOVE_IDENTITY
+				)
+			);
+	}
 
-    @Test
-    public void testHear() throws Exception {
-        // setup
-        Event event = new Event.Builder(
-            "Remove Identity",
-            IdentityConstants.EventType.EDGE_IDENTITY,
-            IdentityConstants.EventSource.REMOVE_IDENTITY
-        )
-            .build();
-        doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
+	@Test
+	public void testHear() throws Exception {
+		// setup
+		Event event = new Event.Builder(
+			"Remove Identity",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REMOVE_IDENTITY
+		)
+			.build();
+		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
 
-        // test
-        listener.hear(event);
+		// test
+		listener.hear(event);
 
-        // verify
-        testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
-        verify(mockIdentityExtension, times(1)).processAddEvent(event);
-    }
+		// verify
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(1)).processAddEvent(event);
+	}
 
-    @Test
-    public void testHear_WhenParentExtensionNull() throws Exception {
-        // setup
-        Event event = new Event.Builder(
-            "Remove Identity",
-            IdentityConstants.EventType.EDGE_IDENTITY,
-            IdentityConstants.EventSource.REMOVE_IDENTITY
-        )
-            .build();
-        doReturn(null).when(listener).getIdentityExtension();
+	@Test
+	public void testHear_WhenParentExtensionNull() throws Exception {
+		// setup
+		Event event = new Event.Builder(
+			"Remove Identity",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REMOVE_IDENTITY
+		)
+			.build();
+		doReturn(null).when(listener).getIdentityExtension();
 
-        // test
-        listener.hear(event);
+		// test
+		listener.hear(event);
 
-        // verify
-        testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
-        verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
-    }
+		// verify
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
+	}
 
-    @Test
-    public void testHear_WhenEventNull() throws Exception {
-        // setup
-        doReturn(null).when(listener).getIdentityExtension();
-        doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
+	@Test
+	public void testHear_WhenEventNull() throws Exception {
+		// setup
+		doReturn(null).when(listener).getIdentityExtension();
+		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
 
-        // test
-        listener.hear(null);
+		// test
+		listener.hear(null);
 
-        // verify
-        testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
-        verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
-    }
+		// verify
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(0)).processAddEvent(any(Event.class));
+	}
 }

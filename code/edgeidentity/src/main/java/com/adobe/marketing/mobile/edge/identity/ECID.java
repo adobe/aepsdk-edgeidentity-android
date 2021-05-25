@@ -22,75 +22,75 @@ import java.util.UUID;
  */
 final class ECID {
 
-    private final String ecidString;
+	private final String ecidString;
 
-    /**
-     * Initializes and generates a new ECID
-     */
-    ECID() {
-        final UUID uuid = UUID.randomUUID();
-        final long most = uuid.getMostSignificantBits();
-        final long least = uuid.getLeastSignificantBits();
-        // return formatted string, flip negatives if they're set.
-        ecidString = String.format(Locale.US, "%019d%019d", most < 0 ? -most : most, least < 0 ? -least : least);
-    }
+	/**
+	 * Initializes and generates a new ECID
+	 */
+	ECID() {
+		final UUID uuid = UUID.randomUUID();
+		final long most = uuid.getMostSignificantBits();
+		final long least = uuid.getLeastSignificantBits();
+		// return formatted string, flip negatives if they're set.
+		ecidString = String.format(Locale.US, "%019d%019d", most < 0 ? -most : most, least < 0 ? -least : least);
+	}
 
-    /**
-     * Creates a new ECID with the passed in string
-     *
-     * @param ecidString a valid (38-digit UUID) ECID string representation, if null or empty a new ECID will be generated
-     */
-    ECID(final String ecidString) {
-        if (Utils.isNullOrEmpty(ecidString)) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                IdentityConstants.LOG_TAG,
-                "Creating an ECID with null or empty ecidString is not allowed, generating a new ECID."
-            );
-            this.ecidString = new ECID().toString();
-            return;
-        }
+	/**
+	 * Creates a new ECID with the passed in string
+	 *
+	 * @param ecidString a valid (38-digit UUID) ECID string representation, if null or empty a new ECID will be generated
+	 */
+	ECID(final String ecidString) {
+		if (Utils.isNullOrEmpty(ecidString)) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"Creating an ECID with null or empty ecidString is not allowed, generating a new ECID."
+			);
+			this.ecidString = new ECID().toString();
+			return;
+		}
 
-        this.ecidString = ecidString;
-    }
+		this.ecidString = ecidString;
+	}
 
-    /**
-     * Retrieves the string representation of the ECID
-     *
-     * @return string representation of the ECID
-     */
-    @Override
-    public String toString() {
-        return ecidString;
-    }
+	/**
+	 * Retrieves the string representation of the ECID
+	 *
+	 * @return string representation of the ECID
+	 */
+	@Override
+	public String toString() {
+		return ecidString;
+	}
 
-    /**
-     * Determine if ECID {@code o} is equal to this ECID.
-     *
-     * @param o the ECID instance to check for equality with this ECID.
-     * @return true if {@code o} is equal to this ECID instance.
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
+	/**
+	 * Determine if ECID {@code o} is equal to this ECID.
+	 *
+	 * @param o the ECID instance to check for equality with this ECID.
+	 * @return true if {@code o} is equal to this ECID instance.
+	 */
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
 
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 
-        ECID ecid = (ECID) o;
-        return Objects.equals(ecidString, ecid.ecidString);
-    }
+		ECID ecid = (ECID) o;
+		return Objects.equals(ecidString, ecid.ecidString);
+	}
 
-    /**
-     * Get the hash code for this ECID.
-     *
-     * @return hash code for this ECID.
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hash(ecidString);
-    }
+	/**
+	 * Get the hash code for this ECID.
+	 *
+	 * @return hash code for this ECID.
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(ecidString);
+	}
 }

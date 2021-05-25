@@ -27,157 +27,157 @@ import org.json.JSONObject;
  */
 class IdentityStorageService {
 
-    private IdentityStorageService() {}
+	private IdentityStorageService() {}
 
-    /**
-     * Loads identity properties from local storage, returns null if not found.
-     *
-     * @return properties stored in local storage if present, otherwise null.
-     */
-    static IdentityProperties loadPropertiesFromPersistence() {
-        final SharedPreferences sharedPreferences = getSharedPreference(IdentityConstants.DataStoreKey.DATASTORE_NAME);
+	/**
+	 * Loads identity properties from local storage, returns null if not found.
+	 *
+	 * @return properties stored in local storage if present, otherwise null.
+	 */
+	static IdentityProperties loadPropertiesFromPersistence() {
+		final SharedPreferences sharedPreferences = getSharedPreference(IdentityConstants.DataStoreKey.DATASTORE_NAME);
 
-        if (sharedPreferences == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Shared Preference value is null. Unable to load saved identity properties from persistence."
-            );
-            return null;
-        }
+		if (sharedPreferences == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Shared Preference value is null. Unable to load saved identity properties from persistence."
+			);
+			return null;
+		}
 
-        final String jsonString = sharedPreferences.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null);
+		final String jsonString = sharedPreferences.getString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, null);
 
-        if (jsonString == null) {
-            MobileCore.log(
-                LoggingMode.VERBOSE,
-                LOG_TAG,
-                "IdentityStorageService - No previous properties were stored in persistence. Current identity properties are null"
-            );
-            return null;
-        }
+		if (jsonString == null) {
+			MobileCore.log(
+				LoggingMode.VERBOSE,
+				LOG_TAG,
+				"IdentityStorageService - No previous properties were stored in persistence. Current identity properties are null"
+			);
+			return null;
+		}
 
-        try {
-            final JSONObject jsonObject = new JSONObject(jsonString);
-            final Map<String, Object> propertyMap = Utils.toMap(jsonObject);
-            return new IdentityProperties(propertyMap);
-        } catch (JSONException exception) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Serialization error while reading properties jsonString from persistence. Unable to load saved identity properties from persistence."
-            );
-            return null;
-        }
-    }
+		try {
+			final JSONObject jsonObject = new JSONObject(jsonString);
+			final Map<String, Object> propertyMap = Utils.toMap(jsonObject);
+			return new IdentityProperties(propertyMap);
+		} catch (JSONException exception) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Serialization error while reading properties jsonString from persistence. Unable to load saved identity properties from persistence."
+			);
+			return null;
+		}
+	}
 
-    /**
-     * Saves the properties to local storage
-     *
-     * @param properties properties to be stored
-     */
-    static void savePropertiesToPersistence(final IdentityProperties properties) {
-        final SharedPreferences sharedPreferences = getSharedPreference(IdentityConstants.DataStoreKey.DATASTORE_NAME);
+	/**
+	 * Saves the properties to local storage
+	 *
+	 * @param properties properties to be stored
+	 */
+	static void savePropertiesToPersistence(final IdentityProperties properties) {
+		final SharedPreferences sharedPreferences = getSharedPreference(IdentityConstants.DataStoreKey.DATASTORE_NAME);
 
-        if (sharedPreferences == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Shared Preference value is null. Unable to write identity properties to persistence."
-            );
-            return;
-        }
+		if (sharedPreferences == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Shared Preference value is null. Unable to write identity properties to persistence."
+			);
+			return;
+		}
 
-        final SharedPreferences.Editor editor = sharedPreferences.edit();
+		final SharedPreferences.Editor editor = sharedPreferences.edit();
 
-        if (editor == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Shared Preference Editor is null. Unable to write identity properties to persistence."
-            );
-            return;
-        }
+		if (editor == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Shared Preference Editor is null. Unable to write identity properties to persistence."
+			);
+			return;
+		}
 
-        if (properties == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Identity Properties are null, removing them from persistence."
-            );
-            editor.remove(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
-            editor.apply();
-            return;
-        }
+		if (properties == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Identity Properties are null, removing them from persistence."
+			);
+			editor.remove(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
+			editor.apply();
+			return;
+		}
 
-        final JSONObject jsonObject = new JSONObject(properties.toXDMData(false));
-        final String jsonString = jsonObject.toString();
-        editor.putString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, jsonString);
-        editor.apply();
-    }
+		final JSONObject jsonObject = new JSONObject(properties.toXDMData(false));
+		final String jsonString = jsonObject.toString();
+		editor.putString(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES, jsonString);
+		editor.apply();
+	}
 
-    /**
-     * Retrieves the direct Identity extension ECID value stored in persistence.
-     *
-     * @return {@link ECID} stored in direct Identity extension's persistence, or null if no ECID value is stored.
-     */
-    static ECID loadEcidFromDirectIdentityPersistence() {
-        final SharedPreferences sharedPreferences = getSharedPreference(
-            IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME
-        );
+	/**
+	 * Retrieves the direct Identity extension ECID value stored in persistence.
+	 *
+	 * @return {@link ECID} stored in direct Identity extension's persistence, or null if no ECID value is stored.
+	 */
+	static ECID loadEcidFromDirectIdentityPersistence() {
+		final SharedPreferences sharedPreferences = getSharedPreference(
+			IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME
+		);
 
-        if (sharedPreferences == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Shared Preference value is null. Unable to load saved direct identity ECID from persistence."
-            );
-            return null;
-        }
+		if (sharedPreferences == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Shared Preference value is null. Unable to load saved direct identity ECID from persistence."
+			);
+			return null;
+		}
 
-        final String ecidString = sharedPreferences.getString(
-            IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
-            null
-        );
+		final String ecidString = sharedPreferences.getString(
+			IdentityConstants.DataStoreKey.IDENTITY_DIRECT_ECID_KEY,
+			null
+		);
 
-        if (ecidString == null || ecidString.isEmpty()) {
-            return null;
-        }
+		if (ecidString == null || ecidString.isEmpty()) {
+			return null;
+		}
 
-        return new ECID(ecidString);
-    }
+		return new ECID(ecidString);
+	}
 
-    /**
-     * Getter for the applications {@link SharedPreferences}
-     * <p>
-     * Returns null if the app or app context is not available
-     *
-     * @param datastoreName the name of the data store to get
-     * @return a {@code SharedPreferences} instance
-     */
-    private static SharedPreferences getSharedPreference(final String datastoreName) {
-        final Application application = MobileCore.getApplication();
+	/**
+	 * Getter for the applications {@link SharedPreferences}
+	 * <p>
+	 * Returns null if the app or app context is not available
+	 *
+	 * @param datastoreName the name of the data store to get
+	 * @return a {@code SharedPreferences} instance
+	 */
+	private static SharedPreferences getSharedPreference(final String datastoreName) {
+		final Application application = MobileCore.getApplication();
 
-        if (application == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Application value is null. Unable to read/write data from persistence."
-            );
-            return null;
-        }
+		if (application == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Application value is null. Unable to read/write data from persistence."
+			);
+			return null;
+		}
 
-        final Context context = application.getApplicationContext();
+		final Context context = application.getApplicationContext();
 
-        if (context == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                LOG_TAG,
-                "IdentityStorageService - Context value is null. Unable to read/write data from persistence."
-            );
-            return null;
-        }
+		if (context == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"IdentityStorageService - Context value is null. Unable to read/write data from persistence."
+			);
+			return null;
+		}
 
-        return context.getSharedPreferences(datastoreName, Context.MODE_PRIVATE);
-    }
+		return context.getSharedPreferences(datastoreName, Context.MODE_PRIVATE);
+	}
 }

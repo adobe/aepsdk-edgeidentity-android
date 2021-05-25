@@ -27,46 +27,46 @@ import org.junit.rules.RuleChain;
 
 public class IdentityBootUpTest {
 
-    @Rule
-    public RuleChain rule = RuleChain
-        .outerRule(new TestHelper.SetupCoreRule())
-        .around(new TestHelper.RegisterMonitorExtensionRule());
+	@Rule
+	public RuleChain rule = RuleChain
+		.outerRule(new TestHelper.SetupCoreRule())
+		.around(new TestHelper.RegisterMonitorExtensionRule());
 
-    // --------------------------------------------------------------------------------------------
-    // OnBootUp
-    // --------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------
+	// OnBootUp
+	// --------------------------------------------------------------------------------------------
 
-    @Test
-    public void testOnBootUp_LoadsAllIdentitiesFromPreference() throws Exception {
-        // test
-        setEdgeIdentityPersistence(
-            createXDMIdentityMap(
-                new IdentityTestUtil.TestItem("ECID", "primaryECID"),
-                new IdentityTestUtil.TestItem("ECID", "secondaryECID"),
-                new IdentityTestUtil.TestItem("Email", "example@email.com"),
-                new IdentityTestUtil.TestItem("UserId", "JohnDoe")
-            )
-        );
-        registerEdgeIdentityExtension();
+	@Test
+	public void testOnBootUp_LoadsAllIdentitiesFromPreference() throws Exception {
+		// test
+		setEdgeIdentityPersistence(
+			createXDMIdentityMap(
+				new IdentityTestUtil.TestItem("ECID", "primaryECID"),
+				new IdentityTestUtil.TestItem("ECID", "secondaryECID"),
+				new IdentityTestUtil.TestItem("Email", "example@email.com"),
+				new IdentityTestUtil.TestItem("UserId", "JohnDoe")
+			)
+		);
+		registerEdgeIdentityExtension();
 
-        // verify xdm shared state
-        Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-        assertEquals(12, xdmSharedState.size()); // 3 for ECID and 3 for secondaryECID + 6
-        assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
-        assertEquals("secondaryECID", xdmSharedState.get("identityMap.ECID[1].id"));
-        assertEquals("example@email.com", xdmSharedState.get("identityMap.Email[0].id"));
-        assertEquals("JohnDoe", xdmSharedState.get("identityMap.UserId[0].id"));
+		// verify xdm shared state
+		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
+		assertEquals(12, xdmSharedState.size()); // 3 for ECID and 3 for secondaryECID + 6
+		assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
+		assertEquals("secondaryECID", xdmSharedState.get("identityMap.ECID[1].id"));
+		assertEquals("example@email.com", xdmSharedState.get("identityMap.Email[0].id"));
+		assertEquals("JohnDoe", xdmSharedState.get("identityMap.UserId[0].id"));
 
-        //verify persisted data
-        final String persistedJson = TestPersistenceHelper.readPersistedData(
-            IdentityConstants.DataStoreKey.DATASTORE_NAME,
-            IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
-        );
-        Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
-        assertEquals(12, persistedMap.size()); // 3 for ECID and 3 for secondaryECID + 6
-    }
-    // --------------------------------------------------------------------------------------------
-    // All the other bootUp tests with to ECID is coded in IdentityECIDHandling
-    // --------------------------------------------------------------------------------------------
+		//verify persisted data
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
+		Map<String, String> persistedMap = flattenMap(IdentityTestUtil.toMap(new JSONObject(persistedJson)));
+		assertEquals(12, persistedMap.size()); // 3 for ECID and 3 for secondaryECID + 6
+	}
+	// --------------------------------------------------------------------------------------------
+	// All the other bootUp tests with to ECID is coded in IdentityECIDHandling
+	// --------------------------------------------------------------------------------------------
 
 }

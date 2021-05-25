@@ -26,135 +26,135 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class UtilsTests {
 
-    @Test
-    public void testUtils_deepCopyNull() {
-        assertNull(Utils.deepCopy((Map) null));
-    }
+	@Test
+	public void testUtils_deepCopyNull() {
+		assertNull(Utils.deepCopy((Map) null));
+	}
 
-    @Test
-    public void testUtils_deepCopyEmpty() {
-        Map<String, Object> emptyMap = new HashMap<>();
-        assertEquals(0, Utils.deepCopy(emptyMap).size());
-    }
+	@Test
+	public void testUtils_deepCopyEmpty() {
+		Map<String, Object> emptyMap = new HashMap<>();
+		assertEquals(0, Utils.deepCopy(emptyMap).size());
+	}
 
-    @Test
-    public void testUtils_deepCopyValidSimpleNull() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
-        Map<String, Object> deepCopy = Utils.deepCopy(map);
+	@Test
+	public void testUtils_deepCopyValidSimpleNull() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
+		Map<String, Object> deepCopy = Utils.deepCopy(map);
 
-        map = null;
-        assertNotNull(deepCopy);
-    }
+		map = null;
+		assertNotNull(deepCopy);
+	}
 
-    @Test
-    public void testUtils_deepCopyValidSimple() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
+	@Test
+	public void testUtils_deepCopyValidSimple() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
 
-        Map<String, Object> deepCopy = Utils.deepCopy(map);
-        deepCopy.remove("key1");
+		Map<String, Object> deepCopy = Utils.deepCopy(map);
+		deepCopy.remove("key1");
 
-        assertTrue(map.containsKey("key1"));
-    }
+		assertTrue(map.containsKey("key1"));
+	}
 
-    @Test
-    public void testUtils_deepCopyValidNested() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
+	@Test
+	public void testUtils_deepCopyValidNested() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
 
-        Map<String, Object> nested = new HashMap<>();
-        nested.put("nestedKey", "nestedValue");
-        map.put("nestedMap", nested);
+		Map<String, Object> nested = new HashMap<>();
+		nested.put("nestedKey", "nestedValue");
+		map.put("nestedMap", nested);
 
-        Map<String, Object> deepCopy = Utils.deepCopy(map);
-        Map<String, Object> nestedDeepCopy = (Map<String, Object>) deepCopy.get("nestedMap");
-        nestedDeepCopy.put("newKey", "newValue");
+		Map<String, Object> deepCopy = Utils.deepCopy(map);
+		Map<String, Object> nestedDeepCopy = (Map<String, Object>) deepCopy.get("nestedMap");
+		nestedDeepCopy.put("newKey", "newValue");
 
-        assertFalse(nested.size() == nestedDeepCopy.size());
-    }
+		assertFalse(nested.size() == nestedDeepCopy.size());
+	}
 
-    @Test
-    public void testUtils_deepCopyNullKey_returnsNull() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
-        map.put(null, "null");
+	@Test
+	public void testUtils_deepCopyNullKey_returnsNull() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
+		map.put(null, "null");
 
-        Map<String, Object> nested = new HashMap<>();
-        nested.put("nestedKey", "nestedValue");
-        map.put(null, "nestednull");
+		Map<String, Object> nested = new HashMap<>();
+		nested.put("nestedKey", "nestedValue");
+		map.put(null, "nestednull");
 
-        assertNull(Utils.deepCopy(map));
-    }
+		assertNull(Utils.deepCopy(map));
+	}
 
-    @Test
-    public void testPutIfNotNull_NonNull_InsertsCorrectly() {
-        Map<String, Object> map = new HashMap<>();
-        Utils.putIfNotNull(map, "testKey", new Integer(2));
+	@Test
+	public void testPutIfNotNull_NonNull_InsertsCorrectly() {
+		Map<String, Object> map = new HashMap<>();
+		Utils.putIfNotNull(map, "testKey", new Integer(2));
 
-        assertEquals(1, map.size());
-        assertEquals(2, map.get("testKey"));
-    }
+		assertEquals(1, map.size());
+		assertEquals(2, map.get("testKey"));
+	}
 
-    @Test
-    public void testPutIfNotNull_Null_NoInsert() {
-        Map<String, Object> map = new HashMap<>();
-        Utils.putIfNotNull(map, "testKey", null);
+	@Test
+	public void testPutIfNotNull_Null_NoInsert() {
+		Map<String, Object> map = new HashMap<>();
+		Utils.putIfNotNull(map, "testKey", null);
 
-        assertEquals(0, map.size());
-    }
+		assertEquals(0, map.size());
+	}
 
-    @Test
-    public void testUtils_deepCopyListOfMaps_Null() {
-        assertNull(Utils.deepCopy((List) null));
-    }
+	@Test
+	public void testUtils_deepCopyListOfMaps_Null() {
+		assertNull(Utils.deepCopy((List) null));
+	}
 
-    @Test
-    public void testUtils_deepCopyListOfMaps_Empty() {
-        assertEquals(0, Utils.deepCopy(new ArrayList<Map<String, Object>>()).size());
-    }
+	@Test
+	public void testUtils_deepCopyListOfMaps_Empty() {
+		assertEquals(0, Utils.deepCopy(new ArrayList<Map<String, Object>>()).size());
+	}
 
-    @Test
-    public void testUtils_deepCopyListOfMaps_ValidSimpleNull() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(new HashMap<String, Object>());
-        assertNotNull(Utils.deepCopy(list));
-    }
+	@Test
+	public void testUtils_deepCopyListOfMaps_ValidSimpleNull() {
+		List<Map<String, Object>> list = new ArrayList<>();
+		list.add(new HashMap<String, Object>());
+		assertNotNull(Utils.deepCopy(list));
+	}
 
-    @Test
-    public void testUtils_deepCopyListOfMaps_ValidSimple() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
-        List<Map<String, Object>> list = new ArrayList<>();
-        list.add(map);
+	@Test
+	public void testUtils_deepCopyListOfMaps_ValidSimple() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
+		List<Map<String, Object>> list = new ArrayList<>();
+		list.add(map);
 
-        List<Map<String, Object>> deepCopy = Utils.deepCopy(list);
-        deepCopy.remove(0);
+		List<Map<String, Object>> deepCopy = Utils.deepCopy(list);
+		deepCopy.remove(0);
 
-        assertEquals(1, list.size());
-    }
+		assertEquals(1, list.size());
+	}
 
-    @Test
-    public void testUtils_deepCopyListOfMaps_ValidNested() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("key1", "value1");
+	@Test
+	public void testUtils_deepCopyListOfMaps_ValidNested() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("key1", "value1");
 
-        Map<String, Object> nested = new HashMap<>();
-        nested.put("nestedKey", "nestedValue");
-        map.put("nestedMap", nested);
+		Map<String, Object> nested = new HashMap<>();
+		nested.put("nestedKey", "nestedValue");
+		map.put("nestedMap", nested);
 
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        list.add(map);
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+		list.add(map);
 
-        Map<String, Object> deepCopy = Utils.deepCopy(map);
-        List<Map<String, Object>> nestedDeepCopy = Utils.deepCopy(list);
-        nestedDeepCopy.get(0).put("newKey", "newValue");
-        ((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).put("nestedKey2", 2222);
+		Map<String, Object> deepCopy = Utils.deepCopy(map);
+		List<Map<String, Object>> nestedDeepCopy = Utils.deepCopy(list);
+		nestedDeepCopy.get(0).put("newKey", "newValue");
+		((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).put("nestedKey2", 2222);
 
-        assertEquals(3, nestedDeepCopy.get(0).size());
-        assertEquals(2, list.get(0).size());
-        assertTrue(list.get(0).containsKey("key1"));
-        assertEquals(1, ((Map<String, Object>) list.get(0).get("nestedMap")).size());
-        assertEquals(2, ((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).size());
-    }
+		assertEquals(3, nestedDeepCopy.get(0).size());
+		assertEquals(2, list.get(0).size());
+		assertTrue(list.get(0).containsKey("key1"));
+		assertEquals(1, ((Map<String, Object>) list.get(0).get("nestedMap")).size());
+		assertEquals(2, ((Map<String, Object>) nestedDeepCopy.get(0).get("nestedMap")).size());
+	}
 }

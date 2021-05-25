@@ -23,51 +23,51 @@ import org.junit.Test;
 
 public class IdentityExtensionVersionTest {
 
-    private static String GRADLE_PROPERTIES_PATH = "../gradle.properties";
-    private static String PROPERTY_MODULE_VERSION = "moduleVersion";
+	private static String GRADLE_PROPERTIES_PATH = "../gradle.properties";
+	private static String PROPERTY_MODULE_VERSION = "moduleVersion";
 
-    @Test
-    public void extensionVersion_verifyModuleVersionInPropertiesFile_asEqual() {
-        Properties properties = loadProperties(GRADLE_PROPERTIES_PATH);
+	@Test
+	public void extensionVersion_verifyModuleVersionInPropertiesFile_asEqual() {
+		Properties properties = loadProperties(GRADLE_PROPERTIES_PATH);
 
-        assertNotNull(Identity.extensionVersion());
-        assertFalse(Identity.extensionVersion().isEmpty());
+		assertNotNull(Identity.extensionVersion());
+		assertFalse(Identity.extensionVersion().isEmpty());
 
-        String moduleVersion = properties.getProperty(PROPERTY_MODULE_VERSION);
-        assertNotNull(moduleVersion);
-        assertFalse(moduleVersion.isEmpty());
+		String moduleVersion = properties.getProperty(PROPERTY_MODULE_VERSION);
+		assertNotNull(moduleVersion);
+		assertFalse(moduleVersion.isEmpty());
 
-        assertEquals(
-            String.format(
-                "Expected version to match in gradle.properties (%s) and extensionVersion API (%s)",
-                moduleVersion,
-                Identity.extensionVersion()
-            ),
-            moduleVersion,
-            Identity.extensionVersion()
-        );
-    }
+		assertEquals(
+			String.format(
+				"Expected version to match in gradle.properties (%s) and extensionVersion API (%s)",
+				moduleVersion,
+				Identity.extensionVersion()
+			),
+			moduleVersion,
+			Identity.extensionVersion()
+		);
+	}
 
-    private Properties loadProperties(final String filepath) {
-        Properties properties = new Properties();
-        InputStream input = null;
+	private Properties loadProperties(final String filepath) {
+		Properties properties = new Properties();
+		InputStream input = null;
 
-        try {
-            input = new FileInputStream(filepath);
+		try {
+			input = new FileInputStream(filepath);
 
-            properties.load(input);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+			properties.load(input);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
-        return properties;
-    }
+		return properties;
+	}
 }

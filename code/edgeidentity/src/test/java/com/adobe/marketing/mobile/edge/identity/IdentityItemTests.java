@@ -21,105 +21,105 @@ import org.junit.Test;
 
 public class IdentityItemTests {
 
-    @Test
-    public void testIdentityItem_toObjectMap_full() {
-        // setup
-        IdentityItem item = new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true);
+	@Test
+	public void testIdentityItem_toObjectMap_full() {
+		// setup
+		IdentityItem item = new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true);
 
-        // test
-        Map<String, Object> data = item.toObjectMap();
+		// test
+		Map<String, Object> data = item.toObjectMap();
 
-        // verify
-        assertEquals("id", (String) data.get("id"));
-        assertEquals("authenticated", (String) data.get("authenticatedState"));
-        assertEquals(true, (boolean) data.get("primary"));
-    }
+		// verify
+		assertEquals("id", (String) data.get("id"));
+		assertEquals("authenticated", (String) data.get("authenticatedState"));
+		assertEquals(true, (boolean) data.get("primary"));
+	}
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testIdentityItem_toObjectMap_missingId() {
-        // setup
-        IdentityItem item = new IdentityItem(null, AuthenticatedState.AUTHENTICATED, true);
+	@Test(expected = IllegalArgumentException.class)
+	public void testIdentityItem_toObjectMap_missingId() {
+		// setup
+		IdentityItem item = new IdentityItem(null, AuthenticatedState.AUTHENTICATED, true);
 
-        // test
-        Map<String, Object> data = item.toObjectMap();
-    }
+		// test
+		Map<String, Object> data = item.toObjectMap();
+	}
 
-    @Test
-    public void testIdentityItem_toObjectMap_missingAuthState() {
-        // setup
-        IdentityItem item = new IdentityItem("id", null, true);
+	@Test
+	public void testIdentityItem_toObjectMap_missingAuthState() {
+		// setup
+		IdentityItem item = new IdentityItem("id", null, true);
 
-        // test
-        Map<String, Object> data = item.toObjectMap();
+		// test
+		Map<String, Object> data = item.toObjectMap();
 
-        // verify
-        assertEquals("id", (String) data.get("id"));
-        assertEquals("ambiguous", (String) data.get("authenticatedState"));
-        assertEquals(true, (boolean) data.get("primary"));
-    }
+		// verify
+		assertEquals("id", (String) data.get("id"));
+		assertEquals("ambiguous", (String) data.get("authenticatedState"));
+		assertEquals(true, (boolean) data.get("primary"));
+	}
 
-    @Test
-    public void testIdentityItem_fromData_full() {
-        // setup
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", "test-id");
-        map.put("authenticatedState", "loggedOut");
-        map.put("primary", true);
+	@Test
+	public void testIdentityItem_fromData_full() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", "test-id");
+		map.put("authenticatedState", "loggedOut");
+		map.put("primary", true);
 
-        // test
-        IdentityItem item = IdentityItem.fromData(map);
+		// test
+		IdentityItem item = IdentityItem.fromData(map);
 
-        // verify
-        assertEquals("test-id", item.getId());
-        assertEquals("loggedOut", item.getAuthenticatedState().getName());
-        assertEquals(true, item.isPrimary());
-    }
+		// verify
+		assertEquals("test-id", item.getId());
+		assertEquals("loggedOut", item.getAuthenticatedState().getName());
+		assertEquals(true, item.isPrimary());
+	}
 
-    @Test
-    public void testIdentityItem_fromData_missingAuthState() {
-        // setup
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", "test-id");
-        map.put("primary", true);
+	@Test
+	public void testIdentityItem_fromData_missingAuthState() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", "test-id");
+		map.put("primary", true);
 
-        // test
-        IdentityItem item = IdentityItem.fromData(map);
+		// test
+		IdentityItem item = IdentityItem.fromData(map);
 
-        // verify
-        assertEquals("test-id", item.getId());
-        assertEquals("ambiguous", item.getAuthenticatedState().getName());
-        assertEquals(true, item.isPrimary());
-    }
+		// verify
+		assertEquals("test-id", item.getId());
+		assertEquals("ambiguous", item.getAuthenticatedState().getName());
+		assertEquals(true, item.isPrimary());
+	}
 
-    @Test
-    public void testIdentityItem_fromData_missingPrimary() {
-        // setup
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", "test-id");
-        map.put("authenticatedState", "loggedOut");
+	@Test
+	public void testIdentityItem_fromData_missingPrimary() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", "test-id");
+		map.put("authenticatedState", "loggedOut");
 
-        // test
-        IdentityItem item = IdentityItem.fromData(map);
+		// test
+		IdentityItem item = IdentityItem.fromData(map);
 
-        // verify
-        assertEquals("test-id", item.getId());
-        assertEquals("loggedOut", item.getAuthenticatedState().getName());
-        assertEquals(false, item.isPrimary());
-    }
+		// verify
+		assertEquals("test-id", item.getId());
+		assertEquals("loggedOut", item.getAuthenticatedState().getName());
+		assertEquals(false, item.isPrimary());
+	}
 
-    @Test
-    public void testIdentityItem_isEqualShouldReturnTrue() {
-        IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS, false);
-        IdentityItem item2 = new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true);
+	@Test
+	public void testIdentityItem_isEqualShouldReturnTrue() {
+		IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS, false);
+		IdentityItem item2 = new IdentityItem("id", AuthenticatedState.AUTHENTICATED, true);
 
-        assertTrue(item1.equals(item2));
-    }
+		assertTrue(item1.equals(item2));
+	}
 
-    @Test
-    public void testIdentityItem_isEqualShouldReturnFalse() {
-        IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS, false);
-        IdentityItem item2 = new IdentityItem("id2", AuthenticatedState.AUTHENTICATED, true);
+	@Test
+	public void testIdentityItem_isEqualShouldReturnFalse() {
+		IdentityItem item1 = new IdentityItem("id", AuthenticatedState.AMBIGUOUS, false);
+		IdentityItem item2 = new IdentityItem("id2", AuthenticatedState.AUTHENTICATED, true);
 
-        assertFalse(item1.equals(item2));
-    }
+		assertFalse(item1.equals(item2));
+	}
 }

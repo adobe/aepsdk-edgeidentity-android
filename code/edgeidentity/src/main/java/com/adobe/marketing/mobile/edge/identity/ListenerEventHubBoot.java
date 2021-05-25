@@ -19,54 +19,54 @@ import com.adobe.marketing.mobile.MobileCore;
 
 class ListenerEventHubBoot extends ExtensionListener {
 
-    /**
-     * Constructor.
-     *
-     * @param extensionApi an instance of {@link ExtensionApi}
-     * @param type         the {@link String} eventType this listener is registered to handle
-     * @param source       the {@link String} eventSource this listener is registered to handle
-     */
-    ListenerEventHubBoot(final ExtensionApi extensionApi, final String type, final String source) {
-        super(extensionApi, type, source);
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param extensionApi an instance of {@link ExtensionApi}
+	 * @param type         the {@link String} eventType this listener is registered to handle
+	 * @param source       the {@link String} eventSource this listener is registered to handle
+	 */
+	ListenerEventHubBoot(final ExtensionApi extensionApi, final String type, final String source) {
+		super(extensionApi, type, source);
+	}
 
-    /**
-     * Method that gets called when event with event type {@link IdentityConstants.EventType#HUB}
-     * and with event source {@link IdentityConstants.EventSource#BOOTED}  is dispatched through eventHub.
-     *
-     * @param event the boot {@link Event}
-     */
-    @Override
-    public void hear(final Event event) {
-        final IdentityExtension parentExtension = getIdentityExtension();
+	/**
+	 * Method that gets called when event with event type {@link IdentityConstants.EventType#HUB}
+	 * and with event source {@link IdentityConstants.EventSource#BOOTED}  is dispatched through eventHub.
+	 *
+	 * @param event the boot {@link Event}
+	 */
+	@Override
+	public void hear(final Event event) {
+		final IdentityExtension parentExtension = getIdentityExtension();
 
-        if (parentExtension == null) {
-            MobileCore.log(
-                LoggingMode.DEBUG,
-                IdentityConstants.LOG_TAG,
-                "ListenerEventHubBoot - The parent extension associated with this listener is null, ignoring this event."
-            );
-            return;
-        }
+		if (parentExtension == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				IdentityConstants.LOG_TAG,
+				"ListenerEventHubBoot - The parent extension associated with this listener is null, ignoring this event."
+			);
+			return;
+		}
 
-        parentExtension
-            .getExecutor()
-            .execute(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        parentExtension.bootupIfReady();
-                    }
-                }
-            );
-    }
+		parentExtension
+			.getExecutor()
+			.execute(
+				new Runnable() {
+					@Override
+					public void run() {
+						parentExtension.bootupIfReady();
+					}
+				}
+			);
+	}
 
-    /**
-     * Returns the parent extension associated with the listener.
-     *
-     * @return a {@link IdentityExtension} object registered with the eventHub
-     */
-    IdentityExtension getIdentityExtension() {
-        return (IdentityExtension) getParentExtension();
-    }
+	/**
+	 * Returns the parent extension associated with the listener.
+	 *
+	 * @return a {@link IdentityExtension} object registered with the eventHub
+	 */
+	IdentityExtension getIdentityExtension() {
+		return (IdentityExtension) getParentExtension();
+	}
 }
