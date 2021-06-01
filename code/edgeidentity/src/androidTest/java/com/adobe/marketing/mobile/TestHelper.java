@@ -299,21 +299,21 @@ public class TestHelper {
 
 		for (Map.Entry<EventSpec, ADBCountDownLatch> expected : expectedEvents.entrySet()) {
 			boolean awaitResult = expected.getValue().await(WAIT_EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-			assertTrue(
-				"Timed out waiting for event type " +
-				expected.getKey().type +
-				" and source " +
-				expected.getKey().source,
-				awaitResult
+			String failMessage = String.format(
+				"Timed out waiting for event type %s and source %s.",
+				expected.getKey().type,
+				expected.getKey().source
 			);
+			assertTrue(failMessage, awaitResult);
 			int expectedCount = expected.getValue().getInitialCount();
 			int receivedCount = expected.getValue().getCurrentCount();
-			String failMessage = String.format(
-				"Expected %d events for '%s', but received %d",
-				expectedCount,
-				expected.getKey(),
-				receivedCount
-			);
+			failMessage =
+				String.format(
+					"Expected %d events for '%s', but received %d",
+					expectedCount,
+					expected.getKey(),
+					receivedCount
+				);
 			assertEquals(failMessage, expectedCount, receivedCount);
 		}
 
