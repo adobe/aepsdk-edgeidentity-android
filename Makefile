@@ -20,6 +20,7 @@ format:
 
 format-check:
 	(./code/gradlew -p code/$(EXTENSION-LIBRARY-FOLDER-NAME) spotlessCheck)
+	(./code/gradlew -p code/$(TEST-APP-FOLDER-NAME) spotlessCheck)
 
 clean:
 	(rm -rf ci)
