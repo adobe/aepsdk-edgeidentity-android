@@ -278,18 +278,14 @@ public class IdentityMapTests {
 			"      \"identityMap\": {\n" +
 			"        \"ECID\": [\n" +
 			"          {\n" +
-			"            \"id\":" +
-			"randomECID" +
-			",\n" +
+			"            \"id\":randomECID,\n" +
 			"            \"authenticatedState\": \"ambiguous\",\n" +
 			"            \"primary\": true\n" +
 			"          }\n" +
 			"        ],\n" +
 			"        \"USERID\": [\n" +
 			"          {\n" +
-			"            \"id\":" +
-			"someUserID" +
-			",\n" +
+			"            \"id\":someUserID,\n" +
 			"            \"authenticatedState\": \"authenticated\",\n" +
 			"            \"primary\": false\n" +
 			"          }\n" +
