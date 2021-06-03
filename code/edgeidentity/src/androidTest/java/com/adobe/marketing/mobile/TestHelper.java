@@ -47,7 +47,7 @@ public class TestHelper {
 	// List of threads to wait for after test execution
 	private static List<String> knownThreads = new ArrayList<String>();
 
-	{
+	static {
 		knownThreads.add("pool"); // used for threads that execute the listeners code
 		knownThreads.add("ADB"); // module internal threads
 	}
@@ -379,10 +379,11 @@ public class TestHelper {
 				MobileCore.log(
 					LoggingMode.DEBUG,
 					TAG,
-					"Received unexpected event with type: " +
-					receivedEvent.getKey().type +
-					" source: " +
-					receivedEvent.getKey().source
+					String.format(
+						"Received unexpected event with type: %s source: %s",
+						receivedEvent.getKey().type,
+						receivedEvent.getKey().source
+					)
 				);
 			}
 		}
