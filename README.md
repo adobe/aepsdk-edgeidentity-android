@@ -40,7 +40,9 @@ Once the connection is established and the events list starts getting populated,
 
 ### Code Format
 
-This project uses the code formatting tools Spotless with Prettier and ktlint. Formatting is applied when the project is built from Gradle and is checked when changes are submitted to the CI build system.
+This project uses the code formatting tools [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) with [Prettier](https://prettier.io/) and [ktlint](https://github.com/pinterest/ktlint). Formatting is applied when the project is built from Gradle and is checked when changes are submitted to the CI build system.
+
+Prettier requires [Node version](https://nodejs.org/en/download/releases/) 10+
 
 To enable the Git pre-commit hook to apply code formatting on each commit, run the following to update the project's git config `core.hooksPath`:
 ```
