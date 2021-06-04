@@ -49,8 +49,6 @@ To enable the Git pre-commit hook to apply code formatting on each commit, run t
 make init
 ```
 
-An `.editorconfig` file which defines the code style for this project is also provided. Enable it in IntelliJ IDEA or Android Studio by selecting the checkbox "Enable EditorConfig support" under "Editor -> Code Style" in the "Preferences" menu.
-
 ## Related Projects
 
 | Project                                                      | Description                                                  |
