@@ -15,7 +15,7 @@ final class IdentityConstants {
 
 	static final String LOG_TAG = "EdgeIdentity";
 	static final String EXTENSION_NAME = "com.adobe.edge.identity";
-	static final String EXTENSION_VERSION = "1.0.0";
+	static final String EXTENSION_VERSION = "1.0.1";
 
 
 	final class EventSource {
