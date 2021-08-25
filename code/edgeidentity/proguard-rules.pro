@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# keep class names and method names used by reflection
+-keepclassmembers class com.adobe.marketing.mobile.edge.identity.* {
+   protected <init>(...);
+   <init>(...);
+}

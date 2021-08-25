@@ -18,7 +18,7 @@ android {
         versionName rootProject.moduleVersion
 
         testInstrumentationRunner rootProject.ext.testInstrumentationRunner
-        consumerProguardFiles "consumer-rules.pro"
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     flavorDimensions "target"
