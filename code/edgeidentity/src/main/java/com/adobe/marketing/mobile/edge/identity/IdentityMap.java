@@ -292,18 +292,18 @@ public class IdentityMap {
 			return null;
 		}
 
-		final Map<String, Object> identityMapDict = (HashMap<String, Object>) map.get(
-			IdentityConstants.XDMKeys.IDENTITY_MAP
-		);
+		try {
+			final Map<String, Object> identityMapDict = (HashMap<String, Object>) map.get(
+				IdentityConstants.XDMKeys.IDENTITY_MAP
+			);
 
-		if (identityMapDict == null) {
-			return null;
-		}
+			if (identityMapDict == null) {
+				return null;
+			}
 
-		final IdentityMap identityMap = new IdentityMap();
+			final IdentityMap identityMap = new IdentityMap();
 
-		for (final String namespace : identityMapDict.keySet()) {
-			try {
+			for (final String namespace : identityMapDict.keySet()) {
 				final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(
 					namespace
 				);
@@ -315,12 +315,16 @@ public class IdentityMap {
 						identityMap.addItemToMap(item, namespace, false);
 					}
 				}
-			} catch (ClassCastException e) {
-				MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "Failed to create IdentityMap from data.");
 			}
+			return identityMap;
+		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.ERROR,
+				LOG_TAG,
+				String.format("Failed to create IdentityMap from data. Exception thrown: %s", e.getLocalizedMessage())
+			);
 		}
-
-		return identityMap;
+		return null;
 	}
 
 	// ========================================================================================
