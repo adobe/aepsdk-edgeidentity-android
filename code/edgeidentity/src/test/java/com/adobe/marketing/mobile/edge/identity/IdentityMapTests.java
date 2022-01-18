@@ -337,7 +337,7 @@ public class IdentityMapTests {
 		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
 
 		// verify
-		assertTrue(map.isEmpty());
+		assertNull(map);
 	}
 
 	@Test
