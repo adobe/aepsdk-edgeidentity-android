@@ -316,9 +316,9 @@ public class IdentityMapTests {
 	}
 
 	@Test
-	public void testFromXDMMap_InvalidXDMData() throws Exception {
+	public void testFromXDMMap_InvalidNamespace() throws Exception {
 		// setup
-		// ECID is map instead of list
+		// ECID namespace is map instead of list
 		final String invalidJsonStr =
 			"{\n" +
 			"  \"identityMap\": {\n" +
@@ -329,6 +329,51 @@ public class IdentityMapTests {
 			"    }\n" +
 			"  }\n" +
 			"}";
+
+		final JSONObject jsonObject = new JSONObject(invalidJsonStr);
+		final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+
+		// test
+		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
+
+		// verify
+		assertTrue(map.isEmpty());
+	}
+
+	@Test
+	public void testFromXDMMap_InvalidItemForNamespace() throws Exception {
+		// setup
+		// namespace is an array of arrays instead of an array of identity items
+		final String invalidJsonStr =
+			"{\n" +
+			"  \"identityMap\": {\n" +
+			"    \"ECID\": [{\n" +
+			"        \"id\": \"randomECID\",\n" +
+			"        \"authenticatedState\": \"ambiguous\",\n" +
+			"        \"primary\": true\n" +
+			"    }],\n" +
+			"    \"namespace\": [\n" +
+			"       [ \"arrayInsteadOfMap\", \"invalid\"]\n" +
+			"    ]\n" +
+			"  }\n," +
+			"}";
+
+		final JSONObject jsonObject = new JSONObject(invalidJsonStr);
+		final Map<String, Object> xdmData = Utils.toMap(jsonObject);
+
+		// test
+		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
+
+		// verify
+		// only ECID namespace is correct, namespace should be dropped due to invalid format
+		assertEquals(1, map.getNamespaces().size());
+		assertEquals("ECID", map.getNamespaces().get(0));
+	}
+
+	@Test
+	public void testFromXDMMap_InvalidIdentityMap() throws Exception {
+		// setup
+		final String invalidJsonStr = "{\"identityMap\": [\"not a map\"]}";
 
 		final JSONObject jsonObject = new JSONObject(invalidJsonStr);
 		final Map<String, Object> xdmData = Utils.toMap(jsonObject);
