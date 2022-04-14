@@ -3,22 +3,22 @@
 # Test App
 ## GAID Background
 In Android, users are opted-in to ad ID tracking by default. They can choose to opt out of tracking in Android Settings at the device level.
-
-Based on Android emulator testing:
-- changes in opt-in/out status or ad ID value does not terminate the app; in iOS changing opt-in/out status terminates the affected app
-    - thus, the guidance for only accessing the ad ID through the API and not caching the value;
-    permissions for ad tracking and/or the value of the ID itself may be changed at any time
-    - practically, it may be cumbersome to detect changes at arbitrary points in the logic throughout the app;
-    it may be helpful to use:
-        - a getter helper for ad ID that detects and handles changes in value or opt-in/out
-        - using app lifecycle foreground event to check for ad ID value or opt-in/out changes
-- opt-out does not seem to cause the admob SDK to return an all-zeros ad ID (based on testing with emulator)
-
-Developers using ad ID should get ad ID from the API each time it is used, as permissions can change
+Developers using ad ID should get ad ID from the API each time it is used, as permissions for ad tracking and/or the value of the ID itself may be changed at any time.
+- In older versions of Android, the ad ID opt-in/out is a toggle, where the existing ad ID value remains unchanged.
+- In newer versions of Android, the ad ID opt-in/out is a delete, where the existing ad ID value is deleted and replaced by an all-zero ad ID until the ad ID is recreated by user selection.
 - note: users can see their ad ID value in the settings page for Ads
 - note: unlike iOS, the permission is more passive, where the user has to seek out the option to turn
 off tracking, and no permissions prompt is shown on first launch, etc.
 
+Based on Android emulator testing:
+- changes in opt-in/out status or ad ID value does not terminate the app; in iOS changing opt-in/out status terminates the affected app
+    - thus, the guidance for only accessing the ad ID through the API and not caching the value
+    - practically, it may be cumbersome to detect changes at arbitrary points in the logic throughout the app;
+    it may be helpful to use:
+        - a getter helper for ad ID that detects and handles changes in value or opt-in/out
+        - using app lifecycle foreground event to check for changes in ad ID value or opt-in/out
+- opt-out does not seem to cause the admob SDK to return an all-zeros ad ID (based on testing with emulator)
+    - however, opt-in/out status can be determined through the property `AdvertisingIdClient.Info.isLimitAdTrackingEnabled`
 
 See Google's [Advertising ID help article](https://support.google.com/googleplay/android-developer/answer/6048248?hl=en) for the latest requirements to access ad ID through AdvertisingIdClient APIs.
 
