@@ -20,6 +20,7 @@ android {
         targetSdkVersion 31
         versionCode 1
         versionName "1.0"
+        multiDexEnabled = true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -65,4 +66,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-ads-lite:20.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-alpha06")
+    implementation("androidx.multidex:multidex:2.0.1")
 }

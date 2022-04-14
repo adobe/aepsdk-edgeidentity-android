@@ -125,7 +125,8 @@ class SharedViewModel : ViewModel() {
             try {
                 val idInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
                 if (idInfo.isLimitAdTrackingEnabled) {
-                    Log.d("Shared_View_Model", "Limit Ad Tracking is enabled by the user, cannot process the advertising identifier")
+                    Log.d("Shared_View_Model", "Limit Ad Tracking is enabled by the user, setting ad ID to \"\"")
+                    MobileCore.setAdvertisingIdentifier("")
                     return@launch
                 }
 
