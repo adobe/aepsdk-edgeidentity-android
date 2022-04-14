@@ -124,15 +124,19 @@ class SharedViewModel : ViewModel() {
             Log.d("Shared_View_Model", "Thread working in ${Thread.currentThread().name}")
             try {
                 val idInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
+                if (idInfo.isLimitAdTrackingEnabled) {
+                    Log.d("Shared_View_Model", "Limit Ad Tracking is enabled by the user, cannot process the advertising identifier")
+                    return@launch
+                }
 
                 Log.d("Shared_View_Model", "AdID: ${idInfo.id}")
                 MobileCore.setAdvertisingIdentifier(idInfo.id)
             } catch (e: GooglePlayServicesNotAvailableException) {
-                e.printStackTrace()
+                Log.d("Shared_View_Model", "GooglePlayServicesNotAvailableException while retrieving the advertising identifier ${e.localizedMessage}")
             } catch (e: GooglePlayServicesRepairableException) {
-                e.printStackTrace()
+                Log.d("Shared_View_Model", "GooglePlayServicesRepairableException while retrieving the advertising identifier ${e.localizedMessage}")
             } catch (e: IOException) {
-                e.printStackTrace()
+                Log.d("Shared_View_Model", "IOException while retrieving the advertising identifier ${e.localizedMessage}")
             }
         }
     }
