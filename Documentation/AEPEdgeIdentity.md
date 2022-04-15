@@ -1,6 +1,6 @@
 # Getting Started
 
-# Test App
+# Android Test App
 ## GAID Background
 In Android, users are opted-in to ad ID tracking by default. They can choose to opt out of tracking in Android Settings at the device level.
 Developers using ad ID should get ad ID from the API each time it is used, as permissions for ad tracking and/or the value of the ID itself may be changed at any time.
@@ -16,7 +16,7 @@ Developers using ad ID should get ad ID from the API each time it is used, as pe
 [<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="350"/>](./assets/new_adid_setting_optout.png)
 
 
-- note: users can see their ad ID value in the settings page for Ads
+- note: users can see their ad ID value in the settings page for Ads.
 - note: unlike iOS, the permission is more passive, where the user has to seek out the option to turn
 off tracking, and no permissions prompt is shown on first launch, etc.
 
