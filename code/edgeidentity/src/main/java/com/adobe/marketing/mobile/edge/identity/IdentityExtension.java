@@ -113,12 +113,6 @@ class IdentityExtension extends Extension {
 			ListenerIdentityRequestReset.class,
 			listenerErrorCallback
 		);
-		extensionApi.registerEventListener(
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_CONTENT,
-			ListenerIdentityRequestReset.class,
-			listenerErrorCallback
-		);
 	}
 
 	/**
@@ -301,9 +295,10 @@ class IdentityExtension extends Extension {
 		}
 
 		final long ts = Utils.getUnixTimeInSeconds();
-		final String ecid = state.getIdentityProperties().getECID().toString();
+		ECID ecid = state.getIdentityProperties().getECID();
+		final String ecidString = ecid != null ? ecid.toString() : null;
 
-		if (Utils.isNullOrEmpty(ecid)) {
+		if (Utils.isNullOrEmpty(ecidString)) {
 			MobileCore.log(
 				LoggingMode.WARNING,
 				LOG_TAG,
@@ -329,7 +324,11 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
-		final String urlVariableEncodedString = URLUtils.generateURLVariablesPayload(String.valueOf(ts), ecid, orgId);
+		final String urlVariableEncodedString = URLUtils.generateURLVariablesPayload(
+			String.valueOf(ts),
+			ecidString,
+			orgId
+		);
 
 		final Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,

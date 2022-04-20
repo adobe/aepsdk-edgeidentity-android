@@ -589,6 +589,7 @@ public class IdentityExtensionTests {
 	@Test
 	public void test_handleUrlVariablesRequest_whenECIDMissing_returnsValidNull() {
 		// setup
+		extension.state.getIdentityProperties().setECID(null);
 		setConfigurationSharedState("test-org-id@AdobeOrg");
 
 		Event event = new Event.Builder(
