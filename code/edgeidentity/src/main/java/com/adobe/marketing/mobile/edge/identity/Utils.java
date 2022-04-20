@@ -183,7 +183,7 @@ class Utils {
 	 *
 	 * @param listOfMaps to be copied
 	 * @return {@link List} containing a deep copy of all the elements in {@code listOfMaps}
-	 * @see {@link #deepCopy(Map)}
+	 * {@link #deepCopy(Map)}
 	 */
 	static List<Map<String, Object>> deepCopy(final List<Map<String, Object>> listOfMaps) {
 		if (listOfMaps == null) {
