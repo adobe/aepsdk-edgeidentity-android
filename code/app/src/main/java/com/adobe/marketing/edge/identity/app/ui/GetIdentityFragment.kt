@@ -56,10 +56,10 @@ class GetIdentityFragment : Fragment() {
 
         val urlVariablesTextView = root.findViewById<TextView>(R.id.text_url_variables)
         sharedViewModel.urlVariablesText.observe(
-                viewLifecycleOwner,
-                Observer {
-                    urlVariablesTextView.text = it
-                }
+            viewLifecycleOwner,
+            Observer {
+                urlVariablesTextView.text = it
+            }
         )
 
         val identitiesTextView = root.findViewById<TextView>(R.id.text_identities)
