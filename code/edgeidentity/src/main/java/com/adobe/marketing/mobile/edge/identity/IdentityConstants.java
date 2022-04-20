@@ -42,10 +42,19 @@ final class IdentityConstants {
 		private EventType() {}
 	}
 
+	final class EventDataKeys {
+
+		static final String URL_VARIABLES = "urlvariables";
+
+		private EventDataKeys() {}
+	}
+
 	final class EventNames {
 
 		static final String IDENTITY_REQUEST_IDENTITY_ECID = "Edge Identity Request ECID";
+		static final String IDENTITY_REQUEST_URL_VARIABLES = "Edge Identity Request URL Variables";
 		static final String IDENTITY_RESPONSE_CONTENT_ONE_TIME = "Edge Identity Response Content One Time";
+		static final String IDENTITY_RESPONSE_URL_VARIABLES = "Edge Identity Response URL Variables";
 		static final String UPDATE_IDENTITIES = "Edge Identity Update Identities";
 		static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
@@ -64,6 +73,14 @@ final class IdentityConstants {
 			static final String EXTENSIONS = "extensions";
 
 			private Hub() {}
+		}
+
+		final class Configuration {
+
+			static final String NAME = "com.adobe.module.configuration";
+			static final String EXPERIENCE_CLOUD_ORGID = "experienceCloud.org";
+
+			private Configuration() {}
 		}
 
 		final class IdentityDirect {
@@ -104,6 +121,16 @@ final class IdentityConstants {
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 
 		private DataStoreKey() {}
+	}
+
+	final class UrlKeys {
+
+		static final String TS = "TS";
+		static final String EXPERIENCE_CLOUD_ORG_ID = "MCORGID";
+		static final String EXPERIENCE_CLOUD_ID = "MCMID";
+		static final String PAYLOAD = "adobe_mc";
+
+		private UrlKeys() {}
 	}
 
 	private IdentityConstants() {}

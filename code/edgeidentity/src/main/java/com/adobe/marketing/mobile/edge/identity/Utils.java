@@ -198,4 +198,15 @@ class Utils {
 
 		return deepCopy;
 	}
+
+	private static final long MILLISECONDS_PER_SECOND = 1000L;
+
+	/**
+	 * Gets current unix timestamp in seconds.
+	 *
+	 * @return {code long} current timestamp
+	 */
+	static long getUnixTimeInSeconds() {
+		return System.currentTimeMillis() / MILLISECONDS_PER_SECOND;
+	}
 }

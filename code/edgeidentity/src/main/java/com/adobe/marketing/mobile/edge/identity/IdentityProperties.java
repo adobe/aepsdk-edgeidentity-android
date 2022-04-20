@@ -62,7 +62,7 @@ class IdentityProperties {
 			identityMap.removeItem(previousECIDItem, IdentityConstants.Namespaces.ECID);
 		}
 
-		// if primary ecid is null, clear off all the existing ECID's
+		// if primary ECID is null, clear off all the existing ECID's
 		if (newEcid == null) {
 			setECIDSecondary(null);
 			identityMap.clearItemsForNamespace(IdentityConstants.Namespaces.ECID);

@@ -66,6 +66,21 @@ final class EventUtils {
 	}
 
 	/**
+	 * Reads the url variables flag from the event data, returns false if not present
+	 *
+	 * @param event the event to verify
+	 * @return true if urlVariables key is present in the event data
+	 */
+	static boolean isRequestIdentityEventForGetUrlVariable(final Event event) {
+		boolean isUrlVariablesEvent = false;
+		if (event == null || event.getEventData() == null) {
+			return isUrlVariablesEvent;
+		}
+
+		return event.getEventData().containsKey(IdentityConstants.EventDataKeys.URL_VARIABLES);
+	}
+
+	/**
 	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_RESET}
 	 *
 	 * @param event the event to verify
@@ -126,5 +141,27 @@ final class EventUtils {
 		}
 
 		return legacyEcid;
+	}
+
+	static String getOrgId(final Map<String, Object> configurationSharedState) {
+		String orgId = null;
+
+		if (configurationSharedState == null) return orgId;
+
+		try {
+			orgId =
+				(String) configurationSharedState.get(
+					IdentityConstants.SharedState.Configuration.EXPERIENCE_CLOUD_ORGID
+				);
+		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"EventUtils - Failed to extract Experience ORG ID from Configuration shared state, expected String: " +
+				e.getLocalizedMessage()
+			);
+		}
+
+		return orgId;
 	}
 }
