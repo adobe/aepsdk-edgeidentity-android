@@ -12,6 +12,7 @@
     <string name="menu_custom_identity">Set Custom Identity</string>
     <string name="menu_multiple_identity">Test Multiple Identities</string>
     <string name="btn_get_ecid">Get ECID</string>
+    <string name="btn_get_url_variables">Get URLVariables</string>
     <string name="btn_get_identities">Get Identities</string>
     <string name="btn_reset_identities">Reset Identities</string>
     <string name="label_identifier">Identifier: </string>

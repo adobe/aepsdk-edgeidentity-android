@@ -54,6 +54,14 @@ class GetIdentityFragment : Fragment() {
             }
         )
 
+        val urlVariablesTextView = root.findViewById<TextView>(R.id.text_url_variables)
+        sharedViewModel.urlVariablesText.observe(
+                viewLifecycleOwner,
+                Observer {
+                    urlVariablesTextView.text = it
+                }
+        )
+
         val identitiesTextView = root.findViewById<TextView>(R.id.text_identities)
         sharedViewModel.identitiesText.observe(
             viewLifecycleOwner,
@@ -83,6 +91,21 @@ class GetIdentityFragment : Fragment() {
 
             sharedViewModel.setEcidValue(if (resultPrimary != null) "ecid: $resultPrimary" else "ecid: not found")
             sharedViewModel.setEcidLegacyValue(if (resultSecondary != null) "legacy: $resultSecondary" else "")
+        }
+
+        root.findViewById<Button>(R.id.btn_get_url_variables).setOnClickListener {
+            val latch = CountDownLatch(2)
+            var resultUrlVariables: String? = null
+
+            com.adobe.marketing.mobile.edge.identity.Identity.getUrlVariables { urlVariables ->
+                Log.d("Home", "Got UrlVariables String: $urlVariables")
+                resultUrlVariables = urlVariables
+                latch.countDown()
+            }
+
+            latch.await(1, TimeUnit.SECONDS)
+
+            sharedViewModel.setUrlVariablesValue(if (resultUrlVariables != null) "urlVariablesString: $resultUrlVariables" else "urlVariablesString: not found")
         }
 
         root.findViewById<Button>(R.id.btn_get_identities).setOnClickListener {

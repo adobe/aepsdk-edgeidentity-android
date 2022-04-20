@@ -58,6 +58,28 @@
 
         </LinearLayout>
 
+        <Button
+            android:id="@+id/btn_get_url_variables"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_get_url_variables"
+            android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            />
+
+            <TextView
+                android:id="@+id/text_url_variables"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:textAlignment="center"
+                android:textSize="12sp"
+                android:layout_gravity="center"
+                android:scrollbars="vertical"
+                android:background="@drawable/border"
+                />
 
         <Button
             android:id="@+id/btn_reset_identities"
@@ -65,6 +87,9 @@
             android:layout_height="wrap_content"
             android:text="@string/btn_reset_identities"
             android:layout_gravity="center"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:textColor="@android:color/white"
             />
 
         <Button
