@@ -247,19 +247,7 @@ class IdentityExtension extends Extension {
 	 * @param event the identity request {@link Event}
 	 */
 	void handleUrlVariablesRequest(final Event event) {
-		Event emptyResponseEvent = new Event.Builder(
-			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESPONSE_IDENTITY
-		)
-			.setEventData(
-				new HashMap<String, Object>() {
-					{
-						put(IdentityConstants.EventDataKeys.URL_VARIABLES, null);
-					}
-				}
-			)
-			.build();
+		String urlVariablesString = null;
 
 		final Map<String, Object> configurationState = getSharedState(
 			IdentityConstants.SharedState.Configuration.NAME,
@@ -269,27 +257,10 @@ class IdentityExtension extends Extension {
 		final String orgId = EventUtils.getOrgId(configurationState);
 
 		if (Utils.isNullOrEmpty(orgId)) {
-			MobileCore.log(
-				LoggingMode.WARNING,
-				LOG_TAG,
-				"IdentityExtension - Cannot process getUrlVariables request Identity event, Experience Cloud Org ID not found in configuration."
-			);
-			MobileCore.dispatchResponseEvent(
-				emptyResponseEvent,
+			handleUrlVariableResponse(
 				event,
-				new ExtensionErrorCallback<ExtensionError>() {
-					@Override
-					public void error(ExtensionError extensionError) {
-						MobileCore.log(
-							LoggingMode.DEBUG,
-							LOG_TAG,
-							"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
-							event.getUniqueIdentifier() +
-							" with error " +
-							extensionError.getErrorName()
-						);
-					}
-				}
+				urlVariablesString,
+				"IdentityExtension - Cannot process getUrlVariables request Identity event, Experience Cloud Org ID not found in configuration."
 			);
 			return;
 		}
@@ -298,38 +269,39 @@ class IdentityExtension extends Extension {
 		final String ecidString = ecid != null ? ecid.toString() : null;
 
 		if (Utils.isNullOrEmpty(ecidString)) {
-			MobileCore.log(
-				LoggingMode.WARNING,
-				LOG_TAG,
-				"IdentityExtension - Cannot process getUrlVariables request Identity event, ECID not found."
-			);
-			MobileCore.dispatchResponseEvent(
-				emptyResponseEvent,
+			handleUrlVariableResponse(
 				event,
-				new ExtensionErrorCallback<ExtensionError>() {
-					@Override
-					public void error(ExtensionError extensionError) {
-						MobileCore.log(
-							LoggingMode.DEBUG,
-							LOG_TAG,
-							"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
-							event.getUniqueIdentifier() +
-							" with error " +
-							extensionError.getErrorName()
-						);
-					}
-				}
+				urlVariablesString,
+				"IdentityExtension - Cannot process getUrlVariables request Identity event, ECID not found."
 			);
 			return;
 		}
 
-		final String urlVariableEncodedString = URLUtils.generateURLVariablesPayload(
-			String.valueOf(Utils.getUnixTimeInSeconds()),
-			ecidString,
-			orgId
-		);
+		urlVariablesString =
+			URLUtils.generateURLVariablesPayload(String.valueOf(Utils.getUnixTimeInSeconds()), ecidString, orgId);
 
-		final Event responseEvent = new Event.Builder(
+		handleUrlVariableResponse(event, urlVariablesString);
+	}
+
+	/**
+	 * Handles response event after processing the url variables request.
+	 *
+	 * @param event the identity request {@link Event}
+	 * @param urlVariables {@link String} representing the urlVariables encoded string
+	 */
+	void handleUrlVariableResponse(final Event event, final String urlVariables) {
+		handleUrlVariableResponse(event, urlVariables, null);
+	}
+
+	/**
+	 * Handles response event after processing the url variables request.
+	 *
+	 * @param event the identity request {@link Event}
+	 * @param urlVariables {@link String} representing the urlVariables encoded string
+	 * @param errorMsg {@link String} representing error encountered while generating the urlVariables string
+	 */
+	void handleUrlVariableResponse(final Event event, final String urlVariables, final String errorMsg) {
+		Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.RESPONSE_IDENTITY
@@ -337,34 +309,31 @@ class IdentityExtension extends Extension {
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
-						put(IdentityConstants.EventDataKeys.URL_VARIABLES, urlVariableEncodedString);
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, urlVariables);
 					}
 				}
 			)
 			.build();
 
-		MobileCore.log(
-			LoggingMode.WARNING,
-			LOG_TAG,
-			"IdentityExtension - Cannot process getUrlVariables request Identity event, ECID not found."
-		);
-		MobileCore.dispatchResponseEvent(
-			responseEvent,
-			event,
-			new ExtensionErrorCallback<ExtensionError>() {
-				@Override
-				public void error(ExtensionError extensionError) {
-					MobileCore.log(
-						LoggingMode.DEBUG,
-						LOG_TAG,
-						"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
-						event.getUniqueIdentifier() +
-						" with error " +
-						extensionError.getErrorName()
-					);
-				}
+		ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+			@Override
+			public void error(ExtensionError extensionError) {
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
+					event.getUniqueIdentifier() +
+					" with error " +
+					extensionError.getErrorName()
+				);
 			}
-		);
+		};
+
+		if (Utils.isNullOrEmpty(urlVariables) && !Utils.isNullOrEmpty(errorMsg)) {
+			MobileCore.log(LoggingMode.WARNING, LOG_TAG, errorMsg);
+		}
+
+		MobileCore.dispatchResponseEvent(responseEvent, event, errorCallback);
 	}
 
 	/**
