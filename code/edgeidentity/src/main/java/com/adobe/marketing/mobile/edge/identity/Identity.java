@@ -141,14 +141,15 @@ public class Identity {
 	/**
 	 * Returns the identifiers in URL query parameter format for consumption in hybrid mobile applications.
 	 * There is no leading &amp; or ? punctuation as the caller is responsible for placing the variables in their resulting URL in the correct locations.
-	 * If an error occurs while retrieving the URL variables, the completion handler is called with a nil value and AEPError instance.
+	 * If an error occurs while retrieving the URL variables, the AdobeCallbackWithError is called with a null value and AdobeError instance.
+	 * If AdobeCallback is provided then callback is not called in case of error.
 	 * Otherwise, the encoded string is returned, for ex: "adobe_mc=TS%3DTIMESTAMP_VALUE%7CMCMID%3DYOUR_ECID%7CMCORGID%3D9YOUR_EXPERIENCE_CLOUD_ID"
 	 * The `adobe_mc` attribute is an URL encoded list that contains:
 	 *     - TS a timestamp taken when the request was made
 	 *     - MCMID Experience Cloud ID (ECID)
 	 *     - MCORGID: Experience Cloud Org ID
 	 *
-	 * @param callback {@link AdobeCallback} of {@code String} invoked with a value value containing the identifiers in query parameter format.
+	 * @param callback {@link AdobeCallback} of {@code String} invoked with a value containing the identifiers in query parameter format.
 	 *     	           If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
 	 *	               eventuality of any error that occurred while getting the identifiers query string
 	 */

@@ -735,6 +735,21 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
+	public void test_processAddEvent_nullEvent_returns() {
+		Map<String, Object> identityXDM = createXDMIdentityMap(new TestItem("space", "moon"));
+		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
+		extension.state = mockIdentityState;
+		mockIdentityState.hasBooted = true;
+
+		// test
+		extension.processAddEvent(null);
+
+		// verify
+		verify(mockExtensionApi, times(0))
+			.setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+	}
+
+	@Test
 	public void test_processCachedEvents_processesWhenBooted() {
 		Map<String, Object> identityXDM = createXDMIdentityMap(new TestItem("space", "moon"));
 		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
@@ -744,6 +759,21 @@ public class IdentityExtensionTests {
 		// test
 		extension.processAddEvent(buildUpdateIdentityRequest(identityXDM));
 		extension.processAddEvent(buildRemoveIdentityRequest(identityXDM));
+		extension.processAddEvent(
+			new Event.Builder(
+				"Test event",
+				IdentityConstants.EventType.EDGE_IDENTITY,
+				IdentityConstants.EventSource.REQUEST_IDENTITY
+			)
+				.setEventData(
+					new HashMap<String, Object>() {
+						{
+							put("urlVariables", true);
+						}
+					}
+				)
+				.build()
+		);
 		extension.processAddEvent(
 			new Event.Builder(
 				"Test event",

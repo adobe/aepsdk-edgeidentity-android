@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.MobileCore;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +60,32 @@ public class ListenerEdgeIdentityRequestIdentityTests {
 			IdentityConstants.EventType.IDENTITY,
 			IdentityConstants.EventSource.REQUEST_IDENTITY
 		)
+			.build();
+		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
+
+		// test
+		listener.hear(event);
+
+		// verify
+		testExecutor.awaitTermination(100, TimeUnit.MILLISECONDS);
+		verify(mockIdentityExtension, times(1)).processAddEvent(event);
+	}
+
+	@Test
+	public void testHear_urlVariables() throws Exception {
+		// setup
+		Event event = new Event.Builder(
+			"Request Identity",
+			IdentityConstants.EventType.IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
+					}
+				}
+			)
 			.build();
 		doReturn(mockIdentityExtension).when(listener).getIdentityExtension();
 

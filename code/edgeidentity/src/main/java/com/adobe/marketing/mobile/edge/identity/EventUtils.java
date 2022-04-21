@@ -143,10 +143,18 @@ final class EventUtils {
 		return legacyEcid;
 	}
 
+	/**
+	 * Extracts the Experience Cloud Org Id from the Configuration shared state
+	 *
+	 * @param configurationSharedState the configuration shared state data
+	 * @return the Experience Cloud Org Id or null if not found or unable to parse the payload
+	 */
 	static String getOrgId(final Map<String, Object> configurationSharedState) {
 		String orgId = null;
 
-		if (configurationSharedState == null) return orgId;
+		if (configurationSharedState == null) {
+			return orgId;
+		}
 
 		try {
 			orgId =

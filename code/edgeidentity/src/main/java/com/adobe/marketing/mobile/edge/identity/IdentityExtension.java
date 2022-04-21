@@ -268,7 +268,7 @@ class IdentityExtension extends Extension {
 
 		final String orgId = EventUtils.getOrgId(configurationState);
 
-		if (orgId == null) {
+		if (Utils.isNullOrEmpty(orgId)) {
 			MobileCore.log(
 				LoggingMode.WARNING,
 				LOG_TAG,
@@ -294,7 +294,6 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
-		final long ts = Utils.getUnixTimeInSeconds();
 		ECID ecid = state.getIdentityProperties().getECID();
 		final String ecidString = ecid != null ? ecid.toString() : null;
 
@@ -325,7 +324,7 @@ class IdentityExtension extends Extension {
 		}
 
 		final String urlVariableEncodedString = URLUtils.generateURLVariablesPayload(
-			String.valueOf(ts),
+			String.valueOf(Utils.getUnixTimeInSeconds()),
 			ecidString,
 			orgId
 		);

@@ -12,6 +12,8 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import static junit.framework.TestCase.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.adobe.marketing.mobile.Event;
@@ -54,13 +56,11 @@ public class EventUtilsTests {
 				IdentityConstants.EventSource.REQUEST_IDENTITY
 			)
 				.setEventData(
-					new HashMap<String, Object>(
-						new HashMap<String, Object>() {
-							{
-								put(IdentityConstants.EventDataKeys.URL_VARIABLES, "123");
-							}
+					new HashMap<String, Object>() {
+						{
+							put(IdentityConstants.EventDataKeys.URL_VARIABLES, "123");
 						}
-					)
+					}
 				)
 				.build();
 
@@ -74,16 +74,41 @@ public class EventUtilsTests {
 				IdentityConstants.EventSource.REMOVE_IDENTITY
 			)
 				.setEventData(
-					new HashMap<String, Object>(
-						new HashMap<String, Object>() {
-							{
-								put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
-							}
+					new HashMap<String, Object>() {
+						{
+							put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
 						}
-					)
+					}
 				)
 				.build();
 
 		assertTrue(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+	}
+
+	@Test
+	public void test_getOrgID_validString_returnsString() {
+		assertEquals(
+			"org-id",
+			EventUtils.getOrgId(
+				new HashMap<String, Object>() {
+					{
+						put("experienceCloud.org", "org-id");
+					}
+				}
+			)
+		);
+	}
+
+	@Test
+	public void test_getOrgID_invalidValue_returnsNull() {
+		assertNull(
+			EventUtils.getOrgId(
+				new HashMap<String, Object>() {
+					{
+						put("experienceCloud.org", true);
+					}
+				}
+			)
+		);
 	}
 }
