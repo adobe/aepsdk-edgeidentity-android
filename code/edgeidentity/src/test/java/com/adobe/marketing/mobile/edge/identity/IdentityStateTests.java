@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -93,6 +94,17 @@ public class IdentityStateTests {
 					return true;
 				}
 			};
+	}
+
+	@Test
+	public void testHasBooted() {
+		IdentityState state = new IdentityState(new IdentityProperties());
+
+		// test
+		assertFalse(state.hasBooted());
+
+		state.bootupIfReady(mockSharedStateCallback);
+		assertTrue(state.hasBooted());
 	}
 
 	@Test

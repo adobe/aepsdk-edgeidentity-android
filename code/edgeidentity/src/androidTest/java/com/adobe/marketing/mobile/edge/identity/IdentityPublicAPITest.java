@@ -13,6 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import static com.adobe.marketing.mobile.TestHelper.*;
 import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.registerEdgeIdentityExtension;
+import static com.adobe.marketing.mobile.edge.identity.IdentityFunctionalTestUtil.setupConfiguration;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
 import static org.junit.Assert.*;
 
@@ -289,7 +290,7 @@ public class IdentityPublicAPITest {
 	@Test
 	public void testGetUrlVariables() throws Exception {
 		// test
-		//setupConfiguration();
+		setupConfiguration();
 		String urlVariables = getUrlVariablesSync();
 
 		assertNotNull(urlVariables);
