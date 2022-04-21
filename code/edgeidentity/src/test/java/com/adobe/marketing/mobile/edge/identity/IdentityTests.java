@@ -402,6 +402,7 @@ public class IdentityTests {
 		// set response event data to not have urlvariables key
 		Map<String, Object> eventData = new HashMap<>();
 		eventData.put("someKey", "someValue");
+		eventData.put("urlvariables", true);
 		adobeCallbackCaptor.getValue().call(buildUrlVariablesResponseEvent(eventData));
 
 		// verify
