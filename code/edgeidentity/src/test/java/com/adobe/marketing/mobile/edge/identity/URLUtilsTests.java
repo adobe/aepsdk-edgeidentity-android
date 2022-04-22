@@ -39,44 +39,44 @@ public class URLUtilsTests {
 	// UrlEncode tests
 	@Test
 	public void urlEncodeWithNoEncodedNeeded() {
-		assertEquals(URLUtils.urlEncode("thisisateststring"), "thisisateststring");
+		assertEquals("thisisateststring", URLUtils.urlEncode("thisisateststring"));
 	}
 
 	@Test
 	public void urlEncodeWithSpaces() {
-		assertEquals(URLUtils.urlEncode("this is a test string"), "this%20is%20a%20test%20string");
+		assertEquals("this%20is%20a%20test%20string", URLUtils.urlEncode("this is a test string"));
 	}
 
 	@Test
 	public void urlEncodeStartsWithSpace() {
-		assertEquals(URLUtils.urlEncode(" afterspace"), "%20afterspace");
+		assertEquals("%20afterspace", URLUtils.urlEncode(" afterspace"));
 	}
 
 	@Test
 	public void urlEncodeOnlyUnicode() {
-		assertEquals(URLUtils.urlEncode("网"), "%E7%BD%91");
+		assertEquals("%E7%BD%91", URLUtils.urlEncode("网"));
 	}
 
 	@Test
 	public void urlEncodeStartsWithUnicode() {
-		assertEquals(URLUtils.urlEncode("网test"), "%E7%BD%91test");
+		assertEquals("%E7%BD%91test", URLUtils.urlEncode("网test"));
 	}
 
 	@Test
 	public void urlEncodeEndsWithUnicode() {
-		assertEquals(URLUtils.urlEncode("test网"), "test%E7%BD%91");
+		assertEquals("test%E7%BD%91", URLUtils.urlEncode("test网"));
 	}
 
 	@Test
 	public void urlEncodeBlankString() {
-		assertEquals(URLUtils.urlEncode(""), "");
+		assertEquals("", URLUtils.urlEncode(""));
 	}
 
 	@Test
 	public void urlEncodeDeathString() {
 		assertEquals(
-			URLUtils.urlEncode("~!@#$%^&*()-+=|}{][\\/.<,>"),
-			"~%21%40%23%24%25%5E%26%2A%28%29-%2B%3D%7C%7D%7B%5D%5B%5C%2F.%3C%2C%3E"
+			"~%21%40%23%24%25%5E%26%2A%28%29-%2B%3D%7C%7D%7B%5D%5B%5C%2F.%3C%2C%3E",
+			URLUtils.urlEncode("~!@#$%^&*()-+=|}{][\\/.<,>")
 		);
 	}
 

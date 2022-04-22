@@ -144,10 +144,12 @@ public class Identity {
 	 * If an error occurs while retrieving the URL variables, the AdobeCallbackWithError is called with a null value and AdobeError instance.
 	 * If AdobeCallback is provided then callback is not called in case of error.
 	 * Otherwise, the encoded string is returned, for ex: "adobe_mc=TS%3DTIMESTAMP_VALUE%7CMCMID%3DYOUR_ECID%7CMCORGID%3D9YOUR_EXPERIENCE_CLOUD_ID"
-	 * The `adobe_mc` attribute is an URL encoded list that contains:
-	 *     - TS a timestamp taken when the request was made
-	 *     - MCMID Experience Cloud ID (ECID)
-	 *     - MCORGID: Experience Cloud Org ID
+	 * The {@code adobe_mc} attribute is an URL encoded list that contains:
+	 *	<ul>
+	 *		<li>TS: a timestamp taken when the request was made</li>
+	 * 		<li>MCID: Experience Cloud ID (ECID)</li>
+	 * 		<li>MCORGID: Experience Cloud Org ID</li>
+	 * 	</ul>
 	 *
 	 * @param callback {@link AdobeCallback} of {@code String} invoked with a value containing the identifiers in query parameter format.
 	 *     	           If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the

@@ -161,7 +161,7 @@ class IdentityExtension extends Extension {
 			final Event event = cachedEvents.peek();
 
 			if (EventUtils.isRequestIdentityEvent(event)) {
-				if (EventUtils.isRequestIdentityEventForGetUrlVariable(event)) {
+				if (EventUtils.hasUrlVariablesFlag(event)) {
 					handleUrlVariablesRequest(event);
 				} else {
 					handleIdentityRequest(event);
@@ -289,7 +289,7 @@ class IdentityExtension extends Extension {
 	 * @param event the identity request {@link Event}
 	 * @param urlVariables {@link String} representing the urlVariables encoded string
 	 */
-	void handleUrlVariableResponse(final Event event, final String urlVariables) {
+	private void handleUrlVariableResponse(final Event event, final String urlVariables) {
 		handleUrlVariableResponse(event, urlVariables, null);
 	}
 
@@ -300,7 +300,7 @@ class IdentityExtension extends Extension {
 	 * @param urlVariables {@link String} representing the urlVariables encoded string
 	 * @param errorMsg {@link String} representing error encountered while generating the urlVariables string
 	 */
-	void handleUrlVariableResponse(final Event event, final String urlVariables, final String errorMsg) {
+	private void handleUrlVariableResponse(final Event event, final String urlVariables, final String errorMsg) {
 		Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
 			IdentityConstants.EventType.EDGE_IDENTITY,

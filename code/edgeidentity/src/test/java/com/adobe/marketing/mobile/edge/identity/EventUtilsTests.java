@@ -24,7 +24,7 @@ public class EventUtilsTests {
 
 	@Test
 	public void test_isRequestIdentityEventForGetUrlVariable_nullEvent_returnsFalse() {
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(null));
+		assertFalse(EventUtils.hasUrlVariablesFlag(null));
 	}
 
 	@Test
@@ -43,7 +43,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertTrue(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertTrue(EventUtils.hasUrlVariablesFlag(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -61,11 +61,11 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertFalse(EventUtils.hasUrlVariablesFlag(event));
 	}
 
 	@Test
-	public void test_isRequestIdentityEventForGetUrlVariable_eventTypeNotEdgeIdentity_eventSourceNotIdentityRequest_eventContainsUrlVariablesKey_validBooleanValue_returnsFalse() {
+	public void test_isRequestIdentityEventForGetUrlVariable_eventTypeNotEdgeIdentity_eventSourceNotIdentityRequest_eventContainsUrlVariablesKey_validBooleanValue_returnsSetBooleanValue() {
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		Event event = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
@@ -81,7 +81,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertTrue(EventUtils.hasUrlVariablesFlag(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -99,7 +99,7 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertTrue(EventUtils.hasUrlVariablesFlag(event));
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertFalse(EventUtils.hasUrlVariablesFlag(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -136,7 +136,7 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertFalse(EventUtils.isRequestIdentityEventForGetUrlVariable(event));
+		assertFalse(EventUtils.hasUrlVariablesFlag(event));
 	}
 
 	@Test

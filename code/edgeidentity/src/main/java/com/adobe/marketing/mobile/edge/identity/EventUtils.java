@@ -71,13 +71,8 @@ final class EventUtils {
 	 * @param event the event to verify
 	 * @return true if urlVariables key is present in the event data
 	 */
-	static boolean isRequestIdentityEventForGetUrlVariable(final Event event) {
-		if (
-			event == null ||
-			event.getEventData() == null ||
-			!IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) ||
-			!IdentityConstants.EventSource.REQUEST_IDENTITY.equalsIgnoreCase(event.getSource())
-		) {
+	static boolean hasUrlVariablesFlag(final Event event) {
+		if (event == null || event.getEventData() == null) {
 			return false;
 		}
 		boolean getUrlVariablesFlag = false;
