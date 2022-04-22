@@ -72,12 +72,24 @@ final class EventUtils {
 	 * @return true if urlVariables key is present in the event data
 	 */
 	static boolean isRequestIdentityEventForGetUrlVariable(final Event event) {
-		boolean isUrlVariablesEvent = false;
-		if (event == null || event.getEventData() == null) {
-			return isUrlVariablesEvent;
+		if (
+			event == null ||
+			event.getEventData() == null ||
+			!IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) ||
+			!IdentityConstants.EventSource.REQUEST_IDENTITY.equalsIgnoreCase(event.getSource())
+		) {
+			return false;
+		}
+		boolean getUrlVariablesFlag = false;
+
+		try {
+			Object urlVariablesFlagObject = event.getEventData().get(IdentityConstants.EventDataKeys.URL_VARIABLES);
+			getUrlVariablesFlag = urlVariablesFlagObject != null && (boolean) urlVariablesFlagObject;
+		} catch (ClassCastException e) {
+			return false;
 		}
 
-		return event.getEventData().containsKey(IdentityConstants.EventDataKeys.URL_VARIABLES);
+		return getUrlVariablesFlag;
 	}
 
 	/**

@@ -483,16 +483,22 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
-	public void test_handleUrlVariablesRequest_whenConfigAndEcidNotPresent_returnsNull() {
+	public void test_handleUrlVariablesRequest_whenConfigAndECIDNotPresent_returnsNull() {
 		// setup
 		Event event = new Event.Builder(
 			"Test event",
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.REQUEST_IDENTITY
 		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
 			.build();
 		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
-		final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		// test
 		extension.handleUrlVariablesRequest(event);
@@ -501,7 +507,7 @@ public class IdentityExtensionTests {
 		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
 		MobileCore.dispatchResponseEvent(
 			responseEventCaptor.capture(),
-			requestEventCaptor.capture(),
+			any(Event.class),
 			any(ExtensionErrorCallback.class)
 		);
 
@@ -524,9 +530,15 @@ public class IdentityExtensionTests {
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.REQUEST_IDENTITY
 		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
 			.build();
 		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
-		final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		// test
 		extension.handleUrlVariablesRequest(event);
@@ -535,7 +547,7 @@ public class IdentityExtensionTests {
 		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
 		MobileCore.dispatchResponseEvent(
 			responseEventCaptor.capture(),
-			requestEventCaptor.capture(),
+			any(Event.class),
 			any(ExtensionErrorCallback.class)
 		);
 
@@ -564,9 +576,15 @@ public class IdentityExtensionTests {
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.REQUEST_IDENTITY
 		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
 			.build();
 		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
-		final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		// test
 		extension.handleUrlVariablesRequest(event);
@@ -575,7 +593,7 @@ public class IdentityExtensionTests {
 		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
 		MobileCore.dispatchResponseEvent(
 			responseEventCaptor.capture(),
-			requestEventCaptor.capture(),
+			any(Event.class),
 			any(ExtensionErrorCallback.class)
 		);
 
@@ -597,9 +615,15 @@ public class IdentityExtensionTests {
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.REQUEST_IDENTITY
 		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
 			.build();
 		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
-		final ArgumentCaptor<Event> requestEventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		// test
 		extension.handleUrlVariablesRequest(event);
@@ -608,7 +632,7 @@ public class IdentityExtensionTests {
 		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
 		MobileCore.dispatchResponseEvent(
 			responseEventCaptor.capture(),
-			requestEventCaptor.capture(),
+			any(Event.class),
 			any(ExtensionErrorCallback.class)
 		);
 

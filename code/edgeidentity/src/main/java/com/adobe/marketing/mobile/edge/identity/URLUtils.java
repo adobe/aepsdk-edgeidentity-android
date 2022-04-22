@@ -565,10 +565,7 @@ public class URLUtils {
 		urlFragment.append(IdentityConstants.UrlKeys.PAYLOAD);
 		urlFragment.append("=");
 
-		String encodedIdString = urlEncode(theIdString);
-		if (encodedIdString != null) {
-			urlFragment.append(encodedIdString);
-		}
+		urlFragment.append(urlEncode(theIdString));
 
 		return urlFragment.toString();
 	}

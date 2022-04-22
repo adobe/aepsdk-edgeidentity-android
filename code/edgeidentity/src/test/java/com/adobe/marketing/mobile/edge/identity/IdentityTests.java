@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -274,7 +275,7 @@ public class IdentityTests {
 	// getUrlVariables API
 	// ========================================================================================
 	@Test
-	public void testGetUrlVariables() {
+	public void testGetUrlVariables() throws InterruptedException {
 		// setup
 		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 		final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
@@ -282,17 +283,18 @@ public class IdentityTests {
 			ExtensionErrorCallback.class
 		);
 		final List<String> callbackReturnValues = new ArrayList<>();
-
+		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
 		// test
 		Identity.getUrlVariables(
 			new AdobeCallback<String>() {
 				@Override
 				public void call(String s) {
 					callbackReturnValues.add(s);
+					latch.countDown();
 				}
 			}
 		);
-
+		latch.await(2000, TimeUnit.MILLISECONDS);
 		// verify
 		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
 		MobileCore.dispatchEventWithResponseCallback(
@@ -307,6 +309,7 @@ public class IdentityTests {
 		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
 		assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
 		assertTrue(dispatchedEvent.getEventData().containsKey("urlvariables"));
+		assertTrue((boolean) dispatchedEvent.getEventData().get("urlvariables"));
 
 		// verify callback responses
 		Map<String, Object> urlVariablesResponse = new HashMap<>();
