@@ -69,7 +69,7 @@ final class EventUtils {
 	 * Reads the url variables flag from the event data, returns false if not present
 	 *
 	 * @param event the event to verify
-	 * @return true if urlVariables key is present in the event data
+	 * @return true if urlVariables key is present in the event data and has a value of true
 	 */
 	static boolean hasUrlVariablesFlag(final Event event) {
 		if (event == null || event.getEventData() == null) {
