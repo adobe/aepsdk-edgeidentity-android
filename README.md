@@ -38,6 +38,13 @@ Note: replace ADD_YOUR_SESSION_ID_HERE with your Assurance session identifier.
 
 Once the connection is established and the events list starts getting populated, you can filter the events for this extension by typing `Edge Identity` in the `Search Events` search box.
 
+**Development on M1 Macs**  
+M1 Macs may run into errors during the build process, specifically finding the npm installation directory. To address this: 
+- Update Android Studio to the latest version (Bumblebee Patch 1 should address this issue) 
+- Update the Android Gradle Plugin to the latest version (7.x.x as of this writing)  
+
+If that does not address the issue, try installing node using the installer and not through homebrew: https://nodejs.org/en/download/ 
+
 ### Code Format
 
 This project uses the code formatting tools [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) with [Prettier](https://prettier.io/) and [ktlint](https://github.com/pinterest/ktlint). Formatting is applied when the project is built from Gradle and is checked when changes are submitted to the CI build system.
