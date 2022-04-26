@@ -22,7 +22,10 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class EventUtilsTests {
 
-	// isAdIdEvent
+	// ======================================================================================================================
+	// Tests for method : isAdIdEvent(final Event event)
+	// ======================================================================================================================
+
 	@Test
 	public void test_isAdIdEvent_whenIsAdIdEvent_thenTrue() {
 		final Event event = createGenericIdentityEvent(
@@ -49,7 +52,10 @@ public class EventUtilsTests {
 		assertFalse(EventUtils.isAdIdEvent(event));
 	}
 
-	// getAdId
+	// ======================================================================================================================
+	// Tests for method : getAdId(final Event event)
+	// ======================================================================================================================
+
 	@Test
 	public void test_getAdId_whenIsNotAdIdEvent_thenEmpty() {
 		final Event event = createGenericIdentityEvent(
@@ -98,6 +104,19 @@ public class EventUtilsTests {
 			new HashMap<String, Object>() {
 				{
 					put(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER, "");
+				}
+			}
+		);
+
+		assertEquals("", EventUtils.getAdId(event));
+	}
+
+	@Test
+	public void test_getAdId_whenUnexpectedType_thenEmpty() {
+		final Event event = createGenericIdentityEvent(
+			new HashMap<String, Object>() {
+				{
+					put(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER, 123);
 				}
 			}
 		);

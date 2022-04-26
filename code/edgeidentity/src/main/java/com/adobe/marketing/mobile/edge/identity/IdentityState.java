@@ -163,69 +163,15 @@ class IdentityState {
 	}
 
 	/**
-	 * Construct the advertising identifier consent request event data using the provided consent value
-	 * @param consentVal the consent value defined by {@link IdentityConstants.XDMKeys.Consent#YES}
-	 *                   or {@link IdentityConstants.XDMKeys.Consent#NO}
-	 * @return the event data for advertising identifier consent request
-	 */
-	private Map<String, Object> buildConsentAdIdRequestData(final String consentVal) {
-		// build the map from the bottom level -> up
-		Map<String, Object> consentValMap = new HashMap<>();
-		consentValMap.put(IdentityConstants.XDMKeys.Consent.VAL, consentVal);
-		consentValMap.put(IdentityConstants.XDMKeys.Consent.ID_TYPE, IdentityConstants.Namespaces.GAID);
-
-		Map<String, Object> adIDMap = new HashMap<>();
-		adIDMap.put(IdentityConstants.XDMKeys.Consent.AD_ID, consentValMap);
-
-		Map<String, Object> consentMap = new HashMap<>();
-		consentMap.put(IdentityConstants.XDMKeys.Consent.CONSENTS, adIDMap);
-		return consentMap;
-	}
-
-	/**
-	 * Dispatches a consent request event with the consent value passed
+	 * This is the main entrypoint for handling ad ID changes. When an ad ID change is detected, it will:
+	 * <ul>
+	 *     <li>Update persistent storage with the new ad ID</li>
+	 *	   <li>Share the XDM state</li>
+	 * 	   <li>Dispatch consent event - only when ad ID changes from invalid/valid and vice versa</li>
+	 * </ul>
 	 *
-	 * @param consentVal the consent value to send in the event, from
-	 * {@link IdentityConstants.XDMKeys.Consent#YES}/{@link IdentityConstants.XDMKeys.Consent#NO}
-	 */
-	private void dispatchAdIdConsentRequestEvent(final String consentVal) {
-		Map<String, Object> consentData = buildConsentAdIdRequestData(consentVal);
-
-		final Event consentEvent = new Event.Builder(
-			IdentityConstants.EventNames.CONSENT_UPDATE_REQUEST_AD_ID,
-			IdentityConstants.EventType.EDGE_CONSENT,
-			IdentityConstants.EventSource.UPDATE_CONSENT
-		)
-			.setEventData(consentData)
-			.build();
-
-		// Callback is not required because there is no response for this type of event
-		MobileCore.dispatchEvent(
-			consentEvent,
-			new ExtensionErrorCallback<ExtensionError>() {
-				@Override
-				public void error(ExtensionError extensionError) {
-					MobileCore.log(
-						LoggingMode.DEBUG,
-						LOG_TAG,
-						"Failed to dispatch consent event " +
-						consentEvent.toString() +
-						": " +
-						extensionError.getErrorName()
-					);
-				}
-			}
-		);
-	}
-
-	/**
-	 * This is the main entrypoint for handling ad ID changes. It will conditionally:
-	 * - Update persistent storage
-	 * - Share the XDM state
-	 * - Dispatch consent event
 	 * @param event the {@link Event} containing the advertising identifier
-	 * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
-	 *        and create a shared state on the EventHub; should not be null
+	 * @param callback {@link SharedStateCallback} used to create a shared state on the EventHub; should not be null
 	 */
 	void updateAdvertisingIdentifier(final Event event, final SharedStateCallback callback) {
 		final String newAdId = EventUtils.getAdId(event);
@@ -349,5 +295,60 @@ class IdentityState {
 		}
 
 		return !Utils.isNullOrEmpty(identityDirectInfo);
+	}
+
+	/**
+	 * Construct the advertising identifier consent request event data using the provided consent value
+	 * @param consentVal the consent value defined by {@link IdentityConstants.XDMKeys.Consent#YES}
+	 *                   or {@link IdentityConstants.XDMKeys.Consent#NO}
+	 * @return the event data for advertising identifier consent request
+	 */
+	private Map<String, Object> buildConsentAdIdRequestData(final String consentVal) {
+		// build the map from the bottom level -> up
+		Map<String, Object> consentValMap = new HashMap<>();
+		consentValMap.put(IdentityConstants.XDMKeys.Consent.VAL, consentVal);
+		consentValMap.put(IdentityConstants.XDMKeys.Consent.ID_TYPE, IdentityConstants.Namespaces.GAID);
+
+		Map<String, Object> adIDMap = new HashMap<>();
+		adIDMap.put(IdentityConstants.XDMKeys.Consent.AD_ID, consentValMap);
+
+		Map<String, Object> consentMap = new HashMap<>();
+		consentMap.put(IdentityConstants.XDMKeys.Consent.CONSENTS, adIDMap);
+		return consentMap;
+	}
+
+	/**
+	 * Dispatches a consent request event with the consent value passed
+	 *
+	 * @param consentVal the consent value to send in the event, from
+	 * {@link IdentityConstants.XDMKeys.Consent#YES}/{@link IdentityConstants.XDMKeys.Consent#NO}
+	 */
+	private void dispatchAdIdConsentRequestEvent(final String consentVal) {
+		Map<String, Object> consentData = buildConsentAdIdRequestData(consentVal);
+
+		final Event consentEvent = new Event.Builder(
+			IdentityConstants.EventNames.CONSENT_UPDATE_REQUEST_AD_ID,
+			IdentityConstants.EventType.EDGE_CONSENT,
+			IdentityConstants.EventSource.UPDATE_CONSENT
+		)
+			.setEventData(consentData)
+			.build();
+
+		MobileCore.dispatchEvent(
+			consentEvent,
+			new ExtensionErrorCallback<ExtensionError>() {
+				@Override
+				public void error(ExtensionError extensionError) {
+					MobileCore.log(
+						LoggingMode.DEBUG,
+						LOG_TAG,
+						"Failed to dispatch consent event " +
+						consentEvent.toString() +
+						": " +
+						extensionError.getErrorName()
+					);
+				}
+			}
+		);
 	}
 }

@@ -24,6 +24,17 @@ import java.util.Map;
 final class EventUtils {
 
 	/**
+	 * Checks if the provided {@code event}'s data contains the key {@link IdentityConstants.EventDataKeys#ADVERTISING_IDENTIFIER}
+	 *
+	 * @param event the event to verify
+	 * @return {@code true} if key is present
+	 */
+	static boolean isAdIdEvent(final Event event) {
+		final Map<String, Object> data = event.getEventData();
+		return data.containsKey(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER);
+	}
+
+	/**
 	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#REMOVE_IDENTITY}
 	 *
 	 * @param event the event to verify
@@ -117,6 +128,40 @@ final class EventUtils {
 	}
 
 	/**
+	 * Gets the advertising ID from the event data using the key
+	 * {@link IdentityConstants.EventDataKeys#ADVERTISING_IDENTIFIER}.
+	 *
+	 * Performs a sanitization of values, converting {@code null}, {@code ""}, and
+	 * {@link IdentityConstants.Default#ZERO_ADVERTISING_ID} into {@code ""}.
+	 *
+	 * This method should not be used to detect whether the event is an ad ID event or not;
+	 * use {@link #isAdIdEvent(Event)} instead.
+	 *
+	 * @param event the event containing the advertising ID
+	 * @return the adID
+	 */
+	static String getAdId(final Event event) {
+		final Map<String, Object> data = event.getEventData();
+		String adID;
+
+		try {
+			adID = (String) data.get(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER);
+		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"EventUtils - Failed to extract ad ID from event, expected String: " + e.getLocalizedMessage()
+			);
+			return "";
+		}
+
+		if (adID == null || IdentityConstants.Default.ZERO_ADVERTISING_ID.equals(adID)) {
+			return "";
+		}
+		return adID;
+	}
+
+	/**
 	 * Extracts the ECID from the Identity Direct shared state and returns it as an {@link ECID} object
 	 *
 	 * @param identityDirectSharedState the Identity Direct shared state data
@@ -140,42 +185,5 @@ final class EventUtils {
 		}
 
 		return legacyEcid;
-	}
-
-	/**
-	 * Checks if the provided {@code event}'s data contains the key {@link IdentityConstants.EventDataKeys#ADVERTISING_IDENTIFIER}
-	 *
-	 * @param event the event to verify
-	 * @return {@code true} if key is present
-	 */
-	static boolean isAdIdEvent(final Event event) {
-		final Map<String, Object> data = event.getEventData();
-		return data.containsKey(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER);
-	}
-
-	/**
-	 * Gets the advertising ID from the event data using the key
-	 * {@link IdentityConstants.EventDataKeys#ADVERTISING_IDENTIFIER}.
-	 *
-	 * Performs a sanitization of values, converting {@code null}, {@code ""}, and
-	 * {@link IdentityConstants.Default#ZERO_ADVERTISING_ID} into {@code ""}.
-	 *
-	 * This method should not be used to detect whether the event is an ad ID event or not;
-	 * use {@link #isAdIdEvent(Event)} instead.
-	 *
-	 * @param event the event containing the advertising ID
-	 * @return the adID
-	 */
-	static String getAdId(final Event event) {
-		final Map<String, Object> data = event.getEventData();
-		try {
-			final String adID = (String) data.get(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER);
-			if (adID == null || IdentityConstants.Default.ZERO_ADVERTISING_ID.equals(adID)) {
-				return "";
-			}
-			return adID;
-		} catch (ClassCastException e) {
-			return "";
-		}
 	}
 }

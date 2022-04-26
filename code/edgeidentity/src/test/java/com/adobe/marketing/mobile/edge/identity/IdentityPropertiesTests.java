@@ -89,7 +89,7 @@ public class IdentityPropertiesTests {
 	}
 
 	@Test
-	public void text_toXDMData_OnlyAdID() {
+	public void text_toXDMData_OnlyAdId() {
 		// setup
 		IdentityProperties props = new IdentityProperties();
 		props.setAdId("test-ad-id");
@@ -98,11 +98,12 @@ public class IdentityPropertiesTests {
 		Map<String, Object> xdmMap = props.toXDMData(false);
 
 		// verify
+		assertEquals("test-ad-id", props.getAdId());
 		assertEquals(props.getAdId(), flattenMap(xdmMap).get("identityMap.GAID[0].id"));
 	}
 
 	@Test
-	public void text_toXDMData_whenEmptyAdID_thenNoValue() {
+	public void text_toXDMData_whenEmptyAdId_thenNoValue() {
 		// setup
 		IdentityProperties props = new IdentityProperties();
 		props.setAdId("");
@@ -111,6 +112,7 @@ public class IdentityPropertiesTests {
 		Map<String, Object> xdmMap = props.toXDMData(false);
 
 		// verify
+		assertNull(props.getAdId());
 		assertNull(flattenMap(xdmMap).get("identityMap.GAID[0].id"));
 	}
 
