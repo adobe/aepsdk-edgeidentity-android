@@ -1,14 +1,14 @@
 # Getting Started
 
 # Android Test App
-## GAID Background
+## Testing tips with Android advertising identifier
 In Android, users are opted-in to ad ID tracking by default. They can choose to opt out of tracking in Android Settings at the device level.
 Developers using ad ID should get ad ID from the API each time it is used, as permissions for ad tracking and/or the value of the ID itself may be changed at any time.
 - In older versions of Android, the ad ID opt-in/out is a toggle, where the existing ad ID value remains unchanged.
 
-[<img src="./assets/old_adid_setting_optin.png" alt="Old ad ID settings page - opt-in state" width="350"/>](./assets/old_adid_setting_optin.png)
-[<img src="./assets/old_adid_setting_optout_prompt.png" alt="Old ad ID settings page - opt-out prompt" width="350"/>](./assets/old_adid_setting_optout_prompt.png)
-[<img src="./assets/old_adid_setting_optout.png" alt="Old ad ID settings page - opt-out state" width="350"/>](./assets/old_adid_setting_optout.png)
+[<img src="./assets/old_adid_setting_optin.png" alt="Old ad ID settings page - opt-in state" width="210"/>](./assets/old_adid_setting_optin.png)
+[<img src="./assets/old_adid_setting_optout_prompt.png" alt="Old ad ID settings page - opt-out prompt" width="210"/>](./assets/old_adid_setting_optout_prompt.png)
+[<img src="./assets/old_adid_setting_optout.png" alt="Old ad ID settings page - opt-out state" width="210"/>](./assets/old_adid_setting_optout.png)
 
 - In newer versions of Android, the ad ID opt-in/out is a delete, where the existing ad ID value is deleted and replaced by an all-zero ad ID until the ad ID is recreated by user selection.
 
@@ -16,9 +16,7 @@ Developers using ad ID should get ad ID from the API each time it is used, as pe
 [<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="350"/>](./assets/new_adid_setting_optout.png)
 
 
-- note: users can see their ad ID value in the settings page for Ads.
-- note: unlike iOS, the permission is more passive, where the user has to seek out the option to turn
-off tracking, and no permissions prompt is shown on first launch, etc.
+- Note: There is no permission prompt shown to the user on first launch; the user can control the ad tracking preferences and see their ad ID value in the device settings in the Ads view.
 
 Based on Android emulator testing:
 - changes in opt-in/out status or ad ID value does not terminate the app; in iOS changing opt-in/out status terminates the affected app
