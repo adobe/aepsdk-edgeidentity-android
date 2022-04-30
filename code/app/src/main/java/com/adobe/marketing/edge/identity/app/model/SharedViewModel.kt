@@ -16,15 +16,13 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.adobe.marketing.mobile.MobileCore
 import com.adobe.marketing.mobile.edge.identity.AuthenticatedState
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.IOException
+
+private const val LOG_TAG = "Shared_View_Model"
 
 class SharedViewModel : ViewModel() {
     companion object {
@@ -119,27 +117,33 @@ class SharedViewModel : ViewModel() {
         _authenticatedStateId.value = value
     }
 
-    fun getGAID(applicationContext: Context) {
-        viewModelScope.launch(Dispatchers.Default) {
-            Log.d("Shared_View_Model", "Thread working in ${Thread.currentThread().name}")
-            try {
-                val idInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
-                if (idInfo.isLimitAdTrackingEnabled) {
-                    Log.d("Shared_View_Model", "Limit Ad Tracking is enabled by the user, setting ad ID to \"\"")
-                    MobileCore.setAdvertisingIdentifier("")
-                    return@launch
-                }
-
-                Log.d("Shared_View_Model", "AdID: ${idInfo.id}")
-                MobileCore.setAdvertisingIdentifier(idInfo.id)
-            } catch (e: GooglePlayServicesNotAvailableException) {
-                Log.d("Shared_View_Model", "GooglePlayServicesNotAvailableException while retrieving the advertising identifier ${e.localizedMessage}")
-            } catch (e: GooglePlayServicesRepairableException) {
-                Log.d("Shared_View_Model", "GooglePlayServicesRepairableException while retrieving the advertising identifier ${e.localizedMessage}")
-            } catch (e: IOException) {
-                Log.d("Shared_View_Model", "IOException while retrieving the advertising identifier ${e.localizedMessage}")
+    /**
+     * Async method that retrieves the ad ID from the `AdvertisingIdClient` (from Google's gms.ads SDK).
+     * Sanitizes ad ID disabled and exceptions to the empty string (`""`), for easy use with `MobileCore` ad ID APIs.
+     * Should *only* be called from a background thread/coroutine.
+     *
+     * @param applicationContext: The application context that has the advertising ID provider to obtain the ad ID from.
+     * @return ad ID string; ad ID value from the provider if available and tracking is allowed, empty string otherwise.
+     */
+    suspend fun getGAID(applicationContext: Context): String {
+        var adID = ""
+        try {
+            val idInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
+            if (idInfo.isLimitAdTrackingEnabled) {
+                Log.d(LOG_TAG, "Limit Ad Tracking is enabled by the user, setting ad ID to \"\"")
+                return adID
             }
+            Log.d(LOG_TAG, "Limit Ad Tracking disabled; ad ID value: ${idInfo.id}")
+            adID = idInfo.id
+        } catch (e: GooglePlayServicesNotAvailableException) {
+            Log.d(LOG_TAG, "GooglePlayServicesNotAvailableException while retrieving the advertising identifier ${e.localizedMessage}")
+        } catch (e: GooglePlayServicesRepairableException) {
+            Log.d(LOG_TAG, "GooglePlayServicesRepairableException while retrieving the advertising identifier ${e.localizedMessage}")
+        } catch (e: IOException) {
+            Log.d(LOG_TAG, "IOException while retrieving the advertising identifier ${e.localizedMessage}")
         }
+        Log.d(LOG_TAG, "Returning ad ID value: $adID")
+        return adID
     }
 
     // Models for Multiple Identities View

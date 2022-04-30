@@ -9,3 +9,6 @@ ci/
 # IntelliJ
 *.iml
 **/.idea/
+
+# Secrets
+**/*/values/secrets.xml
