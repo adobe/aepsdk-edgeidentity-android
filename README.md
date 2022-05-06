@@ -20,17 +20,20 @@ implementation 'com.adobe.marketing.mobile:core:1.+'
 
 **Open the project**
 
-To open and run the project, open the `code/settings.gradle` file in Android Studio
+To open and run the project, open the `code/settings.gradle` file in Android Studio.
+
+**Data Collection mobile property prerequisites**
+
+The test app needs to be configured with the following edge extensions before it can be used:
+- Mobile Core (installed by default)
+- [Edge] (https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension)
+- [Edge Identity] (https://aep-sdks.gitbook.io/docs/foundation-extensions/identity-for-edge-network)
 
 **Run demo application**
 
-The demo app is required to have an AdMob app ID setup.
-
-Once you opened the project in Android Studio (see above), browse to `app/res/value/secrets.xml` .  Follow the information to setup and enter an AdMob app ID.
-
-Add App Environment ID to `app/.../EdgeIdentityApplication.kt`.   
-
-Select the `app` runnable with your favorite simulator and run the program.
+1. In the test app, set your APP_ENVIRONMENT_ID in EdgeIdentityApplication.kt.
+2. Open `app/res/value/secrets.xml` and follow the instructions to set up the AdMob app ID. This is required for testing with advertising identifiers.
+3. Select the `app` runnable with your favorite simulator and run the program.
 
 **View the platform events with Assurance**
 

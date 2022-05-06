@@ -20,7 +20,7 @@ import com.adobe.marketing.mobile.edge.consent.Consent
 import com.adobe.marketing.mobile.edge.identity.Identity
 
 class EdgeIdentityApplication : Application() {
-    // Add your app environment id to configure the SDK from your Data Collection tag property
+    // Add your app environment id to configure the SDK from your Data Collection mobile property
     private var APP_ENVIRONMENT_ID: String = "yourAppId"
 
     override fun onCreate() {
