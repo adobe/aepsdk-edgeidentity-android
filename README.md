@@ -24,7 +24,13 @@ To open and run the project, open the `code/settings.gradle` file in Android Stu
 
 **Run demo application**
 
-Once you opened the project in Android Studio (see above), select the `app` runnable and your favorite simulator and run the program.
+The demo app is required to have an AdMob app ID setup.
+
+Once you opened the project in Android Studio (see above), browse to `app/res/value/secrets.xml` .  Follow the information to setup and enter an AdMob app ID.
+
+Add App Environment ID to `app/.../EdgeIdentityApplication.kt`.   
+
+Select the `app` runnable with your favorite simulator and run the program.
 
 **View the platform events with Assurance**
 
