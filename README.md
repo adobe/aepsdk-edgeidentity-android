@@ -26,8 +26,8 @@ To open and run the project, open the `code/settings.gradle` file in Android Stu
 
 The test app needs to be configured with the following edge extensions before it can be used:
 - Mobile Core (installed by default)
-- [Edge] (https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension)
-- [Edge Identity] (https://aep-sdks.gitbook.io/docs/foundation-extensions/identity-for-edge-network)
+- [Edge](https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension)
+- [Edge Identity](https://aep-sdks.gitbook.io/docs/foundation-extensions/identity-for-edge-network)
 
 **Run demo application**
 
