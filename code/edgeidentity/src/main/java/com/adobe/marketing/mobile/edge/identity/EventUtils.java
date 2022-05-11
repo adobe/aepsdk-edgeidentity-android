@@ -67,11 +67,11 @@ final class EventUtils {
 
 	/**
 	 * Reads the url variables flag from the event data, returns false if not present
-	 *
+	 * Note: This API needs to be used with isRequestIdentityEvent API to determine the correct event type and event source
 	 * @param event the event to verify
 	 * @return true if urlVariables key is present in the event data and has a value of true
 	 */
-	static boolean hasUrlVariablesFlag(final Event event) {
+	static boolean isGetUrlVariablesRequestEvent(final Event event) {
 		if (event == null || event.getEventData() == null) {
 			return false;
 		}
@@ -81,6 +81,11 @@ final class EventUtils {
 			Object urlVariablesFlagObject = event.getEventData().get(IdentityConstants.EventDataKeys.URL_VARIABLES);
 			getUrlVariablesFlag = urlVariablesFlagObject != null && (boolean) urlVariablesFlagObject;
 		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.WARNING,
+				LOG_TAG,
+				"EventUtils - Failed to read urlvariables value, expected boolean: " + e.getLocalizedMessage()
+			);
 			return false;
 		}
 

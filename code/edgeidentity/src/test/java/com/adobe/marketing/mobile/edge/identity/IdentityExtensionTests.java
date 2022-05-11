@@ -513,6 +513,7 @@ public class IdentityExtensionTests {
 
 		Event urlVariablesResponseEvent = responseEventCaptor.getAllValues().get(0);
 		final Map<String, Object> data = urlVariablesResponseEvent.getEventData();
+		assertTrue(data.containsKey("urlvariables"));
 		String urlvariables = (String) data.get("urlvariables");
 
 		assertNull(urlvariables);
@@ -556,8 +557,7 @@ public class IdentityExtensionTests {
 		String urlvariables = (String) data.get("urlvariables");
 
 		String expectedUrlVariableTSString = "adobe_mc=TS%3";
-		String expectedUrlVariableIdentifiersString =
-			"%7C" + "MCMID" + "%3D" + testECID.toString() + "%7C" + "MCORGID" + "%3D" + "test-org-id%40AdobeOrg";
+		String expectedUrlVariableIdentifiersString = "%7CMCMID%3D" + testECID + "%7CMCORGID%3Dtest-org-id%40AdobeOrg";
 
 		assertNotNull(urlvariables);
 		assertTrue(urlvariables.contains("adobe_mc="));

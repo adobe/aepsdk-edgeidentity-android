@@ -161,7 +161,7 @@ class IdentityExtension extends Extension {
 			final Event event = cachedEvents.peek();
 
 			if (EventUtils.isRequestIdentityEvent(event)) {
-				if (EventUtils.hasUrlVariablesFlag(event)) {
+				if (EventUtils.isGetUrlVariablesRequestEvent(event)) {
 					handleUrlVariablesRequest(event);
 				} else {
 					handleIdentityRequest(event);

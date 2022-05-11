@@ -24,7 +24,7 @@ public class EventUtilsTests {
 
 	@Test
 	public void test_isRequestIdentityEventForGetUrlVariable_nullEvent_returnsFalse() {
-		assertFalse(EventUtils.hasUrlVariablesFlag(null));
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(null));
 	}
 
 	@Test
@@ -43,7 +43,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertTrue(EventUtils.hasUrlVariablesFlag(event));
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -61,7 +61,7 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertFalse(EventUtils.hasUrlVariablesFlag(event));
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertTrue(EventUtils.hasUrlVariablesFlag(event));
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -99,7 +99,7 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertTrue(EventUtils.hasUrlVariablesFlag(event));
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class EventUtilsTests {
 			)
 			.build();
 
-		assertFalse(EventUtils.hasUrlVariablesFlag(event));
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
 
 		// eventType is not edgeIdentity and eventSource is not requestIdentity
 		event =
@@ -136,7 +136,7 @@ public class EventUtilsTests {
 				)
 				.build();
 
-		assertFalse(EventUtils.hasUrlVariablesFlag(event));
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
 	}
 
 	@Test

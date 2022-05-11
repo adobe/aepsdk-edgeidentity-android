@@ -26,6 +26,8 @@ import org.json.JSONObject;
 
 class Utils {
 
+	private static final long MILLISECONDS_PER_SECOND = 1000L;
+
 	private Utils() {}
 
 	static boolean isNullOrEmpty(final String str) {
@@ -198,8 +200,6 @@ class Utils {
 
 		return deepCopy;
 	}
-
-	private static final long MILLISECONDS_PER_SECOND = 1000L;
 
 	/**
 	 * Gets current unix timestamp in seconds.
