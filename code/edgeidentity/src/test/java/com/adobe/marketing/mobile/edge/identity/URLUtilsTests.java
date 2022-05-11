@@ -34,10 +34,18 @@ public class URLUtilsTests {
 	@Test
 	public void test_generateURLVariablesPayload_validStringValuesPassed_returnsStringWith_TS_ECID_ORGID() {
 		String actual = URLUtils.generateURLVariablesPayload("TEST_TS", "TEST_ECID", "TEST@ORGID");
-		assertEquals("adobe_mc=TS%3DTEST_TS%7CMCMID%3DTEST_ECID%7CMCORGID%3DTEST_ORGID", actual);
+		assertEquals("adobe_mc=TS%3DTEST_TS%7CMCMID%3DTEST_ECID%7CMCORGID%3DTEST%40ORGID", actual);
 	}
 
 	// UrlEncode tests
+	@Test
+	public void urlEncodeForUrlVariablesFormat() {
+		assertEquals(
+			"TS%3DTIMESTAMP_VALUE%7CMCMID%3DYOUR_ECID%7CMCORGID%3DTest%40OrgID",
+			URLUtils.urlEncode("TS=TIMESTAMP_VALUE|MCMID=YOUR_ECID|MCORGID=Test@OrgID")
+		);
+	}
+
 	@Test
 	public void urlEncodeWithNoEncodedNeeded() {
 		assertEquals("thisisateststring", URLUtils.urlEncode("thisisateststring"));
