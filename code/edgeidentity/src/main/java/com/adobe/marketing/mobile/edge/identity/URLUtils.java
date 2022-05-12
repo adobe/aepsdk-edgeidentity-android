@@ -17,7 +17,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-public class URLUtils {
+class URLUtils {
 
 	static final String LOG_TAG = "URLUtils";
 
@@ -33,22 +33,30 @@ public class URLUtils {
 		final StringBuilder urlFragment = new StringBuilder();
 
 		// construct the adobe_mc string
+		try {
+			// append timestamp
+			String theIdString = appendKVPToVisitorIdString(null, IdentityConstants.UrlKeys.TS, ts);
 
-		// append timestamp
-		String theIdString = appendKVPToVisitorIdString(null, IdentityConstants.UrlKeys.TS, ts);
+			// append ecid
+			theIdString = appendKVPToVisitorIdString(theIdString, IdentityConstants.UrlKeys.EXPERIENCE_CLOUD_ID, ecid);
 
-		// append ecid
-		theIdString = appendKVPToVisitorIdString(theIdString, IdentityConstants.UrlKeys.EXPERIENCE_CLOUD_ID, ecid);
+			// add Experience Cloud Org ID
+			theIdString =
+				appendKVPToVisitorIdString(theIdString, IdentityConstants.UrlKeys.EXPERIENCE_CLOUD_ORG_ID, orgId);
 
-		// add Experience Cloud Org ID
-		theIdString = appendKVPToVisitorIdString(theIdString, IdentityConstants.UrlKeys.EXPERIENCE_CLOUD_ORG_ID, orgId);
+			// after the adobe_mc string is created, encode the idString before adding it to the url
+			urlFragment.append(IdentityConstants.UrlKeys.PAYLOAD);
+			urlFragment.append("=");
 
-		// after the adobe_mc string is created, encode the idString before adding it to the url
-		urlFragment.append(IdentityConstants.UrlKeys.PAYLOAD);
-		urlFragment.append("=");
-
-		urlFragment.append(urlEncode(theIdString));
-
+			if (Utils.isNullOrEmpty(theIdString)) {
+				// No need to encode
+				urlFragment.append("null");
+			} else {
+				urlFragment.append(URLEncoder.encode(theIdString, StandardCharsets.UTF_8.toString()));
+			}
+		} catch (UnsupportedEncodingException e) {
+			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to encode urlVariable string: %s", e));
+		}
 		return urlFragment.toString();
 	}
 
@@ -79,30 +87,6 @@ public class URLUtils {
 			return newUrlVariable;
 		} else {
 			return String.format("%s|%s", originalString, newUrlVariable);
-		}
-	}
-
-	/**
-	 * Encodes an URL given as {@code String}.
-	 *
-	 * @param unencodedString nullable {@link String} value to be encoded
-	 * @return the encoded {@code String}
-	 */
-	static String urlEncode(final String unencodedString) {
-		if (unencodedString == null) {
-			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, String.format("Failed to url encode string, string was null"));
-			return null;
-		}
-
-		try {
-			return URLEncoder.encode(unencodedString, StandardCharsets.UTF_8.toString());
-		} catch (UnsupportedEncodingException e) {
-			MobileCore.log(
-				LoggingMode.DEBUG,
-				LOG_TAG,
-				String.format("Failed to url encode string %s (%s)", unencodedString, e)
-			);
-			return null;
 		}
 	}
 }
