@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Refer our [Getting Started Guide](getting-started.md)
+Refer to the [Getting Started Guide](getting-started.md)
 
 ## API reference
 
@@ -40,7 +40,7 @@ String extensionVersion = Identity.extensionVersion();
 
 This API retrieves the Experience Cloud ID (ECID) that was generated when the app was initially launched. This ID is preserved between app upgrades, is saved and restored during the standard application backup process, and is removed at uninstall.
 
-> The ECID value is returned via the [AdobeCallback](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes). When [AdobeCallbackWithError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes) is provided to this API, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate [AdobeError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes).
+> The ECID value is returned via the `AdobeCallback`. When `AdobeCallbackWithError` is provided to this API, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate `AdobeError`.
 
 #### Java
 
@@ -67,7 +67,7 @@ Identity.getExperienceCloudId(new AdobeCallback<String>() {
 
 Get all the identities in the Identity for Edge Network extension, including customer identifiers which were previously added.
 
-> When [AdobeCallbackWithError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes) is provided, and you are fetching the identities from the Mobile SDK, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate [AdobeError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes).
+> When `AdobeCallbackWithError` is provided, and you are fetching the identities from the Mobile SDK, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate `AdobeError`.
 
 #### Java
 
@@ -90,7 +90,7 @@ Identity.getIdentities(new AdobeCallback<IdentityMap>() {
 ------
 
 ### getUrlVariables
-> :information_source: This method was added in Edge Identity version 1.1.0.
+> :information_source: This API is available with version 1.1.0 and above.
 
 This API returns the identifiers in URL query parameter format for consumption in **hybrid mobile applications**. There is no leading & or ? punctuation as the caller is responsible for placing the variables in their resulting URL in the correct locations. If an error occurs while retrieving the URL variables, the callback handler will be called with a null value. Otherwise, the encoded string is returned, for example: `"adobe_mc=TS%3DTIMESTAMP_VALUE%7CMCMID%3DYOUR_ECID%7CMCORGID%3D9YOUR_EXPERIENCE_CLOUD_ID"`
 
@@ -99,7 +99,7 @@ This API returns the identifiers in URL query parameter format for consumption i
   * `MCORGID` - Experience Cloud Org ID
   * `TS` - A timestamp taken when this request was made
 
-> :memo: When [AdobeCallbackWithError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes) is provided, and you are fetching the url variables from the Mobile SDK, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate [AdobeError](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#public-classes).
+> :memo: When `AdobeCallbackWithError` is provided, and you are fetching the url variables from the Mobile SDK, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate `AdobeError`.
 
 #### Java
 
@@ -115,11 +115,10 @@ Identity.getUrlVariables(new AdobeCallback<String>() {
     @Override    
     public void call(String urlVariablesString) {        
         //handle the URL query parameter string here
-        //For example, open the URL on the device browser        
-        //        
-        Intent i = new Intent(Intent.ACTION_VIEW);        
-        i.setData(Uri.parse("https://example.com?" + urlVariablesString));        
-        startActivity(i);    
+        //For example, open the URL in a webView  
+        WebView webView;
+        webView = (WebView)findViewById(R.id.your_webview); // initialize with your webView
+        webview.loadUrl("https://example.com?" + urlVariablesString);
     }
 });
 ```
@@ -131,8 +130,6 @@ Identity.getUrlVariables(new AdobeCallback<String>() {
 Registers the Identity for Edge Network extension with the Mobile Core extension.
 
 > :information_source: If your use-case covers both Edge Network and Adobe Experience Cloud Solutions extensions, you need to register Identity for Edge Network and Identity for Experience Cloud Identity Service from Mobile Core extensions. For more details, see the [frequently asked questions](https://aep-sdks.gitbook.io/docs/foundation-extensions/identity-for-edge-network/identity-faq#q-i-am-using-aep-edge-and-adobe-solutions-extensions-which-identity-extension-should-i-install-and-register).
-
-The extension registration occurs by passing Identity for Edge Network extension to the [MobileCore.registerExtensions API](https://aep-sdks.gitbook.io/docs/foundation-extensions/mobile-core/mobile-core-api-reference#registerextension-s).
 
 #### Java
 
