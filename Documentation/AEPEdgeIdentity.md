@@ -12,8 +12,8 @@ Developers using ad ID should get ad ID from the API each time it is used, as pe
 
 - In newer versions of Android, the ad ID opt-in/out is a delete, where the existing ad ID value is deleted and replaced by an all-zero ad ID until the ad ID is recreated by user selection.
 
-[<img src="./assets/new_adid_setting_optin.png" alt="New ad ID settings page - opt-in state" width="350"/>](./assets/new_adid_setting_optin.png)
-[<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="350"/>](./assets/new_adid_setting_optout.png)
+[<img src="./assets/new_adid_setting_optin.png" alt="New ad ID settings page - opt-in state" width="210"/>](./assets/new_adid_setting_optin.png)
+[<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="210"/>](./assets/new_adid_setting_optout.png)
 
 
 - Note: There is no permission prompt shown to the user on first launch; the user can control the ad tracking preferences and see their ad ID value in the device settings in the Ads view.
@@ -25,10 +25,49 @@ Based on Android emulator testing:
     it may be helpful to use:
         - a getter helper for ad ID that detects and handles changes in value or opt-in/out
         - using app lifecycle foreground event to check for changes in ad ID value or opt-in/out
-- opt-out does not seem to cause the admob SDK to return an all-zeros ad ID (based on testing with emulator)
+- opt-out does not seem to cause the AdMob SDK to return an all-zeros ad ID (based on testing with emulator)
     - however, opt-in/out status can be determined through the property `AdvertisingIdClient.Info.isLimitAdTrackingEnabled`
 
 See Google's [Advertising ID help article](https://support.google.com/googleplay/android-developer/answer/6048248?hl=en) for the latest requirements to access ad ID through AdvertisingIdClient APIs.
+
+Example implementation of using a getter to 
+```kotlin
+import android.content.Context
+import android.util.Log
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.common.GooglePlayServicesRepairableException
+import java.io.IOException
+
+/**
+* Async method that retrieves the ad ID from the `AdvertisingIdClient` (from Google's gms.ads SDK).
+* Sanitizes ad ID disabled and exceptions to the empty string (`""`), for easy use with `MobileCore` ad ID APIs.
+* Should *only* be called from a background thread/coroutine.
+*
+* @param applicationContext: The application context that has the advertising ID provider to obtain the ad ID from.
+* @return ad ID string; ad ID value from the provider if available and tracking is allowed, empty string otherwise.
+*/
+suspend fun getGAID(applicationContext: Context): String {
+    var adID = ""
+    try {
+        val idInfo = AdvertisingIdClient.getAdvertisingIdInfo(applicationContext)
+        if (idInfo.isLimitAdTrackingEnabled) {
+            Log.d(LOG_TAG, "Limit Ad Tracking is enabled by the user, setting ad ID to \"\"")
+            return adID
+        }
+        Log.d(LOG_TAG, "Limit Ad Tracking disabled; ad ID value: ${idInfo.id}")
+        adID = idInfo.id
+    } catch (e: GooglePlayServicesNotAvailableException) {
+        Log.d(LOG_TAG, "GooglePlayServicesNotAvailableException while retrieving the advertising identifier ${e.localizedMessage}")
+    } catch (e: GooglePlayServicesRepairableException) {
+        Log.d(LOG_TAG, "GooglePlayServicesRepairableException while retrieving the advertising identifier ${e.localizedMessage}")
+    } catch (e: IOException) {
+        Log.d(LOG_TAG, "IOException while retrieving the advertising identifier ${e.localizedMessage}")
+    }
+    Log.d(LOG_TAG, "Returning ad ID value: $adID")
+    return adID
+}
+```
 
 As of this writing (Wed, April 13 2022), all devices that support Google Play Services follow the device level opt-in/out status, regardless of the app’s target SDK level. This is enforced starting from April 1, 2022. Prior to this, it was only applied to devices running Android 12.
 
