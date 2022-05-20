@@ -20,8 +20,8 @@ import com.adobe.marketing.mobile.edge.consent.Consent
 import com.adobe.marketing.mobile.edge.identity.Identity
 
 class EdgeIdentityApplication : Application() {
-    // Add your Launch Environment ID to configure the SDK from your Launch property
-    private var LAUNCH_ENVIRONMENT_ID: String = ""
+    // Add your app environment id to configure the SDK from your Data Collection mobile property
+    private var APP_ENVIRONMENT_ID: String = "yourAppId"
 
     override fun onCreate() {
         super.onCreate()
@@ -36,7 +36,7 @@ class EdgeIdentityApplication : Application() {
         Assurance.registerExtension()
 
         MobileCore.start {
-            MobileCore.configureWithAppID(LAUNCH_ENVIRONMENT_ID)
+            MobileCore.configureWithAppID(APP_ENVIRONMENT_ID)
         }
     }
 }
