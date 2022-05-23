@@ -4,13 +4,13 @@
 ## Testing tips with Android advertising identifier
 In Android, users are opted-in to ad ID tracking by default. They can choose to opt out of tracking in Android Settings at the device level.
 Developers using ad ID should get ad ID from the API each time it is used, as permissions for ad tracking and/or the value of the ID itself may be changed at any time.
-- In older versions of Android, the ad ID opt-in/out is a toggle, where the existing ad ID value remains unchanged.
+- In some Android environments, the ad ID opt-in/out is a toggle where the existing ad ID value remains unchanged.
 
 [<img src="./assets/old_adid_setting_optin.png" alt="Old ad ID settings page - opt-in state" width="210"/>](./assets/old_adid_setting_optin.png)
 [<img src="./assets/old_adid_setting_optout_prompt.png" alt="Old ad ID settings page - opt-out prompt" width="210"/>](./assets/old_adid_setting_optout_prompt.png)
 [<img src="./assets/old_adid_setting_optout.png" alt="Old ad ID settings page - opt-out state" width="210"/>](./assets/old_adid_setting_optout.png)
 
-- In newer versions of Android, the ad ID opt-in/out is a delete, where the existing ad ID value is deleted and replaced by an all-zero ad ID until the ad ID is recreated by user selection.
+- In other Android environments, the ad ID opt-in/out is a delete, where the existing ad ID value is deleted and replaced by an all-zero ad ID until the ad ID is recreated by user selection.
 
 [<img src="./assets/new_adid_setting_optin.png" alt="New ad ID settings page - opt-in state" width="210"/>](./assets/new_adid_setting_optin.png)
 [<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="210"/>](./assets/new_adid_setting_optout.png)
@@ -68,24 +68,21 @@ suspend fun getGAID(applicationContext: Context): String {
     return adID
 }
 ```
+Callsite:
+```kotlin
+ // Create IO (background) coroutine scope to fetch ad ID value
+val scope = CoroutineScope(Dispatchers.IO).launch {
+    val adID = sharedViewModel.getGAID(context.applicationContext)
+    Log.d(LOG_TAG, "Sending ad ID value: $adID to MobileCore.setAdvertisingIdentifier")
+    MobileCore.setAdvertisingIdentifier(adID)
+}
+```
 
-As of this writing (Wed, April 13 2022), all devices that support Google Play Services follow the device level opt-in/out status, regardless of the app’s target SDK level. This is enforced starting from April 1, 2022. Prior to this, it was only applied to devices running Android 12.
-
-Required manifest permissions to use ad ID (normal level permission):
-This is only required for Android 13+ (Apps with target API level set to 33 (Android 13))
-Conversely, for apps with target API level set to 32 (Android 12L) or older, this permission is not needed.
-If it is not declared when required, you will get an all-zero ad ID.
-In the test app's case, the current targetSdkVersion is 30, so the permission is not required.
-note: some SDKs may already include this permission in their manifest, so you do not need to include it separately; ex: Google Mobile Ads SDK (play-services-ads).
-
-The permission is:
+Required normal permissions to use ad ID (Android 13 and above):
 ```xml
 <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 ```
-To prevent [permission merging](https://developer.android.com/studio/build/manage-manifests#merge-manifests) in manifest files
-```xml
-<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
-```
+For more specifics on the use of this permission in the context of Android version requirements and permission merging through SDKs, see the [AdvertisingIdClient.Info documentation](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info).
 
 
 
