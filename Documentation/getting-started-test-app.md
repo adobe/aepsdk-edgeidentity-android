@@ -18,15 +18,15 @@ In some Android environments, the ad ID tracking authorization is controlled usi
 Based on Android emulator (Pixel_3a_API_32_arm64-v8a) testing for the ad ID toggle view using the Google Mobile Ads Lite SDK:
 - Ad ID settings can be accessed through the device settings: Settings -> Privacy -> Ads. On this page:
     - Users are opted-in to ad ID tracking by default.
-    - The ad ID value can be reset; replacing the old value with a new one.
+    - The ad ID value can be reset; this option replaces the old value with a new one.
     - Ad tracking authorization status can be changed using the toggle.
     - The ad ID value can be viewed.
 - There is no ad tracking permission prompt shown to the user on first app launch.
 - Changes in ad tracking authorization status or ad ID value do not terminate the app.
-- When ad tracking is limited, the Mobile Ads Lite SDK still returns the device's current valid ad ID; see Google's API reference on [`getId()`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info#public-string-getid) for the latest guidance on accessing the ad ID value and expected return values.
-    - Therefore, using the [`isLimitAdTrackingEnabled()`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info#isLimitAdTrackingEnabled()) API to determine tracking authorization status before accessing ad ID value is recommended.  
+- When ad tracking is limited, the Mobile Ads Lite SDK still returns the device's current valid ad ID,
+therefore using the [`isLimitAdTrackingEnabled()`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info#isLimitAdTrackingEnabled()) API to determine tracking authorization status before accessing ad ID value is recommended. See Google's API reference on [`getId()`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info#public-string-getid) for the latest guidance on accessing the ad ID value and expected return values.
 
-In other Android environments, the ad ID tracking authorization is controlled using a delete, where the existing ad ID value is deleted and replaced by an all-zero value until it is recreated by user selection:
+In other Android environments, the ad ID tracking authorization is controlled using a delete option that replaces the existing ad ID value with an all-zeros value until it is recreated by user's selection:
 
 [<img src="./assets/new_adid_setting_optin.png" alt="New ad ID settings page - opt-in state" width="210"/>](./assets/new_adid_setting_optin.png)
 [<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="210"/>](./assets/new_adid_setting_optout.png)
