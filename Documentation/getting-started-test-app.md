@@ -31,8 +31,15 @@ In other Android environments, the ad ID tracking authorization is controlled us
 [<img src="./assets/new_adid_setting_optin.png" alt="New ad ID settings page - opt-in state" width="210"/>](./assets/new_adid_setting_optin.png)
 [<img src="./assets/new_adid_setting_optout.png" alt="New ad ID settings page - opt-out state" width="210"/>](./assets/new_adid_setting_optout.png)
 
-## Implementation examples
-Mobile Ads Lite SDK: Using a getter to return the ad ID value. Key points to note:
+## Android Ads SDKs
+## Google Mobile Ads Lite SDK
+The [Google Mobile Ads Lite SDK](https://developers.google.com/admob/android/lite-sdk) is a way to use ads APIs without including the full size [Google Mobile Ads SDK](https://developers.google.com/admob/android/quick-start).  
+See API reference for [`AdvertisingIdClient`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient) and [`AdvertisingIdClient.Info`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info); the latter provides the APIs for getting the ad ID value and tracking authorization status.
+
+The Google AdMob SDK requires an application ID specified in the `AndroidManifest.xml` when the SDK is included in the build, otherwise the app will crash. However, for just ad ID testing purposes, the SDK doesn't have to be initialized. See Google's [quick start guide](https://developers.google.com/admob/android/quick-start#import_the_mobile_ads_sdk) for a detailed implementation guide (and a free sample app ID provided by Google for testing purposes in step 3).
+
+#### Implementation example
+Using a getter to return the ad ID value. Key points to note:
 - Use of a background coroutine scope from the call site.
 - Checking the ad tracking authorization status to return the appropriate ad ID value.
 ```kotlin
@@ -87,13 +94,6 @@ Required normal permissions to use ad ID (Android 13 and above):
 <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 ```
 For more specifics on the use of this permission in the context of Android version requirements and permission merging through SDKs, see the [AdvertisingIdClient.Info documentation](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info).
-
-
-## Google Mobile Ads Lite SDK
-The [Google Mobile Ads Lite SDK](https://developers.google.com/admob/android/lite-sdk) is a way to use ads APIs without including the full size Google Mobile Ads SDK.  
-See API reference for [`AdvertisingIdClient`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient) and [`AdvertisingIdClient.Info`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info); the latter provides the APIs for getting the ad ID value and tracking authorization status.
-
-The Google AdMob SDK requires an application ID specified in the `AndroidManifest.xml` when the SDK is included in the build, otherwise the app will crash. However, for just ad ID testing purposes, the SDK doesn't have to be initialized. See Google's [quick start guide](https://developers.google.com/admob/android/quick-start#import_the_mobile_ads_sdk) for a detailed implementation guide (and a free sample app ID provided by Google for testing purposes in step 3).
 
 ## AndroidX Ads SDK
 Overview: https://developer.android.com/jetpack/androidx/releases/ads  
