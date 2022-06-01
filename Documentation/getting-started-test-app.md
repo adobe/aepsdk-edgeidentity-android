@@ -90,7 +90,7 @@ For more specifics on the use of this permission in the context of Android versi
 
 
 ## Google Mobile Ads Lite SDK
-A lightweight version of the Google Mobile Ads SDK: https://developers.google.com/admob/android/lite-sdk  
+The [Google Mobile Ads Lite SDK](https://developers.google.com/admob/android/lite-sdk) is a way to use ads APIs without including the full size Google Mobile Ads SDK.  
 See API reference for [`AdvertisingIdClient`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient) and [`AdvertisingIdClient.Info`](https://developers.google.com/android/reference/com/google/android/gms/ads/identifier/AdvertisingIdClient.Info); the latter provides the APIs for getting the ad ID value and tracking authorization status.
 
 The Google AdMob SDK requires an application ID specified in the `AndroidManifest.xml` when the SDK is included in the build, otherwise the app will crash. However, for just ad ID testing purposes, the SDK doesn't have to be initialized. See Google's [quick start guide](https://developers.google.com/admob/android/quick-start#import_the_mobile_ads_sdk) for a detailed implementation guide (and a free sample app ID provided by Google for testing purposes in step 3).
