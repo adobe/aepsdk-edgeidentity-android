@@ -91,6 +91,10 @@ make init
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AEP SDK Sample App for Android](https://github.com/adobe/aepsdk-sample-app-android) | Contains Android sample app for the AEP SDK.                 |
 
+## Documentation
+
+Additional documentation for usage and SDK architecture can be found under the [Documentation](Documentation) directory.
+
 ## Contributing
 
 Contributions are welcomed! Read the [Contributing Guide](./.github/CONTRIBUTING.md) for more information.
