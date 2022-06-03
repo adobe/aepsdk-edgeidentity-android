@@ -33,7 +33,7 @@ The GAID is preserved between app upgrades, is saved and restored during the sta
 ```java
 public static void setAdvertisingIdentifier(final String advertisingIdentifier);
 ```
-
+- _identifier_ is a string that provides developers with a simple, standard system to continue to track the Ads through their apps.
 ##### Example
 ```java
 ...
@@ -80,6 +80,7 @@ public void onResume() {
 ```kotlin
 public fun setAdvertisingIdentifier(advertisingIdentifier: String)
 ```
+- _identifier_ is a string that provides developers with a simple, standard system to continue to track the Ads through their apps.
 ##### Example
 <details>
   <summary><code>import ...</code></summary>
