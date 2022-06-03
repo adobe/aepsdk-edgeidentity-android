@@ -31,7 +31,7 @@ The test app needs to be configured with the following edge extensions before it
 
 **Run demo application**
 
-1. In the test app, set your APP_ENVIRONMENT_ID in EdgeIdentityApplication.kt.
+1. In the test app, set your ENVIRONMENT_FILE_ID in EdgeIdentityApplication.kt.
 2. Open `app/res/value/secrets.xml` and follow the instructions to set up the AdMob app ID. This is required for testing with advertising identifiers.
 3. Select the `app` runnable with your favorite simulator and run the program.
 
