@@ -14,7 +14,7 @@ Refer to the [Getting Started Guide](getting-started.md)
 
 ### setAdvertisingIdentifier
 
-When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ namespace. If the API is called with the empty string (`""`), `null`, or the nil UUID values, the GAID is removed from the XDM Identity Map (if previously set).
+When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ (Google Advertising ID) namespace. If the API is called with the empty string (`""`), `null`, or the nil [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) values, the GAID is removed from the XDM Identity Map (if previously set).
 
 The GAID is preserved between app upgrades, is saved and restored during the standard application backup process, and is removed at uninstall.
 
