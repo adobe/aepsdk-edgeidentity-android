@@ -14,12 +14,12 @@ Refer to the [Getting Started Guide](getting-started.md)
 
 ### setAdvertisingIdentifier
 
-When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ (Google Advertising ID) namespace. If the API is called with the empty string (`""`), `null`, or the nil [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) values, the GAID is removed from the XDM Identity Map (if previously set).
+When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ (Google Advertising ID) namespace. If the API is called with the empty string (`""`), `null`, or the all-zeros [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) string values, the GAID is removed from the XDM Identity Map (if previously set).
 
 The GAID is preserved between app upgrades, is saved and restored during the standard application backup process, and is removed at uninstall.
 
 > **Warning**  
-> In order to enable collection of the user's current advertising tracking authorization selection for the provided advertising identifier, you need to install and register the [AEPEdgeConsent](https://aep-sdks.gitbook.io/docs/foundation-extensions/consent-for-edge-network) extension and update the [AEPEdge](https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension) dependency to minimum 1.4.1.
+> In order to enable collection of the user's current advertising tracking authorization selection for the provided advertising identifier, you need to install and register the [AEPEdgeConsent](https://aep-sdks.gitbook.io/docs/foundation-extensions/consent-for-edge-network) extension and update the [AEPEdge](https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension) dependency to minimum 1.3.2.
 
 > **Note**  
 > These examples require Google Play Services to be configured in your mobile application, and use the Google Mobile Ads Lite SDK. For instructions on how to import the SDK and configure your `ApplicationManifest.xml` file, see [Google Mobile Ads Lite SDK setup](https://developers.google.com/admob/android/lite-sdk).
