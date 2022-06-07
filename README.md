@@ -10,10 +10,11 @@ The Adobe Experience Platform Edge Identity is a mobile extension for the [Adobe
 
 Integrate the Edge Identity extension into your app by including the following in your gradle file's `dependencies`:
 
-```
+```gradle
 implementation 'com.adobe.marketing.mobile:edgeidentity:1.+'
 implementation 'com.adobe.marketing.mobile:edge:1.+'
 implementation 'com.adobe.marketing.mobile:core:1.+'
+implementation 'com.adobe.marketing.mobile:edgeconsent:1.+' // Recommended when using the setAdvertisingIdentifier API
 ```
 
 ### Development
@@ -31,9 +32,11 @@ The test app needs to be configured with the following edge extensions before it
 
 **Run demo application**
 
-1. In the test app, set your ENVIRONMENT_FILE_ID in EdgeIdentityApplication.kt.
-2. Open `app/res/value/secrets.xml` and follow the instructions to set up the AdMob app ID. This is required for testing with advertising identifiers.
-3. Select the `app` runnable with your favorite simulator and run the program.
+1. In the test app, set your `ENVIRONMENT_FILE_ID` in `EdgeIdentityApplication.kt`.
+2. Select the `app` runnable with your favorite emulator and run the program.
+
+> **Note**
+> To enable GAID related advertising identifier features, follow the [documentation](Documentation/README.md#advertising-identifier) for the required setup steps.
 
 **View the platform events with Assurance**
 
