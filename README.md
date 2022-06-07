@@ -29,6 +29,7 @@ The test app needs to be configured with the following edge extensions before it
 - Mobile Core (installed by default)
 - [Edge](https://aep-sdks.gitbook.io/docs/foundation-extensions/experience-platform-extension)
 - [Edge Identity](https://aep-sdks.gitbook.io/docs/foundation-extensions/identity-for-edge-network)
+- [Edge Consent](https://aep-sdks.gitbook.io/docs/foundation-extensions/consent-for-edge-network) (recommended when using the setAdvertisingIdentifier API)
 
 **Run demo application**
 
@@ -70,7 +71,7 @@ try setting the system property 'npm.exec' in the build process to override auto
 ```
 
 To address this: 
-- Update Android Studio to the latest version (Bumblebee Patch 1 should address this issue) 
+- Update Android Studio to the latest version (version minimum Bumblebee Patch 1 should address this issue) 
 - Update the Android Gradle Plugin to the latest version (7.x.x as of this writing)  
 
 If that does not address the issue, try installing node using the installer and not through homebrew: https://nodejs.org/en/download/ 
