@@ -71,7 +71,7 @@ try setting the system property 'npm.exec' in the build process to override auto
 ```
 
 To address this: 
-- Update Android Studio to the latest version (version minimum Bumblebee Patch 1 should address this issue) 
+- Update Android Studio to the latest version (minimum version Bumblebee Patch 1 should address this issue) 
 - Update the Android Gradle Plugin to the latest version (7.x.x as of this writing)  
 
 If that does not address the issue, try installing node using the installer and not through homebrew: https://nodejs.org/en/download/ 
