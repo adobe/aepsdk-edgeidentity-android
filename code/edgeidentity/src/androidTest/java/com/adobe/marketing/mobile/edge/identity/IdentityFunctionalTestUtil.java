@@ -111,6 +111,19 @@ public class IdentityFunctionalTestUtil {
 	}
 
 	/**
+	 * Updates configuration shared state with an orgId
+	 */
+	static void setupConfiguration() throws Exception {
+		HashMap<String, Object> config = new HashMap<String, Object>() {
+			{
+				put("experienceCloud.org", "testOrg@AdobeOrg");
+			}
+		};
+		MobileCore.updateConfiguration(config);
+		TestHelper.waitForThreads(2000);
+	}
+
+	/**
 	 * Set the ECID in persistence for Identity Direct extension.
 	 */
 	static void setIdentityDirectPersistedECID(final String legacyECID) {

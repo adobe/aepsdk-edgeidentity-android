@@ -15,6 +15,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildUpdateIdentityRequest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -480,6 +481,177 @@ public class IdentityExtensionTests {
 	}
 
 	// ========================================================================================
+	// handleUrlVariablesRequest
+	// ========================================================================================
+
+	@Test
+	public void test_handleUrlVariablesRequest_nullEvent_shouldNotThrow() {
+		// test
+		extension.handleUrlVariablesRequest(null);
+	}
+
+	@Test
+	public void test_handleUrlVariablesRequest_whenConfigAndECIDNotPresent_returnsNull() {
+		// setup
+		Event event = new Event.Builder(
+			"Test event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
+			.build();
+		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		// test
+		extension.handleUrlVariablesRequest(event);
+
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchResponseEvent(
+			responseEventCaptor.capture(),
+			any(Event.class),
+			any(ExtensionErrorCallback.class)
+		);
+
+		Event urlVariablesResponseEvent = responseEventCaptor.getAllValues().get(0);
+		final Map<String, Object> data = urlVariablesResponseEvent.getEventData();
+		assertTrue(data.containsKey("urlvariables"));
+		String urlvariables = (String) data.get("urlvariables");
+
+		assertNull(urlvariables);
+	}
+
+	@Test
+	public void test_handleUrlVariablesRequest_whenOrgIdAndECIDPresent_returnsValidUrlVariablesString() {
+		// setup
+		ECID testECID = new ECID();
+		extension.state.getIdentityProperties().setECID(testECID);
+		setConfigurationSharedState("test-org-id@AdobeOrg");
+
+		Event event = new Event.Builder(
+			"Test event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
+			.build();
+		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		// test
+		extension.handleUrlVariablesRequest(event);
+
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchResponseEvent(
+			responseEventCaptor.capture(),
+			any(Event.class),
+			any(ExtensionErrorCallback.class)
+		);
+
+		Event urlVariablesResponseEvent = responseEventCaptor.getAllValues().get(0);
+		final Map<String, Object> data = urlVariablesResponseEvent.getEventData();
+		String urlvariables = (String) data.get("urlvariables");
+
+		String expectedUrlVariableTSString = "adobe_mc=TS%3";
+		String expectedUrlVariableIdentifiersString = "%7CMCMID%3D" + testECID + "%7CMCORGID%3Dtest-org-id%40AdobeOrg";
+
+		assertNotNull(urlvariables);
+		assertTrue(urlvariables.contains("adobe_mc="));
+		assertTrue(urlvariables.contains(expectedUrlVariableTSString));
+		assertTrue(urlvariables.contains(expectedUrlVariableIdentifiersString));
+	}
+
+	@Test
+	public void test_handleUrlVariablesRequest_whenOrgIdMissing_returnsValidNull() {
+		// setup
+		ECID testECID = new ECID();
+		extension.state.getIdentityProperties().setECID(testECID);
+
+		Event event = new Event.Builder(
+			"Test event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
+			.build();
+		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		// test
+		extension.handleUrlVariablesRequest(event);
+
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchResponseEvent(
+			responseEventCaptor.capture(),
+			any(Event.class),
+			any(ExtensionErrorCallback.class)
+		);
+
+		Event urlVariablesResponseEvent = responseEventCaptor.getAllValues().get(0);
+		final Map<String, Object> data = urlVariablesResponseEvent.getEventData();
+		String urlvariables = (String) data.get("urlvariables");
+
+		assertNull(urlvariables);
+	}
+
+	@Test
+	public void test_handleUrlVariablesRequest_whenECIDMissing_returnsValidNull() {
+		// setup
+		extension.state.getIdentityProperties().setECID(null);
+		setConfigurationSharedState("test-org-id@AdobeOrg");
+
+		Event event = new Event.Builder(
+			"Test event",
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("urlvariables", true);
+					}
+				}
+			)
+			.build();
+		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		// test
+		extension.handleUrlVariablesRequest(event);
+
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchResponseEvent(
+			responseEventCaptor.capture(),
+			any(Event.class),
+			any(ExtensionErrorCallback.class)
+		);
+
+		Event urlVariablesResponseEvent = responseEventCaptor.getAllValues().get(0);
+		final Map<String, Object> data = urlVariablesResponseEvent.getEventData();
+		String urlvariables = (String) data.get("urlvariables");
+
+		assertNull(urlvariables);
+	}
+
+	// ========================================================================================
 	// handleUpdateIdentities
 	// ========================================================================================
 
@@ -595,6 +767,21 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
+	public void test_processAddEvent_nullEvent_returns() {
+		Map<String, Object> identityXDM = createXDMIdentityMap(new TestItem("space", "moon"));
+		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
+		extension.state = mockIdentityState;
+		mockIdentityState.hasBooted = true;
+
+		// test
+		extension.processAddEvent(null);
+
+		// verify
+		verify(mockExtensionApi, times(0))
+			.setXDMSharedEventState(any(Map.class), any(Event.class), any(ExtensionErrorCallback.class));
+	}
+
+	@Test
 	public void test_processCachedEvents_processesWhenBooted() {
 		Map<String, Object> identityXDM = createXDMIdentityMap(new TestItem("space", "moon"));
 		MockIdentityState mockIdentityState = new MockIdentityState(new IdentityProperties(identityXDM));
@@ -604,6 +791,21 @@ public class IdentityExtensionTests {
 		// test
 		extension.processAddEvent(buildUpdateIdentityRequest(identityXDM));
 		extension.processAddEvent(buildRemoveIdentityRequest(identityXDM));
+		extension.processAddEvent(
+			new Event.Builder(
+				"Test event",
+				IdentityConstants.EventType.EDGE_IDENTITY,
+				IdentityConstants.EventSource.REQUEST_IDENTITY
+			)
+				.setEventData(
+					new HashMap<String, Object>() {
+						{
+							put("urlVariables", true);
+						}
+					}
+				)
+				.build()
+		);
 		extension.processAddEvent(
 			new Event.Builder(
 				"Test event",
@@ -699,6 +901,23 @@ public class IdentityExtensionTests {
 				new HashMap<String, Object>() {
 					{
 						put(IdentityConstants.SharedState.IdentityDirect.ECID, ecid);
+					}
+				}
+			);
+	}
+
+	private void setConfigurationSharedState(final String orgId) {
+		when(
+			mockExtensionApi.getSharedEventState(
+				eq("com.adobe.module.configuration"),
+				any(Event.class),
+				any(ExtensionErrorCallback.class)
+			)
+		)
+			.thenReturn(
+				new HashMap<String, Object>() {
+					{
+						put("experienceCloud.org", orgId);
 					}
 				}
 			);

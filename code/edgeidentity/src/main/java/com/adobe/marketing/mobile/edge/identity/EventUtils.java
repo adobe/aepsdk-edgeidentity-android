@@ -91,6 +91,33 @@ final class EventUtils {
 	}
 
 	/**
+	 * Reads the url variables flag from the event data, returns false if not present
+	 * Note: This API needs to be used with isRequestIdentityEvent API to determine the correct event type and event source
+	 * @param event the event to verify
+	 * @return true if urlVariables key is present in the event data and has a value of true
+	 */
+	static boolean isGetUrlVariablesRequestEvent(final Event event) {
+		if (event == null || event.getEventData() == null) {
+			return false;
+		}
+		boolean getUrlVariablesFlag = false;
+
+		try {
+			Object urlVariablesFlagObject = event.getEventData().get(IdentityConstants.EventDataKeys.URL_VARIABLES);
+			getUrlVariablesFlag = urlVariablesFlagObject != null && (boolean) urlVariablesFlagObject;
+		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.WARNING,
+				LOG_TAG,
+				"EventUtils - Failed to read urlvariables value, expected boolean: " + e.getLocalizedMessage()
+			);
+			return false;
+		}
+
+		return getUrlVariablesFlag;
+	}
+
+	/**
 	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_RESET}
 	 *
 	 * @param event the event to verify
@@ -185,5 +212,35 @@ final class EventUtils {
 		}
 
 		return legacyEcid;
+	}
+
+	/**
+	 * Extracts the Experience Cloud Org Id from the Configuration shared state
+	 *
+	 * @param configurationSharedState the configuration shared state data
+	 * @return the Experience Cloud Org Id or null if not found or unable to parse the payload
+	 */
+	static String getOrgId(final Map<String, Object> configurationSharedState) {
+		String orgId = null;
+
+		if (configurationSharedState == null) {
+			return orgId;
+		}
+
+		try {
+			orgId =
+				(String) configurationSharedState.get(
+					IdentityConstants.SharedState.Configuration.EXPERIENCE_CLOUD_ORGID
+				);
+		} catch (ClassCastException e) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"EventUtils - Failed to extract Experience ORG ID from Configuration shared state, expected String: " +
+				e.getLocalizedMessage()
+			);
+		}
+
+		return orgId;
 	}
 }

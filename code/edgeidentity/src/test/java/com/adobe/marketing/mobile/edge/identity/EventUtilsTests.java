@@ -11,16 +11,168 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.adobe.marketing.mobile.Event;
 import java.util.HashMap;
 import org.junit.Test;
 
-@SuppressWarnings("unchecked")
 public class EventUtilsTests {
+
+	// ======================================================================================================================
+	// Tests for method : isGetUrlVariablesRequestEvent(final Event event)
+	// ======================================================================================================================
+
+	@Test
+	public void test_isRequestIdentityEventForGetUrlVariable_nullEvent_returnsFalse() {
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(null));
+	}
+
+	@Test
+	public void test_isRequestIdentityEventForGetUrlVariable_eventContainsUrlVariablesKey_validBooleanValue_returnsSetBooleanValue() {
+		Event event = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
+					}
+				}
+			)
+			.build();
+
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
+
+		// eventType is not edgeIdentity and eventSource is not requestIdentity
+		event =
+			new Event.Builder(
+				IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+				IdentityConstants.EventType.EDGE_IDENTITY,
+				IdentityConstants.EventSource.REQUEST_IDENTITY
+			)
+				.setEventData(
+					new HashMap<String, Object>() {
+						{
+							put(IdentityConstants.EventDataKeys.URL_VARIABLES, false);
+						}
+					}
+				)
+				.build();
+
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
+	}
+
+	@Test
+	public void test_isRequestIdentityEventForGetUrlVariable_eventTypeNotEdgeIdentity_eventSourceNotIdentityRequest_eventContainsUrlVariablesKey_validBooleanValue_returnsSetBooleanValue() {
+		// eventType is not edgeIdentity and eventSource is not requestIdentity
+		Event event = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+			IdentityConstants.EventType.IDENTITY,
+			IdentityConstants.EventSource.REQUEST_RESET
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
+					}
+				}
+			)
+			.build();
+
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
+
+		// eventType is not edgeIdentity and eventSource is not requestIdentity
+		event =
+			new Event.Builder(
+				IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+				IdentityConstants.EventType.IDENTITY,
+				IdentityConstants.EventSource.REQUEST_IDENTITY
+			)
+				.setEventData(
+					new HashMap<String, Object>() {
+						{
+							put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
+						}
+					}
+				)
+				.build();
+
+		assertTrue(EventUtils.isGetUrlVariablesRequestEvent(event));
+	}
+
+	@Test
+	public void test_RequestIdentityEventForGetUrlVariable_eventContainsUrlVariablesKey_invalidValue_returnsFalse() {
+		Event event = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, "true");
+					}
+				}
+			)
+			.build();
+
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
+
+		// eventType is not edgeIdentity and eventSource is not requestIdentity
+		event =
+			new Event.Builder(
+				IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+				IdentityConstants.EventType.EDGE_IDENTITY,
+				IdentityConstants.EventSource.REQUEST_IDENTITY
+			)
+				.setEventData(
+					new HashMap<String, Object>() {
+						{
+							put(IdentityConstants.EventDataKeys.URL_VARIABLES, 123);
+						}
+					}
+				)
+				.build();
+
+		assertFalse(EventUtils.isGetUrlVariablesRequestEvent(event));
+	}
+
+	// ======================================================================================================================
+	// Tests for method : getOrgId(final Map<String, Object> configurationSharedState)
+	// ======================================================================================================================
+
+	@Test
+	public void test_getOrgID_validString_returnsString() {
+		assertEquals(
+			"org-id",
+			EventUtils.getOrgId(
+				new HashMap<String, Object>() {
+					{
+						put("experienceCloud.org", "org-id");
+					}
+				}
+			)
+		);
+	}
+
+	@Test
+	public void test_getOrgID_invalidValue_returnsNull() {
+		assertNull(
+			EventUtils.getOrgId(
+				new HashMap<String, Object>() {
+					{
+						put("experienceCloud.org", true);
+					}
+				}
+			)
+		);
+	}
 
 	// ======================================================================================================================
 	// Tests for method : isAdIdEvent(final Event event)
