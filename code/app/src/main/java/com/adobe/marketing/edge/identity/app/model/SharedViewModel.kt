@@ -11,7 +11,6 @@
 
 package com.adobe.marketing.edge.identity.app.model
 
-
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
