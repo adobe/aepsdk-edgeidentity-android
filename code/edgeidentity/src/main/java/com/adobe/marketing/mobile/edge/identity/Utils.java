@@ -26,6 +26,8 @@ import org.json.JSONObject;
 
 class Utils {
 
+	private static final long MILLISECONDS_PER_SECOND = 1000L;
+
 	private Utils() {}
 
 	static boolean isNullOrEmpty(final String str) {
@@ -187,7 +189,7 @@ class Utils {
 	 *
 	 * @param listOfMaps to be copied
 	 * @return {@link List} containing a deep copy of all the elements in {@code listOfMaps}
-	 * @see {@link #deepCopy(Map)}
+	 * @see #deepCopy(Map)
 	 */
 	static List<Map<String, Object>> deepCopy(final List<Map<String, Object>> listOfMaps) {
 		if (listOfMaps == null) {
@@ -201,5 +203,14 @@ class Utils {
 		}
 
 		return deepCopy;
+	}
+
+	/**
+	 * Gets current unix timestamp in seconds.
+	 *
+	 * @return {code long} current timestamp
+	 */
+	static long getUnixTimeInSeconds() {
+		return System.currentTimeMillis() / MILLISECONDS_PER_SECOND;
 	}
 }

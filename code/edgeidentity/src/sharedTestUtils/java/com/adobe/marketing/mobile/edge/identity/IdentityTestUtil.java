@@ -348,6 +348,26 @@ class IdentityTestUtil {
 		}
 	}
 
+	static String getUrlVariablesSync() {
+		try {
+			final HashMap<String, String> getUrlVariablesResponse = new HashMap<>();
+			final ADBCountDownLatch latch = new ADBCountDownLatch(1);
+			Identity.getUrlVariables(
+				new AdobeCallback<String>() {
+					@Override
+					public void call(final String urlVariables) {
+						getUrlVariablesResponse.put(IdentityTestConstants.GetIdentitiesHelper.VALUE, urlVariables);
+						latch.countDown();
+					}
+				}
+			);
+			latch.await(2000, TimeUnit.MILLISECONDS);
+			return getUrlVariablesResponse.get(IdentityTestConstants.GetIdentitiesHelper.VALUE);
+		} catch (Exception exp) {
+			return null;
+		}
+	}
+
 	static IdentityMap CreateIdentityMap(final String namespace, final String id) {
 		return CreateIdentityMap(namespace, id, AuthenticatedState.AMBIGUOUS, false);
 	}

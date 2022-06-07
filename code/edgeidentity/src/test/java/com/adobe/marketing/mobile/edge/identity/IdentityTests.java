@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 
+import android.util.Log;
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -263,6 +265,189 @@ public class IdentityTests {
 		// set response event to map missing ECID
 		Map<String, Object> emptyXDMData = new HashMap<>();
 		adobeCallbackCaptor.getValue().call(buildIdentityResponseEvent(emptyXDMData));
+
+		// verify
+		assertTrue((boolean) errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+		assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+	}
+
+	// ========================================================================================
+	// getUrlVariables API
+	// ========================================================================================
+	@Test
+	public void testGetUrlVariables() throws InterruptedException {
+		// setup
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<ExtensionErrorCallback> extensionErrorCallbackCaptor = ArgumentCaptor.forClass(
+			ExtensionErrorCallback.class
+		);
+		final List<String> callbackReturnValues = new ArrayList<>();
+		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
+		// test
+		Identity.getUrlVariables(
+			new AdobeCallback<String>() {
+				@Override
+				public void call(String s) {
+					callbackReturnValues.add(s);
+					latch.countDown();
+				}
+			}
+		);
+		latch.await(2000, TimeUnit.MILLISECONDS);
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEventWithResponseCallback(
+			eventCaptor.capture(),
+			adobeCallbackCaptor.capture(),
+			extensionErrorCallbackCaptor.capture()
+		);
+
+		// verify the dispatched event details
+		Event dispatchedEvent = eventCaptor.getValue();
+		assertEquals(IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES, dispatchedEvent.getName());
+		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY.toLowerCase(), dispatchedEvent.getType());
+		assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY.toLowerCase(), dispatchedEvent.getSource());
+		assertTrue(dispatchedEvent.getEventData().containsKey("urlvariables"));
+		assertTrue((boolean) dispatchedEvent.getEventData().get("urlvariables"));
+
+		// verify callback responses
+		Map<String, Object> urlVariablesResponse = new HashMap<>();
+		urlVariablesResponse.put("urlvariables", "test-url-variable-string");
+
+		adobeCallbackCaptor.getValue().call(buildUrlVariablesResponseEvent(urlVariablesResponse));
+		assertEquals("test-url-variable-string", callbackReturnValues.get(0));
+		// TODO - enable when ExtensionError creation is available
+		// should not crash on calling the callback
+		//extensionErrorCallback.error(ExtensionError.UNEXPECTED_ERROR);
+	}
+
+	@Test
+	public void testGetUrlVariables_nullCallback() {
+		// test
+		Identity.getExperienceCloudId(null);
+
+		// verify
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(0));
+		MobileCore.dispatchEventWithResponseCallback(
+			any(Event.class),
+			any(AdobeCallback.class),
+			any(ExtensionErrorCallback.class)
+		);
+	}
+
+	@Test
+	public void testGetUrlVariables_nullResponseEvent() {
+		// setup
+		final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+		final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+		final Map<String, Object> errorCapture = new HashMap<>();
+		final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+			@Override
+			public void fail(AdobeError adobeError) {
+				errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+				errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+			}
+
+			@Override
+			public void call(Object o) {}
+		};
+
+		// test
+		Identity.getUrlVariables(callbackWithError);
+
+		// verify if the event is dispatched
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEventWithResponseCallback(
+			any(Event.class),
+			adobeCallbackCaptor.capture(),
+			any(ExtensionErrorCallback.class)
+		);
+
+		// set response event to null
+		adobeCallbackCaptor.getValue().call(null);
+
+		// verify
+		assertTrue((boolean) errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+		assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+	}
+
+	@Test
+	public void testGetUrlVariables_invalidEventData() {
+		// setup
+		final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+		final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+		final Map<String, Object> errorCapture = new HashMap<>();
+		final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+			@Override
+			public void fail(AdobeError adobeError) {
+				errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+				errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+			}
+
+			@Override
+			public void call(Object o) {}
+		};
+
+		// test
+		Identity.getUrlVariables(callbackWithError);
+
+		// verify if the event is dispatched
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEventWithResponseCallback(
+			any(Event.class),
+			adobeCallbackCaptor.capture(),
+			any(ExtensionErrorCallback.class)
+		);
+
+		// set response event data to not have urlvariables key
+		Map<String, Object> eventData = new HashMap<>();
+		eventData.put("someKey", "someValue");
+		eventData.put("urlvariables", true);
+		adobeCallbackCaptor.getValue().call(buildUrlVariablesResponseEvent(eventData));
+
+		// verify
+		assertTrue((boolean) errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
+		assertEquals(AdobeError.UNEXPECTED_ERROR, errorCapture.get(KEY_CAPTUREDERRORCALLBACK));
+	}
+
+	@Test
+	public void testGetUrlVariables_NullUrlVariablesStringInResponseData() {
+		// setup
+		final String KEY_IS_ERRORCALLBACK_CALLED = "errorCallBackCalled";
+		final String KEY_CAPTUREDERRORCALLBACK = "capturedErrorCallback";
+		final Map<String, Object> errorCapture = new HashMap<>();
+		final ArgumentCaptor<AdobeCallback> adobeCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final AdobeCallbackWithError callbackWithError = new AdobeCallbackWithError() {
+			@Override
+			public void fail(AdobeError adobeError) {
+				errorCapture.put(KEY_IS_ERRORCALLBACK_CALLED, true);
+				errorCapture.put(KEY_CAPTUREDERRORCALLBACK, adobeError);
+			}
+
+			@Override
+			public void call(Object o) {
+				Log.d("test", "test");
+			}
+		};
+
+		// test
+		Identity.getUrlVariables(callbackWithError);
+
+		// verify if the event is dispatched
+		PowerMockito.verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEventWithResponseCallback(
+			any(Event.class),
+			adobeCallbackCaptor.capture(),
+			any(ExtensionErrorCallback.class)
+		);
+
+		// set response event to have urlvariables map to null value
+		Map<String, Object> nullUrlVariablesData = new HashMap<>();
+		nullUrlVariablesData.put("urlvariables", null);
+		adobeCallbackCaptor.getValue().call(buildUrlVariablesResponseEvent(nullUrlVariablesData));
 
 		// verify
 		assertTrue((boolean) errorCapture.get(KEY_IS_ERRORCALLBACK_CALLED));
@@ -575,6 +760,16 @@ public class IdentityTests {
 	private Event buildIdentityResponseEvent(final Map<String, Object> eventData) {
 		return new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESPONSE_IDENTITY
+		)
+			.setEventData(eventData)
+			.build();
+	}
+
+	private Event buildUrlVariablesResponseEvent(final Map<String, Object> eventData) {
+		return new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.RESPONSE_IDENTITY
 		)

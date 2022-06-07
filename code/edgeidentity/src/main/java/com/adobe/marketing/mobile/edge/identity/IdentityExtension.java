@@ -20,6 +20,7 @@ import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -168,7 +169,11 @@ class IdentityExtension extends Extension {
 			final Event event = cachedEvents.peek();
 
 			if (EventUtils.isRequestIdentityEvent(event)) {
-				handleIdentityRequest(event);
+				if (EventUtils.isGetUrlVariablesRequestEvent(event)) {
+					handleUrlVariablesRequest(event);
+				} else {
+					handleIdentityRequest(event);
+				}
 			} else if (EventUtils.isRequestContentEvent(event)) {
 				handleRequestContent(event);
 			} else if (EventUtils.isUpdateIdentityEvent(event)) {
@@ -194,6 +199,101 @@ class IdentityExtension extends Extension {
 		final SharedStateCallback callback = createSharedStateCallback();
 
 		return state.bootupIfReady(callback);
+	}
+
+	/**
+	 * Handles events requesting for formatted and encoded identifiers url for hybrid apps.
+	 *
+	 * @param event the identity request {@link Event}
+	 */
+	void handleUrlVariablesRequest(final Event event) {
+		String urlVariablesString = null;
+
+		final Map<String, Object> configurationState = getSharedState(
+			IdentityConstants.SharedState.Configuration.NAME,
+			event
+		);
+
+		final String orgId = EventUtils.getOrgId(configurationState);
+
+		if (Utils.isNullOrEmpty(orgId)) {
+			handleUrlVariableResponse(
+				event,
+				urlVariablesString,
+				"IdentityExtension - Cannot process getUrlVariables request Identity event, Experience Cloud Org ID not found in configuration."
+			);
+			return;
+		}
+
+		ECID ecid = state.getIdentityProperties().getECID();
+		final String ecidString = ecid != null ? ecid.toString() : null;
+
+		if (Utils.isNullOrEmpty(ecidString)) {
+			handleUrlVariableResponse(
+				event,
+				urlVariablesString,
+				"IdentityExtension - Cannot process getUrlVariables request Identity event, ECID not found."
+			);
+			return;
+		}
+
+		urlVariablesString =
+			URLUtils.generateURLVariablesPayload(String.valueOf(Utils.getUnixTimeInSeconds()), ecidString, orgId);
+
+		handleUrlVariableResponse(event, urlVariablesString);
+	}
+
+	/**
+	 * Handles response event after processing the url variables request.
+	 *
+	 * @param event the identity request {@link Event}
+	 * @param urlVariables {@link String} representing the urlVariables encoded string
+	 */
+	private void handleUrlVariableResponse(final Event event, final String urlVariables) {
+		handleUrlVariableResponse(event, urlVariables, null);
+	}
+
+	/**
+	 * Handles response event after processing the url variables request.
+	 *
+	 * @param event the identity request {@link Event}
+	 * @param urlVariables {@link String} representing the urlVariables encoded string
+	 * @param errorMsg {@link String} representing error encountered while generating the urlVariables string
+	 */
+	private void handleUrlVariableResponse(final Event event, final String urlVariables, final String errorMsg) {
+		Event responseEvent = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.RESPONSE_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, urlVariables);
+					}
+				}
+			)
+			.build();
+
+		ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+			@Override
+			public void error(ExtensionError extensionError) {
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					"IdentityExtension - Failed to dispatch Edge Identity response event for event " +
+					event.getUniqueIdentifier() +
+					" with error " +
+					extensionError.getErrorName()
+				);
+			}
+		};
+
+		if (Utils.isNullOrEmpty(urlVariables) && !Utils.isNullOrEmpty(errorMsg)) {
+			MobileCore.log(LoggingMode.WARNING, LOG_TAG, errorMsg);
+		}
+
+		MobileCore.dispatchResponseEvent(responseEvent, event, errorCallback);
 	}
 
 	/**
@@ -408,7 +508,8 @@ class IdentityExtension extends Extension {
 					LoggingMode.DEBUG,
 					LOG_TAG,
 					String.format(
-						"IdentityExtension - Failed getting direct Identity shared state. Error : %s.",
+						"IdentityExtension - Failed getting %s shared state. Error : %s.",
+						stateOwner,
 						extensionError.getErrorName()
 					)
 				);

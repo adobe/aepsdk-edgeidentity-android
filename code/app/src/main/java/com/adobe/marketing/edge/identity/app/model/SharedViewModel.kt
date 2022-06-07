@@ -42,6 +42,9 @@ class SharedViewModel : ViewModel() {
     private val _ecidLegacyText = MutableLiveData<String>("")
     val ecidLegacyText: LiveData<String> = _ecidLegacyText
 
+    private val _urlVariablesText = MutableLiveData<String>("")
+    val urlVariablesText: LiveData<String> = _urlVariablesText
+
     private val _identitiesText = MutableLiveData<String>("")
     val identitiesText: LiveData<String> = _identitiesText
 
@@ -51,6 +54,10 @@ class SharedViewModel : ViewModel() {
 
     fun setEcidLegacyValue(value: String) {
         _ecidLegacyText.value = value
+    }
+
+    fun setUrlVariablesValue(value: String) {
+        _urlVariablesText.value = value
     }
 
     fun setIdentitiesValue(value: String) {

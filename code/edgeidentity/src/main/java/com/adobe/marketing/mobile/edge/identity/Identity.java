@@ -21,7 +21,9 @@ import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Defines the public APIs for the AEP Edge Identity extension.
@@ -129,6 +131,91 @@ public class Identity {
 						callback.call("");
 					} else {
 						callback.call(ecidItems.get(0).getId());
+					}
+				}
+			},
+			errorCallback
+		);
+	}
+
+	/**
+	 * Returns the identifiers in URL query parameter format for consumption in hybrid mobile applications.
+	 * There is no leading &amp; or ? punctuation as the caller is responsible for placing the variables in their resulting URL in the correct locations.
+	 * If an error occurs while retrieving the URL variables, the AdobeCallbackWithError is called with a null value and AdobeError instance.
+	 * If AdobeCallback is provided then callback is not called in case of error.
+	 * Otherwise, the encoded string is returned, for ex: "adobe_mc=TS%3DTIMESTAMP_VALUE%7CMCMID%3DYOUR_ECID%7CMCORGID%3D9YOUR_EXPERIENCE_CLOUD_ID"
+	 * The {@code adobe_mc} attribute is an URL encoded list that contains:
+	 *	<ul>
+	 *		<li>TS: a timestamp taken when the request was made</li>
+	 * 		<li>MCID: Experience Cloud ID (ECID)</li>
+	 * 		<li>MCORGID: Experience Cloud Org ID</li>
+	 * 	</ul>
+	 *
+	 * @param callback {@link AdobeCallback} of {@code String} invoked with a value containing the identifiers in query parameter format.
+	 *     	           If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
+	 *	               eventuality of any error that occurred while getting the identifiers query string
+	 */
+	public static void getUrlVariables(final AdobeCallback<String> callback) {
+		if (callback == null) {
+			MobileCore.log(
+				LoggingMode.DEBUG,
+				LOG_TAG,
+				"Identity - Unexpected null callback, provide a callback to retrieve current visitor identifiers (URLVariables) query string."
+			);
+			return;
+		}
+
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+			IdentityConstants.EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSource.REQUEST_IDENTITY
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.EventDataKeys.URL_VARIABLES, true);
+					}
+				}
+			)
+			.build();
+
+		final ExtensionErrorCallback<ExtensionError> errorCallback = new ExtensionErrorCallback<ExtensionError>() {
+			@Override
+			public void error(final ExtensionError extensionError) {
+				returnError(callback, extensionError);
+				MobileCore.log(
+					LoggingMode.DEBUG,
+					LOG_TAG,
+					String.format(
+						"Identity - Failed to dispatch %s event: Error : %s.",
+						IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
+						extensionError.getErrorName()
+					)
+				);
+			}
+		};
+
+		MobileCore.dispatchEventWithResponseCallback(
+			event,
+			new AdobeCallback<Event>() {
+				@Override
+				public void call(Event responseEvent) {
+					if (responseEvent == null || responseEvent.getEventData() == null) {
+						returnError(callback, AdobeError.UNEXPECTED_ERROR);
+						return;
+					}
+
+					final Map<String, Object> data = responseEvent.getEventData();
+					try {
+						String urlVariableString = (String) data.get(IdentityConstants.EventDataKeys.URL_VARIABLES);
+						if (urlVariableString == null) {
+							returnError(callback, AdobeError.UNEXPECTED_ERROR);
+							return;
+						}
+						callback.call(urlVariableString);
+					} catch (ClassCastException e) {
+						returnError(callback, AdobeError.UNEXPECTED_ERROR);
+						return;
 					}
 				}
 			},
