@@ -32,9 +32,11 @@ import com.adobe.marketing.mobile.edge.identity.AuthenticatedState
 import com.adobe.marketing.mobile.edge.identity.Identity
 import com.adobe.marketing.mobile.edge.identity.IdentityItem
 import com.adobe.marketing.mobile.edge.identity.IdentityMap
+/* Ad ID implementation (pt. 4/5)
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+/* Ad ID implementation (pt. 4/5) */*/
 
 private const val LOG_TAG = "Custom_Identity_Fragment"
 private const val ZERO_ADVERTISING_ID = "00000000-0000-0000-0000-000000000000"
@@ -108,6 +110,8 @@ class CustomIdentityFragment : Fragment() {
             Identity.removeIdentity(item, namespace)
         }
 
+        // Advertising identifier features
+
         // Button for Set Ad ID behavior
         // Sets the advertising identifier set in the corresponding textfield using the MobileCore API
         root.findViewById<Button>(R.id.btn_set_ad_id).setOnClickListener {
@@ -115,6 +119,12 @@ class CustomIdentityFragment : Fragment() {
             MobileCore.setAdvertisingIdentifier(adId)
         }
 
+        // Default hint for how to enable ad ID features; overwritten by actual implementation when ad ID features are enabled.
+        root.findViewById<Button>(R.id.btn_get_gaid).setOnClickListener {
+            Log.d(LOG_TAG, "For complete instructions on how to enable ad ID features, please see ./Documentation/README.md#advertising-identifier")
+        }
+
+        /* Ad ID implementation (pt. 5/5)
         // For details on implementation tips and differences between Google Play Services Ads vs AndroidX Ads,
         // please see the project Documentation -> AEPEdgeIdentity.md : Android Test App -> Testing tips with Android advertising identifier
         root.findViewById<Button>(R.id.btn_get_gaid).setOnClickListener {
@@ -128,6 +138,12 @@ class CustomIdentityFragment : Fragment() {
                     MobileCore.setAdvertisingIdentifier(adID)
                 }
             }
+        }
+        /* Ad ID implementation (pt. 5/5) */*/
+
+        root.findViewById<Button>(R.id.btn_set_ad_id_empty_string).setOnClickListener {
+            Log.d(LOG_TAG, "Setting advertising identifier to: \"\"")
+            MobileCore.setAdvertisingIdentifier("")
         }
 
         root.findViewById<Button>(R.id.btn_set_ad_id_null).setOnClickListener {

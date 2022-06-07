@@ -11,17 +11,19 @@
 
 package com.adobe.marketing.edge.identity.app.model
 
-import android.content.Context
-import android.util.Log
+
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.adobe.marketing.mobile.edge.identity.AuthenticatedState
+/* Ad ID implementation (pt. 2/5)
+import android.content.Context
+import android.util.Log
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
 import java.io.IOException
-
+/* Ad ID implementation (pt. 2/5) */*/
 private const val LOG_TAG = "Shared_View_Model"
 
 class SharedViewModel : ViewModel() {
@@ -117,6 +119,7 @@ class SharedViewModel : ViewModel() {
         _authenticatedStateId.value = value
     }
 
+    /* Ad ID implementation (pt. 3/5)
     /**
      * Async method that retrieves the ad ID from the `AdvertisingIdClient` (from Google's gms.ads SDK).
      * Sanitizes ad ID disabled and exceptions to the empty string (`""`), for easy use with `MobileCore` ad ID APIs.
@@ -145,6 +148,7 @@ class SharedViewModel : ViewModel() {
         Log.d(LOG_TAG, "Returning ad ID value: $adID")
         return adID
     }
+    /* Ad ID implementation (pt. 3/5) */*/
 
     // Models for Multiple Identities View
 

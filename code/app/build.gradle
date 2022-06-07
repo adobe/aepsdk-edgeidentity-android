@@ -63,8 +63,9 @@ dependencies {
     }
     implementation 'com.adobe.marketing.mobile:assurance:1+'
 
+    /* Ad ID implementation (pt. 1/5)
     implementation("com.google.android.gms:play-services-ads-lite:20.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-alpha06")
+    /* Ad ID implementation (pt. 1/5) */
     implementation("androidx.multidex:multidex:2.0.1")
 }

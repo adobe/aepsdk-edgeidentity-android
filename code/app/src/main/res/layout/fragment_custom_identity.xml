@@ -201,6 +201,13 @@
         tools:layout_editor_absoluteX="1dp">
 
         <Button
+            android:id="@+id/btn_set_ad_id_empty_string"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_set_ad_id_empty_string" />
+
+        <Button
             android:id="@+id/btn_set_ad_id_null"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

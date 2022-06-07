@@ -40,7 +40,8 @@
     <string name="btn_get_consents">Get Current Consents</string>
     <string name="btn_get_gaid">Update Ad ID With Current GAID</string>
     <string name="btn_set_ad_id">Set Ad ID</string>
-    <string name="btn_set_ad_id_all_zeros">Set Ad ID as all-zeros</string>
+    <string name="btn_set_ad_id_empty_string">Set Ad ID as Empty String</string>
+    <string name="btn_set_ad_id_all_zeros">Set Ad ID as All-Zeros</string>
     <string name="btn_set_ad_id_null">Set Ad ID as null</string>
 
     <!-- Labels -->
