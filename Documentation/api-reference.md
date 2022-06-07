@@ -14,7 +14,7 @@ Refer to the [Getting Started Guide](getting-started.md)
 
 ### setAdvertisingIdentifier
 
-When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ (Google Advertising ID) namespace. If the API is called with the empty string (`""`), `null`, or the all-zeros [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) string values, the GAID is removed from the XDM Identity Map (if previously set).
+When this API is called with a valid advertising identifier, the Identity for Edge Network extension includes the advertising identifier in the XDM Identity Map using the _GAID_ (Google Advertising ID) namespace. If the API is called with the empty string (`""`), `null`, or the all-zeros UUID string values, the GAID is removed from the XDM Identity Map (if previously set).
 
 The GAID is preserved between app upgrades, is saved and restored during the standard application backup process, and is removed at uninstall.
 
@@ -30,11 +30,14 @@ The GAID is preserved between app upgrades, is saved and restored during the sta
 #### Java
 
 ##### Syntax
+
 ```java
 public static void setAdvertisingIdentifier(final String advertisingIdentifier);
 ```
-- _identifier_ is a string that provides developers with a simple, standard system to continue to track the Ads through their apps.
+- _advertisingIdentifier_ is an ID string that provides developers with a simple, standard system to continue to track ads throughout their apps.
+
 ##### Example
+
 ```java
 ...
 @Override
@@ -80,7 +83,8 @@ public void onResume() {
 ```kotlin
 public fun setAdvertisingIdentifier(advertisingIdentifier: String)
 ```
-- _identifier_ is a string that provides developers with a simple, standard system to continue to track the Ads through their apps.
+- _advertisingIdentifier_ is an ID string that provides developers with a simple, standard system to continue to track ads throughout their apps.
+
 ##### Example
 <details>
   <summary><code>import ...</code></summary>
