@@ -34,7 +34,7 @@ The test app needs to be configured with the following edge extensions before it
 **Run demo application**
 
 1. In the test app, set your `ENVIRONMENT_FILE_ID` in `EdgeIdentityApplication.kt`.
-2. Select the `app` runnable with your favorite emulator and run the program.
+2. Select the `app` runnable with the desired emulator and run the program.
 
 > **Note**
 > To enable GAID related advertising identifier features, follow the [documentation](Documentation/README.md#advertising-identifier) for the required setup steps.
