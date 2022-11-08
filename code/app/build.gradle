@@ -13,6 +13,8 @@ spotless {
 }
 
 android {
+    namespace 'com.adobe.marketing.edge.identity.app'
+
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
