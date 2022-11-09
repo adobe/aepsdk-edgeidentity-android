@@ -25,7 +25,9 @@ spotless {
 }
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    namespace 'com.adobe.marketing.mobile.edge.identity'
+
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         minSdk rootProject.ext.minSdkVersion
@@ -183,7 +185,7 @@ signing {
 }
 
 task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneDebugUnitTest") {
-    def excludeRegex = ['**/ADB*.class', '**/BuildConfig.class']
+    def excludeRegex = ['**/BuildConfig.class']
     def debugTree = fileTree(dir: "${project.buildDir}/intermediates/javac/phoneDebug/classes/com/adobe/marketing/mobile", excludes: excludeRegex)
 
     additionalClassDirs.setFrom files([debugTree])
