@@ -15,6 +15,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +83,7 @@ class IdentityProperties {
 			identityMap.removeItem(previousAdIdItem, IdentityConstants.Namespaces.GAID);
 		}
 
-		if (Utils.isNullOrEmpty(newAdId)) {
+		if (StringUtils.isNullOrEmpty(newAdId)) {
 			return;
 		}
 
@@ -130,7 +131,7 @@ class IdentityProperties {
 			ecidItems != null &&
 			!ecidItems.isEmpty() &&
 			ecidItems.get(0) != null &&
-			!Utils.isNullOrEmpty(ecidItems.get(0).getId())
+			!StringUtils.isNullOrEmpty(ecidItems.get(0).getId())
 		) {
 			return new ECID(ecidItems.get(0).getId());
 		}
@@ -183,7 +184,7 @@ class IdentityProperties {
 			ecidItems != null &&
 			ecidItems.size() > 1 &&
 			ecidItems.get(1) != null &&
-			!Utils.isNullOrEmpty(ecidItems.get(1).getId())
+			!StringUtils.isNullOrEmpty(ecidItems.get(1).getId())
 		) {
 			return new ECID(ecidItems.get(1).getId());
 		}

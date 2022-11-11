@@ -15,16 +15,16 @@ final class IdentityConstants {
 
 	static final String LOG_TAG = "EdgeIdentity";
 	static final String EXTENSION_NAME = "com.adobe.edge.identity";
-	static final String EXTENSION_VERSION = "1.1.0";
+	static final String EXTENSION_VERSION = "2.0.0";
 
-	final class Default {
+	static final class Default {
 
 		static final String ZERO_ADVERTISING_ID = "00000000-0000-0000-0000-000000000000";
 
 		private Default() {}
 	}
 
-	final class EventSource {
+	static final class EventSource {
 
 		static final String BOOTED = "com.adobe.eventSource.booted";
 		static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
@@ -40,7 +40,7 @@ final class IdentityConstants {
 		private EventSource() {}
 	}
 
-	final class EventType {
+	static final class EventType {
 
 		static final String EDGE_CONSENT = "com.adobe.eventType.edgeConsent";
 		static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
@@ -51,7 +51,7 @@ final class IdentityConstants {
 		private EventType() {}
 	}
 
-	final class EventNames {
+	static final class EventNames {
 
 		static final String CONSENT_UPDATE_REQUEST_AD_ID = "Consent Update Request for Ad ID";
 		static final String IDENTITY_REQUEST_IDENTITY_ECID = "Edge Identity Request ECID";
@@ -66,7 +66,7 @@ final class IdentityConstants {
 		private EventNames() {}
 	}
 
-	final class EventDataKeys {
+	static final class EventDataKeys {
 
 		static final String ADVERTISING_IDENTIFIER = "advertisingidentifier";
 		static final String STATE_OWNER = "stateowner";
@@ -75,9 +75,9 @@ final class IdentityConstants {
 		private EventDataKeys() {}
 	}
 
-	final class SharedState {
+	static final class SharedState {
 
-		final class Hub {
+		static final class Hub {
 
 			static final String NAME = "com.adobe.module.eventhub";
 			static final String EXTENSIONS = "extensions";
@@ -85,7 +85,7 @@ final class IdentityConstants {
 			private Hub() {}
 		}
 
-		final class Configuration {
+		static final class Configuration {
 
 			static final String NAME = "com.adobe.module.configuration";
 			static final String EXPERIENCE_CLOUD_ORGID = "experienceCloud.org";
@@ -93,7 +93,7 @@ final class IdentityConstants {
 			private Configuration() {}
 		}
 
-		final class IdentityDirect {
+		static final class IdentityDirect {
 
 			static final String NAME = "com.adobe.module.identity";
 			static final String ECID = "mid";
@@ -104,7 +104,7 @@ final class IdentityConstants {
 		private SharedState() {}
 	}
 
-	final class Namespaces {
+	static final class Namespaces {
 
 		static final String ECID = "ECID";
 		static final String IDFA = "IDFA";
@@ -113,14 +113,14 @@ final class IdentityConstants {
 		private Namespaces() {}
 	}
 
-	final class XDMKeys {
+	static final class XDMKeys {
 
 		static final String IDENTITY_MAP = "identityMap";
 		static final String ID = "id";
 		static final String AUTHENTICATED_STATE = "authenticatedState";
 		static final String PRIMARY = "primary";
 
-		final class Consent {
+		static final class Consent {
 
 			static final String AD_ID = "adID";
 			static final String CONSENTS = "consents";
@@ -135,7 +135,7 @@ final class IdentityConstants {
 		private XDMKeys() {}
 	}
 
-	final class DataStoreKey {
+	static final class DataStoreKey {
 
 		static final String DATASTORE_NAME = EXTENSION_NAME;
 		static final String IDENTITY_PROPERTIES = "identity.properties";
@@ -145,7 +145,7 @@ final class IdentityConstants {
 		private DataStoreKey() {}
 	}
 
-	final class UrlKeys {
+	static final class UrlKeys {
 
 		static final String TS = "TS";
 		static final String EXPERIENCE_CLOUD_ORG_ID = "MCORGID";

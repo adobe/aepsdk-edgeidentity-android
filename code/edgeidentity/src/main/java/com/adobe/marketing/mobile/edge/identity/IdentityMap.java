@@ -15,6 +15,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.util.DataReader;
+import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +45,7 @@ public class IdentityMap {
 	public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
 		final List<IdentityItem> copyItems = new ArrayList<>();
 
-		if (Utils.isNullOrEmpty(namespace)) {
+		if (StringUtils.isNullOrEmpty(namespace)) {
 			return copyItems;
 		}
 
@@ -96,7 +98,7 @@ public class IdentityMap {
 			return;
 		}
 
-		if (Utils.isNullOrEmpty(namespace)) {
+		if (StringUtils.isNullOrEmpty(namespace)) {
 			MobileCore.log(
 				LoggingMode.DEBUG,
 				LOG_TAG,
@@ -167,7 +169,7 @@ public class IdentityMap {
 			return;
 		}
 
-		if (Utils.isNullOrEmpty(namespace)) {
+		if (StringUtils.isNullOrEmpty(namespace)) {
 			MobileCore.log(
 				LoggingMode.DEBUG,
 				LOG_TAG,
@@ -281,7 +283,7 @@ public class IdentityMap {
 	}
 
 	/**
-	 * Creates an {@link IdentityMap} from the given xdm formatted {@link Map}
+	 * Creates an {@link IdentityMap} from the given xdm formatted immutable {@link Map}
 	 * Returns null if the provided map is null/empty.
 	 * Return null if the provided map is not in Identity Map's XDM format.
 	 *
@@ -292,16 +294,12 @@ public class IdentityMap {
 			return null;
 		}
 
-		Map<String, Object> identityMapDict = null;
-		try {
-			identityMapDict = (HashMap<String, Object>) map.get(IdentityConstants.XDMKeys.IDENTITY_MAP);
-		} catch (ClassCastException e) {
-			MobileCore.log(
-				LoggingMode.ERROR,
-				LOG_TAG,
-				String.format("Failed to create IdentityMap from data. Exception thrown: %s", e.getLocalizedMessage())
-			);
-		}
+		final Map<String, Object> identityMapDict = DataReader.optTypedMap(
+			Object.class,
+			map,
+			IdentityConstants.XDMKeys.IDENTITY_MAP,
+			null
+		);
 
 		if (identityMapDict == null) {
 			return null;
@@ -310,14 +308,17 @@ public class IdentityMap {
 		final IdentityMap identityMap = new IdentityMap();
 		for (final String namespace : identityMapDict.keySet()) {
 			try {
-				final ArrayList<HashMap<String, Object>> idArr = (ArrayList<HashMap<String, Object>>) identityMapDict.get(
-					namespace
+				final List<Object> immutableIdList = DataReader.optTypedList(
+					Object.class,
+					identityMapDict,
+					namespace,
+					null
 				);
-				if (idArr == null) {
-					continue;
-				}
+				if (immutableIdList == null) continue;
 
-				for (Object idMap : idArr) {
+				final ArrayList<?> idMapList = new ArrayList<>(immutableIdList);
+
+				for (Object idMap : idMapList) {
 					final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
 
 					if (item != null) {

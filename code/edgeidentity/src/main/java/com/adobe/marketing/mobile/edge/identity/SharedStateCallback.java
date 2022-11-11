@@ -12,10 +12,11 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.SharedStateResult;
 import java.util.Map;
 
 /**
- * Callback for fetching Shared States from the outside of the extension class.
+ * Callback for streamlining  Shared State operations (within and outside the extension class)
  */
 interface SharedStateCallback {
 	/**
@@ -23,9 +24,9 @@ interface SharedStateCallback {
 	 *
 	 * @param stateOwner Shared state owner name
 	 * @param event      current event for which to fetch the shared state; if null is passed, the latest shared state will be returned
-	 * @return current shared state if found, null if shared state is pending or an error occurred
+	 * @return a {@code SharedStateResult} at the event; null if an error occurred
 	 */
-	Map<String, Object> getSharedState(final String stateOwner, final Event event);
+	SharedStateResult getSharedState(final String stateOwner, final Event event);
 
 	/**
 	 * Creates an XDM Shared State for the provided {@code event} with the specified {@code state}.
@@ -33,5 +34,5 @@ interface SharedStateCallback {
 	 * @param state data to be set as XDM Shared State
 	 * @param event current event for which to set the shared state; if null is passed, the next shared state version will be set
 	 */
-	boolean setXDMSharedEventState(final Map<String, Object> state, final Event event);
+	void createXDMSharedState(final Map<String, Object> state, final Event event);
 }

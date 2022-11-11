@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.util.JSONUtils;
 import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,7 +60,7 @@ class IdentityStorageService {
 
 		try {
 			final JSONObject jsonObject = new JSONObject(jsonString);
-			final Map<String, Object> propertyMap = Utils.toMap(jsonObject);
+			final Map<String, Object> propertyMap = JSONUtils.toMap(jsonObject);
 			return new IdentityProperties(propertyMap);
 		} catch (JSONException exception) {
 			MobileCore.log(

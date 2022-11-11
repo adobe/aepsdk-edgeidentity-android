@@ -30,9 +30,9 @@ public enum AuthenticatedState {
 	 */
 	LOGGED_OUT("loggedOut");
 
-	private String name;
+	private final String name;
 
-	private AuthenticatedState(final String name) {
+	AuthenticatedState(final String name) {
 		this.name = name;
 	}
 
