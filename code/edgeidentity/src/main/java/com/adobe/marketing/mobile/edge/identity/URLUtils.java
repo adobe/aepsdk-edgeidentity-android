@@ -13,6 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.util.StringUtils;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -48,7 +49,7 @@ class URLUtils {
 			urlFragment.append(IdentityConstants.UrlKeys.PAYLOAD);
 			urlFragment.append("=");
 
-			if (Utils.isNullOrEmpty(theIdString)) {
+			if (StringUtils.isNullOrEmpty(theIdString)) {
 				// No need to encode
 				urlFragment.append("null");
 			} else {
@@ -75,7 +76,7 @@ class URLUtils {
 	 */
 	static String appendKVPToVisitorIdString(final String originalString, final String key, final String value) {
 		// quickly return original string if key or value are empty
-		if (Utils.isNullOrEmpty(key) || Utils.isNullOrEmpty(value)) {
+		if (StringUtils.isNullOrEmpty(key) || StringUtils.isNullOrEmpty(value)) {
 			return originalString;
 		}
 
@@ -83,7 +84,7 @@ class URLUtils {
 		final String newUrlVariable = String.format("%s=%s", key, value);
 
 		// if the original string is not empty, we need to append a pipe before we return
-		if (Utils.isNullOrEmpty(originalString)) {
+		if (StringUtils.isNullOrEmpty(originalString)) {
 			return newUrlVariable;
 		} else {
 			return String.format("%s|%s", originalString, newUrlVariable);

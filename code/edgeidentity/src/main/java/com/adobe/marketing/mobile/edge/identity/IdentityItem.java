@@ -15,6 +15,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
+import com.adobe.marketing.mobile.util.DataReader;
+import com.adobe.marketing.mobile.util.DataReaderException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -166,23 +168,20 @@ public final class IdentityItem {
 		}
 
 		try {
-			final String id = (String) data.get(IdentityConstants.XDMKeys.ID);
-			AuthenticatedState authenticatedState = AuthenticatedState.fromString(
-				(String) data.get(IdentityConstants.XDMKeys.AUTHENTICATED_STATE)
+			final String id = DataReader.getString(data, IdentityConstants.XDMKeys.ID);
+
+			final AuthenticatedState authenticatedState = AuthenticatedState.fromString(
+				DataReader.optString(
+					data,
+					IdentityConstants.XDMKeys.AUTHENTICATED_STATE,
+					AuthenticatedState.AMBIGUOUS.getName()
+				)
 			);
 
-			if (authenticatedState == null) {
-				authenticatedState = AuthenticatedState.AMBIGUOUS;
-			}
-
-			boolean primary = false;
-
-			if (data.get(IdentityConstants.XDMKeys.PRIMARY) != null) {
-				primary = (boolean) data.get(IdentityConstants.XDMKeys.PRIMARY);
-			}
+			final boolean primary = DataReader.optBoolean(data, IdentityConstants.XDMKeys.PRIMARY, false);
 
 			return new IdentityItem(id, authenticatedState, primary);
-		} catch (ClassCastException e) {
+		} catch (final DataReaderException e) {
 			MobileCore.log(LoggingMode.DEBUG, LOG_TAG, "IdentityItem - Failed to create IdentityItem from data.");
 			return null;
 		}
