@@ -35,7 +35,6 @@ android {
 
         testInstrumentationRunner rootProject.ext.testInstrumentationRunner
         consumerProguardFiles "consumer-rules.pro"
-        multiDexEnabled true
     }
 
     flavorDimensions "target"
@@ -49,6 +48,12 @@ android {
         debug {
             testCoverageEnabled true
             debuggable true
+
+            // Functional tests will fail without this flag as this module exceeds the DEX limit.
+            // It is sufficient to enable this for debug as it is the type used for functional tests.
+            // Consuming apps are responsible for making changes to their gradle to overcome
+            // the DEX limit as necessary.
+            multiDexEnabled true
         }
 
         release {
