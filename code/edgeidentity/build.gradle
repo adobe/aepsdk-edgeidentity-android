@@ -17,7 +17,7 @@ spotless {
         toggleOffOn("format:off", "format:on")
         target "src/*/java/**/*.java"
         removeUnusedImports()
-        prettier(['prettier': '2.3.0', 'prettier-plugin-java': '1.1.0'])
+        prettier(['prettier': rootProject.ext.prettierVersion, 'prettier-plugin-java': rootProject.ext.prettierPluginJavaVersion])
                 .config(['parser': 'java', 'tabWidth': 4, 'useTabs': true, 'printWidth': 120])
         endWithNewline()
         licenseHeaderFile "../../config/formatter/adobe.header.txt"
@@ -48,12 +48,6 @@ android {
         debug {
             testCoverageEnabled true
             debuggable true
-
-            // Functional tests will fail without this flag as this module exceeds the DEX limit.
-            // It is sufficient to enable this for debug as it is the type used for functional tests.
-            // Consuming apps are responsible for making changes to their gradle to overcome
-            // the DEX limit as necessary.
-            multiDexEnabled true
         }
 
         release {
@@ -134,7 +128,7 @@ publishing {
             pom {
                 name = mavenRepoName
                 description = mavenRepoDescription
-                url = 'https://aep-sdks.gitbook.io'
+                url = 'https://developer.adobe.com/client-sdks'
                 licenses {
                     license {
                         name = 'Adobe Proprietary'
@@ -148,9 +142,9 @@ publishing {
                     }
                 }
                 scm {
-                    connection = 'scm:git:github.com//Adobe-Marketing-Cloud/acp-sdks.git'
-                    developerConnection = 'scm:git:ssh://github.com//Adobe-Marketing-Cloud/acp-sdks.git'
-                    url = 'https://github.com/Adobe-Marketing-Cloud/acp-sdks'
+                    connection = 'scm:git:github.com//adobe/aepsdk-edgeidentity-android.git'
+                    developerConnection = 'scm:git:ssh://github.com//adobe/aepsdk-edgeidentity-android.git'
+                    url = 'https://github.com/adobe/aepsdk-edgeidentity-android'
                 }
                 withXml {
                     def dependenciesNode = asNode().appendNode('dependencies')
@@ -224,7 +218,6 @@ task platformFunctionalTestJacocoReport(type: JacocoReport, dependsOn: "createPh
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.2.0'
 
     // Adobe Mobile SDK Core
     implementation "com.adobe.marketing.mobile:core:${rootProject.mavenCoreVersion}"
@@ -236,7 +229,6 @@ dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:2.0.0'
     testImplementation 'org.json:json:20180813'
 
-    androidTestImplementation "androidx.test:core:1.4.0"
     androidTestImplementation "androidx.test.ext:junit:${rootProject.ext.junitVersion}"
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     // Using older version of PowerMock as it supports minimum Android API < 26
