@@ -66,7 +66,7 @@ class Utils {
 
 		try {
 			return JSONUtils.toMap(new JSONObject(map));
-		} catch (final JSONException e) {
+		} catch (final JSONException | NullPointerException e) {
 			MobileCore.log(
 				LoggingMode.DEBUG,
 				LOG_TAG,
