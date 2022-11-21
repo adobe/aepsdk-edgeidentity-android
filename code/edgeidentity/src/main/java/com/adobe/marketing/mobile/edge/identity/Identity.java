@@ -50,6 +50,8 @@ public class Identity {
 
 	/**
 	 * Registers the extension with the Mobile SDK. This method should be called only once in your application class.
+	 *
+	 * @deprecated Use {@link MobileCore#registerExtensions(List, AdobeCallback)} with {@link Identity#EXTENSION} instead.
 	 */
 	@Deprecated
 	public static void registerExtension() {

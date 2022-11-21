@@ -51,6 +51,7 @@ class IdentityState {
 	/**
 	 * @return the current bootup status
 	 */
+	@VisibleForTesting
 	boolean hasBooted() {
 		return hasBooted;
 	}
@@ -80,8 +81,16 @@ class IdentityState {
 
 		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			// Wait for all extensions to be registered as forth coming logic depends on Identity Direct state
-			if (!areAllExtensionsRegistered(callback)) return false;
+			// Wait for all extensions to be registered as forthcoming logic depends on Identity Direct state.
+			// This is inferred via EventHub's shared state and is based on the assumption that EventHub
+			// sets its state only when all the extensions are registered initially.
+			final SharedStateResult eventHubStateResult = callback.getSharedState(
+				IdentityConstants.SharedState.Hub.NAME,
+				null
+			);
+			if (eventHubStateResult == null || eventHubStateResult.getStatus() != SharedStateStatus.SET) {
+				return false;
+			}
 
 			// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
 			final ECID directIdentityEcid = IdentityStorageService.loadEcidFromDirectIdentityPersistence();
@@ -97,7 +106,7 @@ class IdentityState {
 				);
 			}
 			// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
-			else if (isIdentityDirectRegistered(callback)) {
+			else if (isIdentityDirectRegistered(eventHubStateResult.getValue())) {
 				// If the direct Identity extension is registered, attempt to get its shared state
 				final SharedStateResult sharedStateResult = callback.getSharedState(
 					IdentityConstants.SharedState.IdentityDirect.NAME,
@@ -268,31 +277,18 @@ class IdentityState {
 
 	/**
 	 * Check if the Identity direct extension is registered by checking the EventHub's shared state list of registered extensions.
-	 * Callers are expected to verify if the EventHub has set its shared state before invoking this method.
 	 *
-	 * @param callback the {@link SharedStateCallback} to be used for fetching the EventHub Shared state; should not be null
-	 * @return true if the Identity direct extension is registered with the EventHub;
-	 *         false if the EventHub shared state is not set or, if Identity direct extension is not registered
+	 * @param eventHubSharedState a {@code Map<String, Object} representing the shared state of eventhub
+	 * @return true if the Identity direct extension is registered with the EventHub; false otherwise.
 	 */
-	private boolean isIdentityDirectRegistered(final SharedStateCallback callback) {
-		final SharedStateResult sharedStateResult = callback.getSharedState(
-			IdentityConstants.SharedState.Hub.NAME,
-			null
-		);
-
-		if (sharedStateResult == null || sharedStateResult.getStatus() != SharedStateStatus.SET) {
-			return false;
-		}
-
-		final Map<String, Object> registeredExtensionsWithHub = sharedStateResult.getValue();
-
-		if (registeredExtensionsWithHub == null) {
+	private boolean isIdentityDirectRegistered(final Map<String, Object> eventHubSharedState) {
+		if (eventHubSharedState == null) {
 			return false;
 		}
 
 		final Map<String, Object> extensions = DataReader.optTypedMap(
 			Object.class,
-			registeredExtensionsWithHub,
+			eventHubSharedState,
 			IdentityConstants.SharedState.Hub.EXTENSIONS,
 			null
 		);
@@ -345,21 +341,5 @@ class IdentityState {
 			.build();
 
 		MobileCore.dispatchEvent(consentEvent);
-	}
-
-	/**
-	 * Checks if all the extensions requested have been registered.
-	 * This is inferred via EventHub's shared state and is based on the assumption that EventHub
-	 * sets its state only when all the extensions are registered initially.
-	 *
-	 * @param callback the {@code SharedStateCallback} that should be used to fetch state
-	 * @return true if the shared state of event hub has been set; false otherwise
-	 */
-	boolean areAllExtensionsRegistered(final SharedStateCallback callback) {
-		final SharedStateResult sharedStateResult = callback.getSharedState(
-			IdentityConstants.SharedState.Hub.NAME,
-			null
-		);
-		return (sharedStateResult != null && sharedStateResult.getStatus() == SharedStateStatus.SET);
 	}
 }

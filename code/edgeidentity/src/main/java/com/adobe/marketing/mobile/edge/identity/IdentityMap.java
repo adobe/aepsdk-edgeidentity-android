@@ -307,34 +307,21 @@ public class IdentityMap {
 
 		final IdentityMap identityMap = new IdentityMap();
 		for (final String namespace : identityMapDict.keySet()) {
-			try {
-				final List<Object> immutableIdList = DataReader.optTypedList(
-					Object.class,
-					identityMapDict,
-					namespace,
-					null
-				);
-				if (immutableIdList == null) continue;
+			final List<Map<String, Object>> immutableIdList = DataReader.optTypedListOfMap(
+				Object.class,
+				identityMapDict,
+				namespace,
+				null
+			);
 
-				final ArrayList<?> idMapList = new ArrayList<>(immutableIdList);
+			if (immutableIdList == null) continue;
 
-				for (Object idMap : idMapList) {
-					final IdentityItem item = IdentityItem.fromData((Map<String, Object>) idMap);
+			for (final Map<String, Object> idMap : immutableIdList) {
+				final IdentityItem item = IdentityItem.fromData(idMap);
 
-					if (item != null) {
-						identityMap.addItemToMap(item, namespace, false);
-					}
+				if (item != null) {
+					identityMap.addItemToMap(item, namespace, false);
 				}
-			} catch (ClassCastException e) {
-				MobileCore.log(
-					LoggingMode.ERROR,
-					LOG_TAG,
-					String.format(
-						"Failed to parse data for namespace (%s). Exception thrown: %s",
-						namespace,
-						e.getLocalizedMessage()
-					)
-				);
 			}
 		}
 

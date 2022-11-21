@@ -24,8 +24,6 @@ import org.json.JSONObject;
 
 class Utils {
 
-	private static final long MILLISECONDS_PER_SECOND = 1000L;
-
 	private Utils() {}
 
 	static boolean isNullOrEmpty(final Map<String, Object> map) {
@@ -65,6 +63,10 @@ class Utils {
 		}
 
 		try {
+			// Core's JSONUtils retains null in resulting Map but, EdgeIdentity 1.0 implementaion
+			// filtered out the null value keys. One issue this may cause is sending empty objects to
+			// Edge Network.
+			// TODO: Add/verify tests to check side effects of retaining nulls in the resulting Map
 			return JSONUtils.toMap(new JSONObject(map));
 		} catch (final JSONException | NullPointerException e) {
 			MobileCore.log(
@@ -96,14 +98,5 @@ class Utils {
 		}
 
 		return deepCopy;
-	}
-
-	/**
-	 * Gets current unix timestamp in seconds.
-	 *
-	 * @return {code long} current timestamp
-	 */
-	static long getUnixTimeInSeconds() {
-		return System.currentTimeMillis() / MILLISECONDS_PER_SECOND;
 	}
 }

@@ -33,62 +33,6 @@ final class EventUtils {
 	}
 
 	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#REMOVE_IDENTITY}
-	 *
-	 * @param event the event to verify
-	 * @return true if both type and source match
-	 */
-	static boolean isRemoveIdentityEvent(final Event event) {
-		return (
-			event != null &&
-			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
-			IdentityConstants.EventSource.REMOVE_IDENTITY.equalsIgnoreCase(event.getSource())
-		);
-	}
-
-	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#UPDATE_IDENTITY}
-	 *
-	 * @param event the event to verify
-	 * @return true if both type and source match
-	 */
-	static boolean isUpdateIdentityEvent(final Event event) {
-		return (
-			event != null &&
-			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
-			IdentityConstants.EventSource.UPDATE_IDENTITY.equalsIgnoreCase(event.getSource())
-		);
-	}
-
-	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#EDGE_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_IDENTITY}
-	 *
-	 * @param event the event to verify
-	 * @return true if both type and source match
-	 */
-	static boolean isRequestIdentityEvent(final Event event) {
-		return (
-			event != null &&
-			IdentityConstants.EventType.EDGE_IDENTITY.equalsIgnoreCase(event.getType()) &&
-			IdentityConstants.EventSource.REQUEST_IDENTITY.equalsIgnoreCase(event.getSource())
-		);
-	}
-
-	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_CONTENT}
-	 *
-	 * @param event the event to verify
-	 * @return true if both type and source match
-	 */
-	static boolean isRequestContentEvent(final Event event) {
-		return (
-			event != null &&
-			IdentityConstants.EventType.GENERIC_IDENTITY.equalsIgnoreCase(event.getType()) &&
-			IdentityConstants.EventSource.REQUEST_CONTENT.equalsIgnoreCase(event.getSource())
-		);
-	}
-
-	/**
 	 * Reads the url variables flag from the event data, returns false if not present
 	 * Note: This API needs to be used with isRequestIdentityEvent API to determine the correct event type and event source
 	 * @param event the event to verify
@@ -98,20 +42,6 @@ final class EventUtils {
 		return (
 			event != null &&
 			DataReader.optBoolean(event.getEventData(), IdentityConstants.EventDataKeys.URL_VARIABLES, false)
-		);
-	}
-
-	/**
-	 * Checks if the provided {@code event} is of type {@link IdentityConstants.EventType#GENERIC_IDENTITY} and source {@link IdentityConstants.EventSource#REQUEST_RESET}
-	 *
-	 * @param event the event to verify
-	 * @return true if both type and source match
-	 */
-	static boolean isRequestResetEvent(final Event event) {
-		return (
-			event != null &&
-			IdentityConstants.EventType.GENERIC_IDENTITY.equalsIgnoreCase(event.getType()) &&
-			IdentityConstants.EventSource.REQUEST_RESET.equalsIgnoreCase(event.getSource())
 		);
 	}
 
@@ -150,7 +80,7 @@ final class EventUtils {
 	 */
 	static String getAdId(final Event event) {
 		final Map<String, Object> data = event.getEventData();
-		final String adID = DataReader.optString(data, IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER, "");
+		final String adID = DataReader.optString(data, IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER, null);
 
 		return (adID == null || IdentityConstants.Default.ZERO_ADVERTISING_ID.equals(adID) ? "" : adID);
 	}

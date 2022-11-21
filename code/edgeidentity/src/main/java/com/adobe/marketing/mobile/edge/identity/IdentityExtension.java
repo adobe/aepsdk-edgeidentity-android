@@ -22,7 +22,9 @@ import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResolution;
 import com.adobe.marketing.mobile.SharedStateResult;
+import com.adobe.marketing.mobile.SharedStateStatus;
 import com.adobe.marketing.mobile.util.StringUtils;
+import com.adobe.marketing.mobile.util.TimeUtils;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,14 +98,14 @@ class IdentityExtension extends Extension {
 			.registerEventListener(
 				IdentityConstants.EventType.GENERIC_IDENTITY,
 				IdentityConstants.EventSource.REQUEST_CONTENT,
-				this::handleEvent
+				this::handleRequestContent
 			);
 
 		getApi()
 			.registerEventListener(
 				IdentityConstants.EventType.GENERIC_IDENTITY,
 				IdentityConstants.EventSource.REQUEST_RESET,
-				this::handleEvent
+				this::handleRequestReset
 			);
 
 		// EDGE_IDENTITY event listeners
@@ -111,21 +113,21 @@ class IdentityExtension extends Extension {
 			.registerEventListener(
 				IdentityConstants.EventType.EDGE_IDENTITY,
 				IdentityConstants.EventSource.REQUEST_IDENTITY,
-				this::handleEvent
+				this::handleRequestIdentity
 			);
 
 		getApi()
 			.registerEventListener(
 				IdentityConstants.EventType.EDGE_IDENTITY,
 				IdentityConstants.EventSource.UPDATE_IDENTITY,
-				this::handleEvent
+				this::handleUpdateIdentities
 			);
 
 		getApi()
 			.registerEventListener(
 				IdentityConstants.EventType.EDGE_IDENTITY,
 				IdentityConstants.EventSource.REMOVE_IDENTITY,
-				this::handleEvent
+				this::handleRemoveIdentity
 			);
 
 		// HUB shared state event listener
@@ -133,40 +135,37 @@ class IdentityExtension extends Extension {
 			.registerEventListener(
 				IdentityConstants.EventType.HUB,
 				IdentityConstants.EventSource.SHARED_STATE,
-				this::handleEvent
+				this::handleIdentityDirectECIDUpdate
 			);
 	}
 
 	@Override
 	public boolean readyForEvent(@NonNull Event event) {
-		// Check if we are already booted
-		if (state.hasBooted()) return true;
+		if (!state.bootupIfReady(sharedStateHandle)) return false;
 
-		// Attempt to boot
-		return state.bootupIfReady(sharedStateHandle);
+		// Get url variables request depends on Configuration shared state
+		// Wait for configuration state to be set before processing such an event.
+		if (EventUtils.isGetUrlVariablesRequestEvent(event)) {
+			final SharedStateResult configurationStateResult = sharedStateHandle.getSharedState(
+				IdentityConstants.SharedState.Configuration.NAME,
+				event
+			);
+
+			return (configurationStateResult != null && configurationStateResult.getStatus() == SharedStateStatus.SET);
+		}
+
+		return true;
 	}
 
 	/**
-	 * Responsible for handling the incoming events that this extension is registered for.
+	 * Handles events requesting for identifiers. Dispatches a response event containing requested identifiers.
+	 * @param event the identity request event
 	 */
-	@VisibleForTesting
-	void handleEvent(@NonNull final Event event) {
-		if (EventUtils.isRequestIdentityEvent(event)) {
-			if (EventUtils.isGetUrlVariablesRequestEvent(event)) {
-				handleUrlVariablesRequest(event);
-			} else {
-				handleIdentityRequest(event);
-			}
-		} else if (EventUtils.isRequestContentEvent(event)) {
-			handleRequestContent(event);
-		} else if (EventUtils.isUpdateIdentityEvent(event)) {
-			handleUpdateIdentities(event);
-		} else if (EventUtils.isRemoveIdentityEvent(event)) {
-			handleRemoveIdentity(event);
-		} else if (EventUtils.isRequestResetEvent(event)) {
-			handleRequestReset(event);
-		} else if (EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.IdentityDirect.NAME, event)) {
-			handleIdentityDirectECIDUpdate(event);
+	void handleRequestIdentity(@NonNull final Event event) {
+		if (EventUtils.isGetUrlVariablesRequestEvent(event)) {
+			handleUrlVariablesRequest(event);
+		} else {
+			handleGetIdentifiersRequest(event);
 		}
 	}
 
@@ -175,7 +174,7 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the identity request {@link Event}
 	 */
-	private void handleUrlVariablesRequest(final Event event) {
+	private void handleUrlVariablesRequest(@NonNull final Event event) {
 		final SharedStateResult configSharedStateResult = sharedStateHandle.getSharedState(
 			IdentityConstants.SharedState.Configuration.NAME,
 			event
@@ -209,7 +208,7 @@ class IdentityExtension extends Extension {
 		}
 
 		final String urlVariablesString = URLUtils.generateURLVariablesPayload(
-			String.valueOf(Utils.getUnixTimeInSeconds()),
+			String.valueOf(TimeUtils.getUnixTimeInSeconds()),
 			ecidString,
 			orgId
 		);
@@ -223,7 +222,7 @@ class IdentityExtension extends Extension {
 	 * @param event the identity request {@link Event}
 	 * @param urlVariables {@link String} representing the urlVariables encoded string
 	 */
-	private void handleUrlVariableResponse(final Event event, final String urlVariables) {
+	void handleUrlVariableResponse(@NonNull final Event event, final String urlVariables) {
 		handleUrlVariableResponse(event, urlVariables, null);
 	}
 
@@ -234,7 +233,7 @@ class IdentityExtension extends Extension {
 	 * @param urlVariables {@link String} representing the urlVariables encoded string
 	 * @param errorMsg {@link String} representing error encountered while generating the urlVariables string
 	 */
-	private void handleUrlVariableResponse(final Event event, final String urlVariables, final String errorMsg) {
+	void handleUrlVariableResponse(@NonNull final Event event, final String urlVariables, final String errorMsg) {
 		Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
 			IdentityConstants.EventType.EDGE_IDENTITY,
@@ -262,8 +261,11 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the edge update identity {@link Event}
 	 */
-	private void handleUpdateIdentities(final Event event) {
-		final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+	void handleUpdateIdentities(@NonNull final Event event) {
+		final Map<String, Object> eventData = event.getEventData();
+
+		if (eventData == null) return; // TODO: Add log message when logging changes are made
+
 		final IdentityMap map = IdentityMap.fromXDMMap(eventData);
 
 		if (map == null) {
@@ -284,8 +286,11 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the edge remove identity request {@link Event}
 	 */
-	private void handleRemoveIdentity(final Event event) {
-		final Map<String, Object> eventData = event.getEventData(); // do not need to null check on eventData, as they are done on listeners
+	void handleRemoveIdentity(@NonNull final Event event) {
+		final Map<String, Object> eventData = event.getEventData();
+
+		if (eventData == null) return; // TODO: Add log message when logging changes are made
+
 		final IdentityMap map = IdentityMap.fromXDMMap(eventData);
 
 		if (map == null) {
@@ -306,9 +311,9 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the identity request {@link Event}
 	 */
-	private void handleIdentityRequest(final Event event) {
-		Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
-		Event responseEvent = new Event.Builder(
+	private void handleGetIdentifiersRequest(@NonNull final Event event) {
+		final Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
+		final Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
 			IdentityConstants.EventType.EDGE_IDENTITY,
 			IdentityConstants.EventSource.RESPONSE_IDENTITY
@@ -325,7 +330,7 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the identity request reset {@link Event}
 	 */
-	private void handleRequestReset(final Event event) {
+	void handleRequestReset(@NonNull final Event event) {
 		state.resetIdentifiers();
 		shareIdentityXDMSharedState(event);
 
@@ -346,7 +351,11 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the shared state update {@link Event}
 	 */
-	private void handleIdentityDirectECIDUpdate(final Event event) {
+	void handleIdentityDirectECIDUpdate(@NonNull final Event event) {
+		if (!EventUtils.isSharedStateUpdateFor(IdentityConstants.SharedState.IdentityDirect.NAME, event)) {
+			return;
+		}
+
 		final SharedStateResult identitySharedStateResult = sharedStateHandle.getSharedState(
 			IdentityConstants.SharedState.IdentityDirect.NAME,
 			event
@@ -372,7 +381,7 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param event the {@link Event} containing advertising identifier data
 	 */
-	private void handleRequestContent(final Event event) {
+	void handleRequestContent(@NonNull final Event event) {
 		if (!EventUtils.isAdIdEvent(event)) {
 			return;
 		}
