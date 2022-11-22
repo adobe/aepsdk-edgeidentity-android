@@ -27,7 +27,6 @@ import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Defines the public APIs for the AEP Edge Identity extension.
@@ -35,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 public class Identity {
 
 	public static final Class<? extends Extension> EXTENSION = IdentityExtension.class;
-	private static final long CALLBACK_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
+	private static final long CALLBACK_TIMEOUT_MILLIS = 500L;
 
 	private Identity() {}
 
