@@ -16,6 +16,8 @@ import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.*;
 import static org.junit.Assert.*;
 
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
 import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
@@ -67,10 +69,7 @@ public class IdentityResetHandlingTest {
 		assertNotEquals(beforeResetECID, newECID);
 
 		// verify edge reset complete event dispatched
-		List<Event> resetCompleteEvent = getDispatchedEventsWith(
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESET_COMPLETE
-		);
+		List<Event> resetCompleteEvent = getDispatchedEventsWith(EventType.EDGE_IDENTITY, EventSource.RESET_COMPLETE);
 		assertEquals(1, resetCompleteEvent.size());
 
 		// verify shared state is updated

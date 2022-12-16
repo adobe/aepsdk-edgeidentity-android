@@ -26,6 +26,8 @@ import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
@@ -120,8 +122,8 @@ public class IdentityTests {
 			// verify the dispatched event details
 			final Event dispatchedEvent = eventCaptor.getValue();
 			assertEquals(IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID, dispatchedEvent.getName());
-			assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-			assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
+			assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+			assertEquals(EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
 			assertNull(dispatchedEvent.getEventData());
 
 			// verify callback responses
@@ -382,8 +384,8 @@ public class IdentityTests {
 		// verify the dispatched event details
 		final Event dispatchedEvent = eventCaptor.getValue();
 		assertEquals(IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES, dispatchedEvent.getName());
-		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-		assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
 		assertTrue(dispatchedEvent.getEventData().containsKey("urlvariables"));
 		assertTrue((boolean) dispatchedEvent.getEventData().get("urlvariables"));
 
@@ -453,8 +455,8 @@ public class IdentityTests {
 
 		final Event dispatchedEvent = eventCaptor.getValue();
 		assertEquals(IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES, dispatchedEvent.getName());
-		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-		assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
 		assertTrue(dispatchedEvent.getEventData().containsKey("urlvariables"));
 		assertTrue((boolean) dispatchedEvent.getEventData().get("urlvariables"));
 
@@ -624,8 +626,8 @@ public class IdentityTests {
 		// verify the dispatched event details
 		Event dispatchedEvent = eventCaptor.getValue();
 		assertEquals(IdentityConstants.EventNames.UPDATE_IDENTITIES, dispatchedEvent.getName());
-		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-		assertEquals(IdentityConstants.EventSource.UPDATE_IDENTITY, dispatchedEvent.getSource());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(EventSource.UPDATE_IDENTITY, dispatchedEvent.getSource());
 		assertEquals(map.asXDMMap(), dispatchedEvent.getEventData());
 	}
 
@@ -678,8 +680,8 @@ public class IdentityTests {
 
 		final Event dispatchedEvent = eventCaptor.getValue();
 		assertEquals(IdentityConstants.EventNames.REMOVE_IDENTITIES, dispatchedEvent.getName());
-		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-		assertEquals(IdentityConstants.EventSource.REMOVE_IDENTITY, dispatchedEvent.getSource());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(EventSource.REMOVE_IDENTITY, dispatchedEvent.getSource());
 
 		final IdentityMap expectedIdentityMap = new IdentityMap();
 		expectedIdentityMap.addItem(sampleItem, "namespace");
@@ -741,8 +743,8 @@ public class IdentityTests {
 		// verify the dispatched event details
 		final Event dispatchedEvent = eventCaptor.getValue();
 		assertEquals(IdentityConstants.EventNames.REQUEST_IDENTITIES, dispatchedEvent.getName());
-		assertEquals(IdentityConstants.EventType.EDGE_IDENTITY, dispatchedEvent.getType());
-		assertEquals(IdentityConstants.EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(EventSource.REQUEST_IDENTITY, dispatchedEvent.getSource());
 		assertNull(dispatchedEvent.getEventData());
 
 		// verify callback responses
@@ -994,8 +996,8 @@ public class IdentityTests {
 	private Event buildIdentityResponseEvent(final Map<String, Object> eventData) {
 		return new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESPONSE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.RESPONSE_IDENTITY
 		)
 			.setEventData(eventData)
 			.build();
@@ -1004,8 +1006,8 @@ public class IdentityTests {
 	private Event buildUrlVariablesResponseEvent(final Map<String, Object> eventData) {
 		return new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESPONSE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.RESPONSE_IDENTITY
 		)
 			.setEventData(eventData)
 			.build();

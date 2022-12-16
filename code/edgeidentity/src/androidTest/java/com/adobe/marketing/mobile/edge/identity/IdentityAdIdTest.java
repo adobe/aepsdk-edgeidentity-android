@@ -18,6 +18,8 @@ import static org.junit.Assert.assertEquals;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
 import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
@@ -316,7 +318,7 @@ public class IdentityAdIdTest {
 	 * APIs are properly dispatched. Verifies:
 	 * 1. Event type and source
 	 * 2. Event data/properties as required for proper ad ID functionality
-	 * @param isGenericIdentityEventAdIdEvent true if the expected {@link com.adobe.marketing.mobile.edge.identity.IdentityConstants.EventType#GENERIC_IDENTITY}
+	 * @param isGenericIdentityEventAdIdEvent true if the expected {@link EventType#GENERIC_IDENTITY}
 	 *                                           event should be an ad ID event, false otherwise
 	 * @param expectedConsentValue the expected consent value in the format {@link IdentityConstants.XDMKeys.Consent#YES}
 	 *                                or {@link IdentityConstants.XDMKeys.Consent#NO}; however, if consent event should not be dispatched, use null
@@ -326,18 +328,15 @@ public class IdentityAdIdTest {
 		throws Exception {
 		// Check the event type and source
 		List<Event> dispatchedGenericIdentityEvents = getDispatchedEventsWith(
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_CONTENT
+			EventType.GENERIC_IDENTITY,
+			EventSource.REQUEST_CONTENT
 		);
 		// Verify Generic Identity event
 		assertEquals(1, dispatchedGenericIdentityEvents.size());
 		Event genericIdentityEvent = dispatchedGenericIdentityEvents.get(0);
 		assertEquals(isGenericIdentityEventAdIdEvent, EventUtils.isAdIdEvent(genericIdentityEvent));
 		// Verify Edge Consent event
-		List<Event> dispatchedConsentEvents = getDispatchedEventsWith(
-			IdentityConstants.EventType.EDGE_CONSENT,
-			IdentityConstants.EventSource.UPDATE_CONSENT
-		);
+		List<Event> dispatchedConsentEvents = getDispatchedEventsWith(EventType.CONSENT, EventSource.UPDATE_CONSENT);
 		assertEquals(StringUtils.isNullOrEmpty(expectedConsentValue) ? 0 : 1, dispatchedConsentEvents.size());
 		if (!StringUtils.isNullOrEmpty(expectedConsentValue)) {
 			Map<String, String> consentDataMap = flattenMap(dispatchedConsentEvents.get(0).getEventData());
@@ -372,8 +371,8 @@ public class IdentityAdIdTest {
 	}
 
 	/**
-	 * Dispatches an event using the MobileCore dispatchEvent API. Event has type {@link com.adobe.marketing.mobile.edge.identity.IdentityConstants.EventType#GENERIC_IDENTITY}
-	 * and source {@link com.adobe.marketing.mobile.edge.identity.IdentityConstants.EventSource#REQUEST_CONTENT}.
+	 * Dispatches an event using the MobileCore dispatchEvent API. Event has type {@link EventType#GENERIC_IDENTITY}
+	 * and source {@link EventSource#REQUEST_CONTENT}.
 	 * This is the combination of event type and source that the ad ID listener will capture, and this
 	 * method helps set up test cases that verify the ad ID is not modified if the advertisingIdentifier
 	 * property is not present in the correct format
@@ -381,8 +380,8 @@ public class IdentityAdIdTest {
 	private void dispatchGenericIdentityNonAdIdEvent() {
 		Event genericIdentityNonAdIdEvent = new Event.Builder(
 			"Test event",
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_CONTENT
+			EventType.GENERIC_IDENTITY,
+			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(
 				new HashMap<String, Object>() {

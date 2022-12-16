@@ -28,6 +28,8 @@ import static org.mockito.Mockito.when;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
@@ -788,11 +790,7 @@ public class IdentityStateTests {
 	 * @return
 	 */
 	private Event fakeGenericIdentityEvent(final String adId) {
-		return new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		return new Event.Builder("Test event", EventType.GENERIC_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{

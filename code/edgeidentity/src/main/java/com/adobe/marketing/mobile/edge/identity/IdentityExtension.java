@@ -16,6 +16,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.Extension;
 import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.SharedStateResolution;
@@ -72,6 +74,11 @@ class IdentityExtension extends Extension {
 	}
 
 	@Override
+	protected String getFriendlyName() {
+		return IdentityConstants.EXTENSION_FRIENDLY_NAME;
+	}
+
+	@Override
 	protected String getVersion() {
 		return IdentityConstants.EXTENSION_VERSION;
 	}
@@ -82,13 +89,13 @@ class IdentityExtension extends Extension {
 	 * <p>
 	 * The following listeners are registered during this extension's registration.
 	 * <ul>
-	 *     <li> EventType {@link IdentityConstants.EventType#GENERIC_IDENTITY} and EventSource {@link IdentityConstants.EventSource#REQUEST_CONTENT}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.EventSource#REQUEST_IDENTITY}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.EventSource#UPDATE_IDENTITY}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.EventSource#REMOVE_IDENTITY}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.EventSource#REQUEST_CONTENT}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#GENERIC_IDENTITY} and EventSource {@link IdentityConstants.EventSource#REQUEST_RESET}</li>
-	 *     <li> EventType {@link IdentityConstants.EventType#HUB} and EventSource {@link IdentityConstants.EventSource#SHARED_STATE}</li>
+	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_IDENTITY}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
+	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_RESET}</li>
+	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -98,48 +105,22 @@ class IdentityExtension extends Extension {
 
 		// GENERIC_IDENTITY event listeners
 		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.GENERIC_IDENTITY,
-				IdentityConstants.EventSource.REQUEST_CONTENT,
-				this::handleRequestContent
-			);
+			.registerEventListener(EventType.GENERIC_IDENTITY, EventSource.REQUEST_CONTENT, this::handleRequestContent);
 
-		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.GENERIC_IDENTITY,
-				IdentityConstants.EventSource.REQUEST_RESET,
-				this::handleRequestReset
-			);
+		getApi().registerEventListener(EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET, this::handleRequestReset);
 
 		// EDGE_IDENTITY event listeners
 		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.EDGE_IDENTITY,
-				IdentityConstants.EventSource.REQUEST_IDENTITY,
-				this::handleRequestIdentity
-			);
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY, this::handleRequestIdentity);
 
 		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.EDGE_IDENTITY,
-				IdentityConstants.EventSource.UPDATE_IDENTITY,
-				this::handleUpdateIdentities
-			);
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.UPDATE_IDENTITY, this::handleUpdateIdentities);
 
 		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.EDGE_IDENTITY,
-				IdentityConstants.EventSource.REMOVE_IDENTITY,
-				this::handleRemoveIdentity
-			);
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REMOVE_IDENTITY, this::handleRemoveIdentity);
 
 		// HUB shared state event listener
-		getApi()
-			.registerEventListener(
-				IdentityConstants.EventType.HUB,
-				IdentityConstants.EventSource.SHARED_STATE,
-				this::handleIdentityDirectECIDUpdate
-			);
+		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
 	}
 
 	@Override
@@ -243,8 +224,8 @@ class IdentityExtension extends Extension {
 	) {
 		Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_URL_VARIABLES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESPONSE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.RESPONSE_IDENTITY
 		)
 			.setEventData(
 				new HashMap<String, Object>() {
@@ -328,8 +309,8 @@ class IdentityExtension extends Extension {
 		final Map<String, Object> xdmData = state.getIdentityProperties().toXDMData(false);
 		final Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_RESPONSE_CONTENT_ONE_TIME,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESPONSE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.RESPONSE_IDENTITY
 		)
 			.setEventData(xdmData)
 			.inResponseToEvent(event)
@@ -350,8 +331,8 @@ class IdentityExtension extends Extension {
 		// dispatch reset complete event
 		final Event responseEvent = new Event.Builder(
 			IdentityConstants.EventNames.RESET_IDENTITIES_COMPLETE,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.RESET_COMPLETE
+			EventType.EDGE_IDENTITY,
+			EventSource.RESET_COMPLETE
 		)
 			.inResponseToEvent(event)
 			.build();

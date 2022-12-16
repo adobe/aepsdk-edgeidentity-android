@@ -17,6 +17,8 @@ import static org.junit.Assert.*;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.edge.identity.util.IdentityTestConstants;
 import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
 import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
@@ -112,10 +114,7 @@ public class IdentityPublicAPITest {
 		waitForThreads(2000);
 
 		// verify no shares state change event dispatched
-		List<Event> dispatchedEvents = getDispatchedEventsWith(
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		);
+		List<Event> dispatchedEvents = getDispatchedEventsWith(EventType.HUB, EventSource.SHARED_STATE);
 		assertEquals(0, dispatchedEvents.size());
 
 		// verify xdm shared state is not disturbed
@@ -131,10 +130,7 @@ public class IdentityPublicAPITest {
 		waitForThreads(2000);
 
 		// verify no shares state change event dispatched
-		List<Event> dispatchedEvents = getDispatchedEventsWith(
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		);
+		List<Event> dispatchedEvents = getDispatchedEventsWith(EventType.HUB, EventSource.SHARED_STATE);
 		assertEquals(0, dispatchedEvents.size());
 
 		// verify xdm shared state is not disturbed

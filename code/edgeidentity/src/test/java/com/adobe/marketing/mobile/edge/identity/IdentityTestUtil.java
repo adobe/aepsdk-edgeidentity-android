@@ -12,6 +12,8 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.LoggingMode;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.util.JSONUtils;
@@ -74,11 +76,7 @@ class IdentityTestUtil {
 	 * Helper method to build remove identity request event with XDM formatted Identity map
 	 */
 	static Event buildRemoveIdentityRequest(final Map<String, Object> map) {
-		return new Event.Builder(
-			"Remove Identity Event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REMOVE_IDENTITY
-		)
+		return new Event.Builder("Remove Identity Event", EventType.EDGE_IDENTITY, EventSource.REMOVE_IDENTITY)
 			.setEventData(map)
 			.build();
 	}
@@ -96,11 +94,7 @@ class IdentityTestUtil {
 	 * Helper method to build update identity request event with XDM formatted Identity map
 	 */
 	static Event buildUpdateIdentityRequest(final Map<String, Object> map) {
-		return new Event.Builder(
-			"Update Identity Event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
-		)
+		return new Event.Builder("Update Identity Event", EventType.EDGE_IDENTITY, EventSource.UPDATE_IDENTITY)
 			.setEventData(map)
 			.build();
 	}

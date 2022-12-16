@@ -17,6 +17,8 @@ import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.Extension;
 import com.adobe.marketing.mobile.ExtensionError;
 import com.adobe.marketing.mobile.ExtensionErrorCallback;
@@ -86,8 +88,8 @@ public class Identity {
 
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_IDENTITY_ECID,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_IDENTITY
 		)
 			.build();
 
@@ -169,8 +171,8 @@ public class Identity {
 
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.IDENTITY_REQUEST_URL_VARIABLES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_IDENTITY
 		)
 			.setEventData(
 				new HashMap<String, Object>() {
@@ -237,8 +239,8 @@ public class Identity {
 
 		final Event updateIdentitiesEvent = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.UPDATE_IDENTITY
 		)
 			.setEventData(identityMap.asXDMMap(false))
 			.build();
@@ -269,8 +271,8 @@ public class Identity {
 
 		final Event removeIdentitiesEvent = new Event.Builder(
 			IdentityConstants.EventNames.REMOVE_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REMOVE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.REMOVE_IDENTITY
 		)
 			.setEventData(identityMap.asXDMMap(false))
 			.build();
@@ -296,8 +298,8 @@ public class Identity {
 
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.REQUEST_IDENTITIES,
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_IDENTITY
 		)
 			.build();
 

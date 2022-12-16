@@ -16,6 +16,8 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
@@ -326,8 +328,8 @@ class IdentityState {
 
 		final Event consentEvent = new Event.Builder(
 			IdentityConstants.EventNames.CONSENT_UPDATE_REQUEST_AD_ID,
-			IdentityConstants.EventType.EDGE_CONSENT,
-			IdentityConstants.EventSource.UPDATE_CONSENT
+			EventType.CONSENT,
+			EventSource.UPDATE_CONSENT
 		)
 			.setEventData(consentData)
 			.build();

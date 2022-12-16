@@ -27,6 +27,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.adobe.marketing.mobile.Event;
+import com.adobe.marketing.mobile.EventSource;
+import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.SharedStateResolution;
 import com.adobe.marketing.mobile.SharedStateResult;
@@ -68,41 +70,16 @@ public class IdentityExtensionTests {
 
 		// verify
 		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.GENERIC_IDENTITY),
-				eq(IdentityConstants.EventSource.REQUEST_CONTENT),
-				any()
-			);
+			.registerEventListener(eq(EventType.GENERIC_IDENTITY), eq(EventSource.REQUEST_CONTENT), any());
 		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.GENERIC_IDENTITY),
-				eq(IdentityConstants.EventSource.REQUEST_RESET),
-				any()
-			);
+			.registerEventListener(eq(EventType.GENERIC_IDENTITY), eq(EventSource.REQUEST_RESET), any());
 		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.EDGE_IDENTITY),
-				eq(IdentityConstants.EventSource.REQUEST_IDENTITY),
-				any()
-			);
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_IDENTITY), any());
 		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.EDGE_IDENTITY),
-				eq(IdentityConstants.EventSource.UPDATE_IDENTITY),
-				any()
-			);
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.UPDATE_IDENTITY), any());
 		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.EDGE_IDENTITY),
-				eq(IdentityConstants.EventSource.REMOVE_IDENTITY),
-				any()
-			);
-		verify(mockExtensionApi)
-			.registerEventListener(
-				eq(IdentityConstants.EventType.HUB),
-				eq(IdentityConstants.EventSource.SHARED_STATE),
-				any()
-			);
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REMOVE_IDENTITY), any());
+		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
 	}
@@ -116,6 +93,21 @@ public class IdentityExtensionTests {
 		extension = new IdentityExtension(mockExtensionApi);
 		final String moduleName = extension.getName();
 		assertEquals("getName should return the correct module name", IdentityConstants.EXTENSION_NAME, moduleName);
+	}
+
+	// ========================================================================================
+	// getFriendlyName
+	// ========================================================================================
+	@Test
+	public void test_getFriendlyName() {
+		extension = new IdentityExtension(mockExtensionApi);
+
+		final String extensionFriendlyName = extension.getFriendlyName();
+		assertEquals(
+			"getFriendlyName should return the correct friendly name",
+			IdentityConstants.EXTENSION_FRIENDLY_NAME,
+			extensionFriendlyName
+		);
 	}
 
 	// ========================================================================================
@@ -150,11 +142,7 @@ public class IdentityExtensionTests {
 	public void test_readyForEvent_GetUrlVariablesRequestButConfigurationStateUnavailable() {
 		// setup
 		when(mockIdentityState.bootupIfReady(any())).thenReturn(true);
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -183,11 +171,7 @@ public class IdentityExtensionTests {
 	public void test_readyForEvent_GetUrlVariablesRequest_ConfigurationStatePending() {
 		// setup
 		when(mockIdentityState.bootupIfReady(any())).thenReturn(true);
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -216,11 +200,7 @@ public class IdentityExtensionTests {
 	public void test_readyForEvent_GetUrlVariablesRequest_ConfigurationStateSet() {
 		// setup
 		when(mockIdentityState.bootupIfReady(any())).thenReturn(true);
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -268,12 +248,7 @@ public class IdentityExtensionTests {
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
-			.build();
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY).build();
 		final ArgumentCaptor<Event> responseEventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		// test
@@ -302,8 +277,8 @@ public class IdentityExtensionTests {
 	public void test_handleIdentityDirectECIDUpdate_notAnIdentityDirectStateUpdate() {
 		final Event event = new Event.Builder(
 			"Not an IdentityDirect State event",
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
+			EventType.HUB,
+			EventSource.SHARED_STATE
 		)
 			.setEventData(
 				new HashMap<String, Object>() {
@@ -324,11 +299,7 @@ public class IdentityExtensionTests {
 
 	@Test
 	public void test_handleIdentityDirectECIDUpdate_identityDirectStateResultIsNull() {
-		final Event event = new Event.Builder(
-			"IdentityDirect State event",
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		)
+		final Event event = new Event.Builder("IdentityDirect State event", EventType.HUB, EventSource.SHARED_STATE)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -366,11 +337,7 @@ public class IdentityExtensionTests {
 
 	@Test
 	public void test_handleIdentityDirectECIDUpdate_identityDirectStateIsNull() {
-		final Event event = new Event.Builder(
-			"IdentityDirect State event",
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		)
+		final Event event = new Event.Builder("IdentityDirect State event", EventType.HUB, EventSource.SHARED_STATE)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -408,11 +375,7 @@ public class IdentityExtensionTests {
 
 	@Test
 	public void test_handleIdentityDirectECIDUpdate_legacyEcidUpdateFailed() {
-		final Event event = new Event.Builder(
-			"IdentityDirect State event",
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		)
+		final Event event = new Event.Builder("IdentityDirect State event", EventType.HUB, EventSource.SHARED_STATE)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -457,11 +420,7 @@ public class IdentityExtensionTests {
 
 	@Test
 	public void test_handleIdentityDirectECIDUpdate_identityDirectStateValidECID() {
-		final Event event = new Event.Builder(
-			"IdentityDirect State event",
-			IdentityConstants.EventType.HUB,
-			IdentityConstants.EventSource.SHARED_STATE
-		)
+		final Event event = new Event.Builder("IdentityDirect State event", EventType.HUB, EventSource.SHARED_STATE)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -522,11 +481,7 @@ public class IdentityExtensionTests {
 	@Test
 	public void test_handleUrlVariablesRequest_whenOrgIdAndECIDNotPresent_returnsNull() {
 		// setup
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -571,11 +526,7 @@ public class IdentityExtensionTests {
 	@Test
 	public void test_handleUrlVariablesRequest_whenOrgIdPresentAndECIDNotPresent_returnsNull() {
 		// setup
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -631,11 +582,7 @@ public class IdentityExtensionTests {
 	@Test
 	public void test_handleUrlVariablesRequest_whenOrgIdAndECIDPresent_returnsValidUrlVariables() {
 		// setup
-		Event event = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event event = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
@@ -723,8 +670,8 @@ public class IdentityExtensionTests {
 		);
 		final Event updateIdentityEvent = new Event.Builder(
 			"Update Identity Event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.UPDATE_IDENTITY
 		)
 			.setEventData(identityXDM)
 			.build();
@@ -750,8 +697,8 @@ public class IdentityExtensionTests {
 		// test
 		final Event updateIdentityEvent = new Event.Builder(
 			"Update Identity Event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.UPDATE_IDENTITY
 		) // no event data
 			.build();
 		extension.handleUpdateIdentities(updateIdentityEvent);
@@ -774,8 +721,8 @@ public class IdentityExtensionTests {
 		// test
 		final Event updateIdentityEvent = new Event.Builder(
 			"Update Identity Event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.UPDATE_IDENTITY
+			EventType.EDGE_IDENTITY,
+			EventSource.UPDATE_IDENTITY
 		)
 			.setEventData(new HashMap<>())
 			.build();
@@ -883,8 +830,8 @@ public class IdentityExtensionTests {
 		// Setup
 		final Event event = new Event.Builder(
 			"Test Ad ID event",
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_CONTENT
+			EventType.GENERIC_IDENTITY,
+			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(
 				new HashMap<String, Object>() {
@@ -908,8 +855,8 @@ public class IdentityExtensionTests {
 		// Setup
 		final Event event = new Event.Builder(
 			"Not an Ad ID event",
-			IdentityConstants.EventType.GENERIC_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_CONTENT
+			EventType.GENERIC_IDENTITY,
+			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(
 				new HashMap<String, Object>() {
@@ -939,11 +886,7 @@ public class IdentityExtensionTests {
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 
-		Event resetEvent = new Event.Builder(
-			"Test event",
-			IdentityConstants.EventType.EDGE_IDENTITY,
-			IdentityConstants.EventSource.REQUEST_IDENTITY
-		)
+		Event resetEvent = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
 			.build();
 
 		extension.handleRequestReset(resetEvent);

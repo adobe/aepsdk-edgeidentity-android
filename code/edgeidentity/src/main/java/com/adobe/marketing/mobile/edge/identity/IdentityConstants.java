@@ -15,6 +15,7 @@ final class IdentityConstants {
 
 	static final String LOG_TAG = "EdgeIdentity";
 	static final String EXTENSION_NAME = "com.adobe.edge.identity";
+	static final String EXTENSION_FRIENDLY_NAME = "Edge Identity";
 	static final String EXTENSION_VERSION = "2.0.0";
 
 	static final class Default {
@@ -22,32 +23,6 @@ final class IdentityConstants {
 		static final String ZERO_ADVERTISING_ID = "00000000-0000-0000-0000-000000000000";
 
 		private Default() {}
-	}
-
-	static final class EventSource {
-
-		static final String REMOVE_IDENTITY = "com.adobe.eventSource.removeIdentity";
-		static final String REQUEST_CONTENT = "com.adobe.eventSource.requestContent";
-		static final String REQUEST_IDENTITY = "com.adobe.eventSource.requestIdentity";
-		static final String REQUEST_RESET = "com.adobe.eventSource.requestReset";
-		static final String RESET_COMPLETE = "com.adobe.eventSource.resetComplete";
-		static final String RESPONSE_IDENTITY = "com.adobe.eventSource.responseIdentity";
-		static final String SHARED_STATE = "com.adobe.eventSource.sharedState";
-		static final String UPDATE_CONSENT = "com.adobe.eventSource.updateConsent";
-		static final String UPDATE_IDENTITY = "com.adobe.eventSource.updateIdentity";
-
-		private EventSource() {}
-	}
-
-	static final class EventType {
-
-		static final String EDGE_CONSENT = "com.adobe.eventType.edgeConsent";
-		static final String EDGE_IDENTITY = "com.adobe.eventType.edgeIdentity";
-		static final String GENERIC_IDENTITY = "com.adobe.eventType.generic.identity";
-		static final String HUB = "com.adobe.eventType.hub";
-		static final String IDENTITY = "com.adobe.eventType.identity";
-
-		private EventType() {}
 	}
 
 	static final class EventNames {
