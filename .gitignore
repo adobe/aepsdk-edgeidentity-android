@@ -24,7 +24,6 @@ jacoco.exec
 
 # Application files
 *.apk
-*.aar
 *.aab
 
 # Dex files for ART/Dalvik VM

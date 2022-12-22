@@ -29,13 +29,9 @@ class EdgeIdentityApplication : Application() {
         // register AEP SDK extensions
         MobileCore.setApplication(this)
         MobileCore.setLogLevel(LoggingMode.VERBOSE)
-
-        Consent.registerExtension()
-        Identity.registerExtension()
-        Edge.registerExtension()
-        Assurance.registerExtension()
-
-        MobileCore.start {
+        MobileCore.registerExtensions(
+            listOf(Edge.EXTENSION, Identity.EXTENSION, Consent.EXTENSION, Assurance.EXTENSION)
+        ) {
             MobileCore.configureWithAppID(ENVIRONMENT_FILE_ID)
         }
     }
