@@ -21,6 +21,7 @@ import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.Extension;
 import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.SharedStateResolution;
+import com.adobe.marketing.mobile.SharedStateResolver;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
 import com.adobe.marketing.mobile.services.Log;
@@ -268,8 +269,10 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
+		// Add pending shared state to avoid race condition between updating and reading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.updateCustomerIdentifiers(map);
-		shareIdentityXDMSharedState(event);
+		resolver.resolve(state.getIdentityProperties().toXDMData(false));
 	}
 
 	/**
@@ -296,8 +299,10 @@ class IdentityExtension extends Extension {
 			return;
 		}
 
+		// Add pending shared state to avoid race condition between updating and reading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.removeCustomerIdentifiers(map);
-		shareIdentityXDMSharedState(event);
+		resolver.resolve(state.getIdentityProperties().toXDMData(false));
 	}
 
 	/**

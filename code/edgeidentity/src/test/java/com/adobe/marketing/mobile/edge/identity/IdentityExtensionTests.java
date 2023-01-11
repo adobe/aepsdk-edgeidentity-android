@@ -31,6 +31,7 @@ import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.SharedStateResolution;
+import com.adobe.marketing.mobile.SharedStateResolver;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
 import java.util.Collections;
@@ -50,6 +51,9 @@ public class IdentityExtensionTests {
 
 	@Mock
 	ExtensionApi mockExtensionApi;
+
+	@Mock
+	SharedStateResolver mockSharedStateResolver;
 
 	@Mock
 	IdentityState mockIdentityState;
@@ -660,6 +664,7 @@ public class IdentityExtensionTests {
 			})
 			.when(mockIdentityState)
 			.updateCustomerIdentifiers(any());
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 
@@ -682,7 +687,10 @@ public class IdentityExtensionTests {
 		verify(mockIdentityState).updateCustomerIdentifiers(identityMapCaptor.capture());
 		assertEquals(identityXDM, identityMapCaptor.getValue().asXDMMap());
 
-		verify(mockExtensionApi).createXDMSharedState(properties.toXDMData(false), updateIdentityEvent);
+		final ArgumentCaptor<Map<String, Object>> stateCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(mockExtensionApi).createPendingXDMSharedState(eq(updateIdentityEvent));
+		verify(mockSharedStateResolver).resolve(stateCaptor.capture());
+		assertEquals(properties.toXDMData(false), stateCaptor.getValue());
 		verify(mockExtensionApi, never()).dispatch(any());
 	}
 
@@ -761,6 +769,8 @@ public class IdentityExtensionTests {
 			.when(mockIdentityState)
 			.removeCustomerIdentifiers(any());
 
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
+
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 
 		// test
@@ -779,7 +789,8 @@ public class IdentityExtensionTests {
 		// verify shared state
 		final Map<String, Object> expectedState = properties.toXDMData(false);
 		final ArgumentCaptor<Map<String, Object>> stateCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(mockExtensionApi).createXDMSharedState(stateCaptor.capture(), eq(removeIdentityEvent));
+		verify(mockExtensionApi).createPendingXDMSharedState(eq(removeIdentityEvent));
+		verify(mockSharedStateResolver).resolve(stateCaptor.capture());
 		assertEquals(expectedState, stateCaptor.getValue());
 	}
 
