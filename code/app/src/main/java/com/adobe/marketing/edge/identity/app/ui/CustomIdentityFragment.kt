@@ -107,7 +107,9 @@ class CustomIdentityFragment : Fragment() {
             val isPrimary: Boolean = sharedViewModel.isPrimary.value ?: false
 
             val item = IdentityItem(identifier, authenticatedState, isPrimary)
-            Identity.removeIdentity(item, namespace)
+            if (namespace != null) {
+                Identity.removeIdentity(item, namespace)
+            }
         }
 
         // Advertising identifier features
