@@ -251,10 +251,14 @@ class IdentityExtension extends Extension {
 	 * @param event the edge update identity {@link Event}
 	 */
 	void handleUpdateIdentities(@NonNull final Event event) {
+		// Add pending shared state to avoid race condition between updating and reading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
+
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
 			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot update identifiers, event data is null.");
+			resolver.resolve(state.getIdentityProperties().toXDMData(false));
 			return;
 		}
 
@@ -266,11 +270,10 @@ class IdentityExtension extends Extension {
 				LOG_SOURCE,
 				"Failed to update identifiers as no identifiers were found in the event data."
 			);
+			resolver.resolve(state.getIdentityProperties().toXDMData(false));
 			return;
 		}
 
-		// Add pending shared state to avoid race condition between updating and reading identity map
-		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.updateCustomerIdentifiers(map);
 		resolver.resolve(state.getIdentityProperties().toXDMData(false));
 	}
@@ -281,10 +284,14 @@ class IdentityExtension extends Extension {
 	 * @param event the edge remove identity request {@link Event}
 	 */
 	void handleRemoveIdentity(@NonNull final Event event) {
+		// Add pending shared state to avoid race condition between updating and reading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
+
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
 			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot remove identifiers, event data is null.");
+			resolver.resolve(state.getIdentityProperties().toXDMData(false));
 			return;
 		}
 
@@ -296,11 +303,10 @@ class IdentityExtension extends Extension {
 				LOG_SOURCE,
 				"Failed to remove identifiers as no identifiers were found in the event data."
 			);
+			resolver.resolve(state.getIdentityProperties().toXDMData(false));
 			return;
 		}
 
-		// Add pending shared state to avoid race condition between updating and reading identity map
-		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.removeCustomerIdentifiers(map);
 		resolver.resolve(state.getIdentityProperties().toXDMData(false));
 	}
@@ -330,8 +336,10 @@ class IdentityExtension extends Extension {
 	 * @param event the identity request reset {@link Event}
 	 */
 	void handleRequestReset(@NonNull final Event event) {
+		// Add pending shared state to avoid race condition between updating and reading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		shareIdentityXDMSharedState(event);
+		resolver.resolve(state.getIdentityProperties().toXDMData(false));
 
 		// dispatch reset complete event
 		final Event responseEvent = new Event.Builder(
