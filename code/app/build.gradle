@@ -70,7 +70,12 @@ dependencies {
         transitive = false
     }
 
-    implementation fileTree(dir: 'libs', include: ['edge-release-2.0.0.aar', 'edgeconsent-release-2.0.0.aar'])
+    implementation ('com.adobe.marketing.mobile:edge:2.0.0-SNAPSHOT') {
+        transitive = false
+    }
+    implementation ('com.adobe.marketing.mobile:edgeconsent:2.0.0-SNAPSHOT') {
+        transitive = false
+    }
     implementation ('com.adobe.marketing.mobile:assurance:2.0.0-SNAPSHOT') {
         transitive = false
     }
