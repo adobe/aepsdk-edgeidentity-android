@@ -73,11 +73,13 @@ class IdentityExtension extends Extension {
 		return IdentityConstants.EXTENSION_NAME;
 	}
 
+	@NonNull
 	@Override
 	protected String getFriendlyName() {
 		return IdentityConstants.EXTENSION_FRIENDLY_NAME;
 	}
 
+	@NonNull
 	@Override
 	protected String getVersion() {
 		return IdentityConstants.EXTENSION_VERSION;

@@ -13,6 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
+import androidx.annotation.NonNull;
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
@@ -20,8 +21,6 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.Extension;
-import com.adobe.marketing.mobile.ExtensionError;
-import com.adobe.marketing.mobile.ExtensionErrorCallback;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
@@ -47,6 +46,7 @@ public class Identity {
 	 *
 	 * @return The version as {@code String}
 	 */
+	@NonNull
 	public static String extensionVersion() {
 		return IdentityConstants.EXTENSION_VERSION;
 	}
@@ -54,22 +54,19 @@ public class Identity {
 	/**
 	 * Registers the extension with the Mobile SDK. This method should be called only once in your application class.
 	 *
-	 * @deprecated Use {@link MobileCore#registerExtensions(List, AdobeCallback)} with {@link Identity#EXTENSION} instead.
+	 * @deprecated as of 2.0.0, use {@link MobileCore#registerExtensions(List, AdobeCallback)} with {@link Identity#EXTENSION} instead.
 	 */
 	@Deprecated
+	@SuppressWarnings("deprecation")
 	public static void registerExtension() {
 		MobileCore.registerExtension(
 			IdentityExtension.class,
-			new ExtensionErrorCallback<ExtensionError>() {
-				@Override
-				public void error(ExtensionError extensionError) {
-					Log.error(
-						LOG_TAG,
-						LOG_SOURCE,
-						"There was an error registering the Edge Identity extension: " + extensionError.getErrorName()
-					);
-				}
-			}
+			extensionError ->
+				Log.error(
+					LOG_TAG,
+					LOG_SOURCE,
+					"There was an error registering the Edge Identity extension: " + extensionError.getErrorName()
+				)
 		);
 	}
 
@@ -80,7 +77,7 @@ public class Identity {
 	 *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
 	 *                 eventuality of any error that occurred while getting the Experience Cloud ID
 	 */
-	public static void getExperienceCloudId(final AdobeCallback<String> callback) {
+	public static void getExperienceCloudId(@NonNull final AdobeCallback<String> callback) {
 		if (callback == null) {
 			Log.debug(LOG_TAG, LOG_SOURCE, "Unexpected null callback, provide a callback to retrieve current ECID.");
 			return;
@@ -95,7 +92,7 @@ public class Identity {
 
 		final AdobeCallbackWithError<Event> callbackWithError = new AdobeCallbackWithError<Event>() {
 			@Override
-			public void call(Event responseEvent) {
+			public void call(final Event responseEvent) {
 				if (responseEvent == null || responseEvent.getEventData() == null) {
 					returnError(callback, AdobeError.UNEXPECTED_ERROR);
 					return;
@@ -125,7 +122,7 @@ public class Identity {
 			}
 
 			@Override
-			public void fail(AdobeError adobeError) {
+			public void fail(final AdobeError adobeError) {
 				returnError(callback, adobeError);
 				Log.debug(
 					LOG_TAG,
@@ -159,7 +156,7 @@ public class Identity {
 	 *     	           If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
 	 *	               eventuality of any error that occurred while getting the identifiers query string
 	 */
-	public static void getUrlVariables(final AdobeCallback<String> callback) {
+	public static void getUrlVariables(@NonNull final AdobeCallback<String> callback) {
 		if (callback == null) {
 			Log.debug(
 				LOG_TAG,
@@ -231,7 +228,7 @@ public class Identity {
 	 *
 	 * @param identityMap The identifiers to add or update.
 	 */
-	public static void updateIdentities(final IdentityMap identityMap) {
+	public static void updateIdentities(@NonNull final IdentityMap identityMap) {
 		if (identityMap == null || identityMap.isEmpty()) {
 			Log.debug(LOG_TAG, LOG_SOURCE, "Unable to updateIdentities, IdentityMap is null or empty");
 			return;
@@ -255,7 +252,7 @@ public class Identity {
 	 * @param item      the {@link IdentityItem} to remove.
 	 * @param namespace The namespace of the identity to remove.
 	 */
-	public static void removeIdentity(final IdentityItem item, final String namespace) {
+	public static void removeIdentity(@NonNull final IdentityItem item, @NonNull final String namespace) {
 		if (StringUtils.isNullOrEmpty(namespace)) {
 			Log.debug(LOG_TAG, LOG_SOURCE, "Unable to removeIdentity, namespace is null or empty");
 			return;
@@ -286,7 +283,7 @@ public class Identity {
 	 *                 If an {@link AdobeCallbackWithError} is provided, an {@link AdobeError} can be returned in the
 	 *                 eventuality of any error that occurred while getting the stored identities.
 	 */
-	public static void getIdentities(final AdobeCallback<IdentityMap> callback) {
+	public static void getIdentities(@NonNull final AdobeCallback<IdentityMap> callback) {
 		if (callback == null) {
 			Log.debug(
 				LOG_TAG,

@@ -64,7 +64,23 @@ public class IdentityPublicAPITest {
 	@Test
 	public void testRegisterExtensionAPI() throws InterruptedException {
 		// test
-		// Identity.registerExtension() is called in the setup method
+		//noinspection deprecation
+		Identity.registerExtension();
+
+		// verify that the extension is registered with the correct version details
+		Map<String, String> sharedStateMap = flattenMap(
+			getSharedStateFor(IdentityTestConstants.SharedStateName.EVENT_HUB, 5000)
+		);
+		assertEquals(
+			IdentityConstants.EXTENSION_VERSION,
+			sharedStateMap.get("extensions.com.adobe.edge.identity.version")
+		);
+	}
+
+	@Test
+	public void testRegisterExtension_withClass() throws InterruptedException {
+		// test
+		// MobileCore.registerExtensions with Identity is called in the setup method
 
 		// verify that the extension is registered with the correct version details
 		Map<String, String> sharedStateMap = flattenMap(
