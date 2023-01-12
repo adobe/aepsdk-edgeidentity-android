@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.json.JSONObject;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -38,15 +37,6 @@ public class IdentityPublicAPITest {
 
 	@Rule
 	public TestRule rule = new SetupCoreRule();
-
-	// --------------------------------------------------------------------------------------------
-	// Setup
-	// --------------------------------------------------------------------------------------------
-
-	@Before
-	public void setup() throws Exception {
-		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
-	}
 
 	// --------------------------------------------------------------------------------------------
 	// Tests for GetExtensionVersion API
@@ -60,12 +50,14 @@ public class IdentityPublicAPITest {
 	// --------------------------------------------------------------------------------------------
 	// Tests for Register extension API
 	// --------------------------------------------------------------------------------------------
-
 	@Test
 	public void testRegisterExtensionAPI() throws InterruptedException {
 		// test
 		//noinspection deprecation
 		Identity.registerExtension();
+
+		// now register monitor extension and start the hub
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION), null);
 
 		// verify that the extension is registered with the correct version details
 		Map<String, String> sharedStateMap = flattenMap(
@@ -80,7 +72,7 @@ public class IdentityPublicAPITest {
 	@Test
 	public void testRegisterExtension_withClass() throws InterruptedException {
 		// test
-		// MobileCore.registerExtensions with Identity is called in the setup method
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
 
 		// verify that the extension is registered with the correct version details
 		Map<String, String> sharedStateMap = flattenMap(
@@ -98,6 +90,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateIdentitiesAPI() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.updateIdentities(
 			createIdentityMap("Email", "example@email.com", AuthenticatedState.AUTHENTICATED, true)
@@ -125,6 +119,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_nullData() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.updateIdentities(null);
 		waitForThreads(2000);
@@ -141,6 +137,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_emptyData() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.updateIdentities(new IdentityMap());
 		waitForThreads(2000);
@@ -157,6 +155,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_shouldReplaceExistingIdentities() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.updateIdentities(createIdentityMap("Email", "example@email.com"));
 		Identity.updateIdentities(
@@ -188,6 +188,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_withReservedNamespaces() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.updateIdentities(createIdentityMap("ECID", "newECID"));
 		Identity.updateIdentities(createIdentityMap("GAID", "<gaid>"));
@@ -215,6 +217,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_multipleNamespaceMap() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		IdentityMap map = new IdentityMap();
 		map.addItem(new IdentityItem("primary@email.com"), "Email");
@@ -247,6 +251,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testUpdateAPI_caseSensitiveNamespacesForCustomIdentifiers() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		IdentityMap map = new IdentityMap();
 		map.addItem(new IdentityItem("primary@email.com"), "Email");
@@ -277,6 +283,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetECID() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		String ecid = getExperienceCloudIdSync();
 
@@ -286,6 +294,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetExperienceCloudId_nullCallback() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		try {
 			Identity.getExperienceCloudId(null); // should not crash
@@ -300,6 +310,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetUrlVariables() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		setupConfiguration();
 		String urlVariables = getUrlVariablesSync();
@@ -309,6 +321,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetUrlVariables_nullCallback() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		try {
 			Identity.getUrlVariables(null); // should not crash
@@ -323,6 +337,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetIdentities() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// setup
 		// update Identities through API
 		IdentityMap map = new IdentityMap();
@@ -349,6 +365,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testGetIdentities_nullCallback() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		try {
 			Identity.getIdentities(null); // should not crash
@@ -363,6 +381,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testRemoveIdentity() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// setup
 		// update Identities through API
 		IdentityMap map = new IdentityMap();
@@ -398,6 +418,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testRemoveIdentity_nonExistentNamespace() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		Identity.removeIdentity(new IdentityItem("primary@email.com"), "Email");
 		waitForThreads(2000);
@@ -418,6 +440,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testRemoveIdentity_nameSpaceCaseSensitive() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// setup
 		// update Identities through API
 		Identity.updateIdentities(createIdentityMap("Email", "example@email.com"));
@@ -442,6 +466,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testRemoveIdentity_nonExistentItem() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// setup
 		// update Identities through API
 		Identity.updateIdentities(createIdentityMap("Email", "example@email.com"));
@@ -466,6 +492,8 @@ public class IdentityPublicAPITest {
 
 	@Test
 	public void testRemoveIdentity_doesNotRemoveECID() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
 		// test
 		String currentECID = getExperienceCloudIdSync();
 

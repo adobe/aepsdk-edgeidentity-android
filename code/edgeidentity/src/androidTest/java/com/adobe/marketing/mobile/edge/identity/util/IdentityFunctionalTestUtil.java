@@ -15,6 +15,7 @@ import static com.adobe.marketing.mobile.edge.identity.util.IdentityTestConstant
 import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.AdobeCallback;
@@ -53,12 +54,11 @@ public class IdentityFunctionalTestUtil {
 	 * core.
 	 * @param extensions the extensions that need to be registered
 	 * @param configuration the initial configuration update that needs to be applied
-	 * @throws InterruptedException if the wait time for extension registration has elapsed
 	 */
 	public static void registerExtensions(
 		final List<Class<? extends Extension>> extensions,
 		@Nullable final Map<String, Object> configuration
-	) throws InterruptedException {
+	) {
 		if (configuration != null) {
 			MobileCore.updateConfiguration(configuration);
 		}
@@ -66,7 +66,11 @@ public class IdentityFunctionalTestUtil {
 		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
 		MobileCore.registerExtensions(extensions, o -> latch.countDown());
 
-		latch.await(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+		try {
+			latch.await(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			fail("Failed to register extensions");
+		}
 		TestHelper.waitForThreads(2000);
 		resetTestExpectations();
 	}
