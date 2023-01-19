@@ -11,11 +11,9 @@
 
 package com.adobe.marketing.mobile.edge.identity.util;
 
-import static org.junit.Assert.fail;
-
-import android.app.Application;
-import android.content.Context;
 import android.content.SharedPreferences;
+import com.adobe.marketing.mobile.services.NamedCollection;
+import com.adobe.marketing.mobile.services.ServiceProvider;
 import java.util.ArrayList;
 
 /**
@@ -39,31 +37,9 @@ public class TestPersistenceHelper {
 	 * @param value     the new value
 	 */
 	public static void updatePersistence(final String datastore, final String key, final String value) {
-		final Application application = TestHelper.defaultApplication;
+		NamedCollection dataStore = ServiceProvider.getInstance().getDataStoreService().getNamedCollection(datastore);
 
-		if (application == null) {
-			fail(
-				"Unable to updatePersistence by TestPersistenceHelper. Application is null, fast failing the test case."
-			);
-		}
-
-		final Context context = application.getApplicationContext();
-
-		if (context == null) {
-			fail("Unable to updatePersistence by TestPersistenceHelper. Context is null, fast failing the test case.");
-		}
-
-		SharedPreferences sharedPreferences = context.getSharedPreferences(datastore, Context.MODE_PRIVATE);
-
-		if (sharedPreferences == null) {
-			fail(
-				"Unable to updatePersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
-			);
-		}
-
-		SharedPreferences.Editor editor = sharedPreferences.edit();
-		editor.putString(key, value);
-		editor.apply();
+		dataStore.setString(key, value);
 	}
 
 	/**
@@ -74,61 +50,22 @@ public class TestPersistenceHelper {
 	 * @return {@link String} value of persisted data. Null if data is not found in {@link SharedPreferences}
 	 */
 	public static String readPersistedData(final String datastore, final String key) {
-		final Application application = TestHelper.defaultApplication;
+		NamedCollection dataStore = ServiceProvider.getInstance().getDataStoreService().getNamedCollection(datastore);
 
-		if (application == null) {
-			fail(
-				"Unable to readPersistedData by TestPersistenceHelper. Application is null, fast failing the test case."
-			);
-		}
-
-		final Context context = application.getApplicationContext();
-
-		if (context == null) {
-			fail("Unable to readPersistedData by TestPersistenceHelper. Context is null, fast failing the test case.");
-		}
-
-		SharedPreferences sharedPreferences = context.getSharedPreferences(datastore, Context.MODE_PRIVATE);
-
-		if (sharedPreferences == null) {
-			fail(
-				"Unable to readPersistedData by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
-			);
-		}
-
-		return sharedPreferences.getString(key, null);
+		return dataStore.getString(key, null);
 	}
 
 	/**
 	 * Clears the Configuration and Consent extension's persisted data
 	 */
 	public static void resetKnownPersistence() {
-		final Application application = TestHelper.defaultApplication;
-
-		if (application == null) {
-			fail(
-				"Unable to resetPersistence by TestPersistenceHelper. Application is null, fast failing the test case."
-			);
-		}
-
-		final Context context = application.getApplicationContext();
-
-		if (context == null) {
-			fail("Unable to resetPersistence by TestPersistenceHelper. Context is null, fast failing the test case.");
-		}
-
 		for (String eachDatastore : knownDatastoreName) {
-			SharedPreferences sharedPreferences = context.getSharedPreferences(eachDatastore, Context.MODE_PRIVATE);
+			NamedCollection dataStore = ServiceProvider
+				.getInstance()
+				.getDataStoreService()
+				.getNamedCollection(eachDatastore);
 
-			if (sharedPreferences == null) {
-				fail(
-					"Unable to resetPersistence by TestPersistenceHelper. sharedPreferences is null, fast failing the test case."
-				);
-			}
-
-			SharedPreferences.Editor editor = sharedPreferences.edit();
-			editor.clear();
-			editor.apply();
+			dataStore.removeAll();
 		}
 	}
 }
