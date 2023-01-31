@@ -1,4 +1,4 @@
-# Adobe Experience Platform Identity for Edge Network Extension - Android
+# Adobe Experience Platform Identity for Edge Network Extension Android API Reference
 
 ## Prerequisites
 
@@ -35,13 +35,25 @@ public static String extensionVersion()
 ```java
 String extensionVersion = Identity.extensionVersion();
 ```
+
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun extensionVersion(): String
+```
+
+##### Example
+```kotlin
+val extensionVersion = Identity.extensionVersion()
+```
 ------
 
 ### getExperienceCloudId
 
 This API retrieves the Experience Cloud ID (ECID) that was generated when the app was initially launched. This ID is preserved between app upgrades, is saved and restored during the standard application backup process, and is removed at uninstall.
 
-> **Note**
+> **Note** 
 > The ECID value is returned via the `AdobeCallback`. When `AdobeCallbackWithError` is provided to this API, the timeout value is 500ms. If the operation times out or an unexpected error occurs, the `fail` method is called with the appropriate `AdobeError`.
 
 #### Java
@@ -61,6 +73,20 @@ Identity.getExperienceCloudId(new AdobeCallback<String>() {
          //Handle the ID returned here    
     }
 });
+```
+
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun getExperienceCloudId(callback: AdobeCallback<String>)
+```
+
+##### Example
+```kotlin
+Identity.getExperienceCloudId { id ->
+    //Handle the ID returned here
+}
 ```
 
 ------
@@ -88,6 +114,20 @@ Identity.getIdentities(new AdobeCallback<IdentityMap>() {
          //Handle the IdentityMap returned here    
     }
 });
+```
+
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun getIdentities(callback: AdobeCallback<IdentityMap>)
+```
+
+##### Example
+```kotlin
+Identity.getIdentities { identityMap ->
+  //Handle the IdentityMap returned here        
+}
 ```
 
 ------
@@ -128,6 +168,23 @@ Identity.getUrlVariables(new AdobeCallback<String>() {
 });
 ```
 
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun getUrlVariables(callback: AdobeCallback<String>)
+```
+
+##### Example
+```kotlin
+Identity.getUrlVariables { urlVariablesString ->
+  //handle the URL query parameter string here
+  //For example, open the URL in a webView      
+  val webView = findViewById<WebView>(R.id.your_webview) // initialize with your webView
+  webView.loadUrl("http://www.example.com?" + urlVariablesString)    
+}
+```
+
 ------
 
 ### registerExtension
@@ -155,6 +212,18 @@ import com.adobe.marketing.mobile.edge.identity.Identity
 Identity.registerExtension();
 ```
 
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun registerExtension()
+```
+
+##### Example
+```kotlin
+Identity.registerExtension()
+```
+
 ------
 
 ### removeIdentity
@@ -180,6 +249,19 @@ public static void removeIdentity(final IdentityItem item, final String namespac
 ```java
 IdentityItem item = new IdentityItem("user@example.com");
 Identity.removeIdentity(item, "Email");
+```
+
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun removeIdentity(item: IdentityItem, namespace: String)
+```
+
+##### Example
+```kotlin
+val item = IdentityItem("user@example.com")
+Identity.removeIdentity(item, "Email")
 ```
 
 ------
@@ -370,6 +452,22 @@ identityMap.addItem(item, "Email")
 Identity.updateIdentities(identityMap);
 ```
 
+
+#### Kotlin
+
+##### Syntax
+```kotlin
+fun updateIdentities(identityMap: IdentityMap)
+```
+
+##### Example
+```kotlin
+val item = IdentityItem("user@example.com")
+val identityMap = IdentityMap()
+identityMap.addItem(item, "Email")
+Identity.updateIdentities(identityMap)
+```
+
 ------
 
 ## Public Classes
@@ -415,6 +513,8 @@ For more information, please read an overview of the [Adobe Experience Platform 
 
 **Example**
 
+#### Java
+
 ```java
 // Construct
 IdentityMap identityMap = new IdentityMap();
@@ -437,6 +537,30 @@ List<String> namespaces = identityMap.getNamespaces();
 boolean hasNotIdentities = identityMap.isEmpty();
 ```
 
+#### Kotlin
+
+```kotlin
+// Construct
+val identityMap = IdentityMap()
+
+// Add an item
+val item = IdentityItem("user@example.com")
+identityMap.addItem(item, "Email")
+
+// Remove an item
+val item = IdentityItem("user@example.com")
+identityMap.removeItem(item, "Email")
+
+// Get a list of items for a given namespace
+val items = identityMap.getIdentityItemsForNamespace("Email")
+
+// Get a list of all namespaces used in current IdentityMap
+val namespaces = identityMap.getNamespaces()
+
+// Check if IdentityMap has no identities
+val hasNotIdentities = identityMap.isEmpty()
+```
+
 ------
 
 ### IdentityItem
@@ -446,6 +570,8 @@ Defines an identity to be included in an [IdentityMap](#identitymap).
 The format of the IdentityItem class is defined by the [XDM Identity Item Schema](https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md).
 
 **Example**
+
+#### Java
 
 ```java
 // Construct
@@ -462,6 +588,23 @@ AuthenticatedState state = item.getAuthenticatedState();
 boolean primary = item.isPrimary();
 ```
 
+#### Kotlin
+
+```kotlin
+// Construct
+val item = IdentityItem("identifier")
+
+val item = IdentityItem("identifier", AuthenticatedState.AUTHENTICATED, false)
+
+
+// Getters
+val id = item.getId()
+
+val state = item.getAuthenticatedState()
+
+val primary = item.isPrimary()
+```
+
 ------
 
 ### AuthenticatedState
@@ -476,10 +619,21 @@ The possible authenticated states are:
 
 **Syntax**
 
+#### Java
+
 ```java
 public enum AuthenticatedState {
     AMBIGUOUS("ambiguous"),
     AUTHENTICATED("authenticated"),
     LOGGED_OUT("loggedOut");
+}
+```
+#### Kotlin
+
+```kotlin
+enum class AuthenticatedState(val name: String) {
+    AMBIGUOUS("ambiguous"),
+    AUTHENTICATED("authenticated"),
+    LOGGED_OUT("loggedOut")
 }
 ```
