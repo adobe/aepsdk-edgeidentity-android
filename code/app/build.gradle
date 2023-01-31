@@ -63,13 +63,10 @@ dependencies {
 
     implementation project(':edgeidentity')
 
-    // TODO: Update these dependencies when all 2.0 artifacts are published to maven
-    // implementation "com.adobe.marketing.mobile:core:${rootProject.mavenCoreVersion}"
-    implementation 'com.adobe.marketing.mobile:core:2.0.0-SNAPSHOT'
-    implementation ('com.adobe.marketing.mobile:identity:2.0.0-SNAPSHOT') {
-        transitive = false
-    }
+    implementation "com.adobe.marketing.mobile:core:${rootProject.mavenCoreVersion}"
+    implementation 'com.adobe.marketing.mobile:identity:2.0.0'
 
+    // TODO: Update these dependencies when all 2.0 artifacts are published to maven
     implementation ('com.adobe.marketing.mobile:edge:2.0.0-SNAPSHOT') {
         transitive = false
     }
