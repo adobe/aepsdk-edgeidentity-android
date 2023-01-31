@@ -13,6 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
 
+import androidx.annotation.NonNull;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.MapUtils;
@@ -44,7 +45,8 @@ public class IdentityMap {
 	 * @param namespace namespace for the list of identities to retrieve
 	 * @return IdentityItem for the namespace
 	 */
-	public List<IdentityItem> getIdentityItemsForNamespace(final String namespace) {
+	@NonNull
+	public List<IdentityItem> getIdentityItemsForNamespace(@NonNull final String namespace) {
 		final List<IdentityItem> copyItems = new ArrayList<>();
 
 		if (StringUtils.isNullOrEmpty(namespace)) {
@@ -69,6 +71,7 @@ public class IdentityMap {
 	 *
 	 * @return a list of all the namespaces for this {@link IdentityMap}, or an empty string if this {@code IdentityMap} is empty
 	 */
+	@NonNull
 	public List<String> getNamespaces() {
 		return new ArrayList<>(identityItems.keySet());
 	}
@@ -77,20 +80,20 @@ public class IdentityMap {
 	 * Add an identity item which is used to clearly distinguish entities that are interacting
 	 * with digital experiences.
 	 *
-	 * @param item      {@link IdentityItem} to be added to the given {@code namespace}
-	 * @param namespace the namespace integration code or namespace ID of the identity
+	 * @param item      {@link IdentityItem} to be added to the given {@code namespace}; should not be null
+	 * @param namespace the namespace integration code or namespace ID of the identity; should not be null
 	 */
-	public void addItem(final IdentityItem item, final String namespace) {
+	public void addItem(@NonNull final IdentityItem item, @NonNull final String namespace) {
 		addItem(item, namespace, false);
 	}
 
 	/**
 	 * Remove a single {@link IdentityItem} from this map.
 	 *
-	 * @param item      {@link IdentityItem} to be removed from the given {@code namespace}
-	 * @param namespace the namespace integration code or namespace ID of the identity
+	 * @param item      {@link IdentityItem} to be removed from the given {@code namespace}; should not be null
+	 * @param namespace the namespace integration code or namespace ID of the identity; should not be null
 	 */
-	public void removeItem(final IdentityItem item, final String namespace) {
+	public void removeItem(@NonNull final IdentityItem item, @NonNull final String namespace) {
 		if (item == null) {
 			Log.debug(LOG_TAG, LOG_SOURCE, "Remove item ignored as must contain a non-null IdentityItem.");
 			return;
@@ -113,6 +116,7 @@ public class IdentityMap {
 		return identityItems.isEmpty();
 	}
 
+	@NonNull
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

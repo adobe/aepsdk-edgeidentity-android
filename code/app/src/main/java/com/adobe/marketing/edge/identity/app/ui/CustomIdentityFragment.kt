@@ -94,10 +94,12 @@ class CustomIdentityFragment : Fragment() {
             val authenticatedState: AuthenticatedState? = sharedViewModel.authenticatedState.value
             val isPrimary: Boolean = sharedViewModel.isPrimary.value ?: false
 
-            val item = IdentityItem(identifier, authenticatedState, isPrimary)
-            val map = IdentityMap()
-            map.addItem(item, namespace)
-            Identity.updateIdentities(map)
+            if (identifier != null && namespace != null) {
+                val item = IdentityItem(identifier, authenticatedState, isPrimary)
+                val map = IdentityMap()
+                map.addItem(item, namespace)
+                Identity.updateIdentities(map)
+            }
         }
 
         root.findViewById<Button>(R.id.btn_remove_identities).setOnClickListener {
@@ -106,8 +108,8 @@ class CustomIdentityFragment : Fragment() {
             val authenticatedState: AuthenticatedState? = sharedViewModel.authenticatedState.value
             val isPrimary: Boolean = sharedViewModel.isPrimary.value ?: false
 
-            val item = IdentityItem(identifier, authenticatedState, isPrimary)
-            if (namespace != null) {
+            if (identifier != null && namespace != null) {
+                val item = IdentityItem(identifier, authenticatedState, isPrimary)
                 Identity.removeIdentity(item, namespace)
             }
         }
