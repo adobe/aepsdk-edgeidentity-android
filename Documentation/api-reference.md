@@ -596,13 +596,12 @@ val item = IdentityItem("identifier")
 
 val item = IdentityItem("identifier", AuthenticatedState.AUTHENTICATED, false)
 
-
 // Getters
-val id = item.getId()
+val id = item.id
 
-val state = item.getAuthenticatedState()
+val state = item.authenticatedState
 
-val primary = item.isPrimary()
+val primary = item.isPrimary
 ```
 
 ------
