@@ -175,6 +175,30 @@ public class IdentityPropertiesTests {
 		assertEquals(0, flattenMap(props.toXDMData(false)).size());
 	}
 
+	@Test
+	public void testConstruct_FromXDMData_removesInvalidIdentityItems() {
+		// setup, Items with null or empty ids are invalid
+		Map<String, Object> persistedIdentifiers = createXDMIdentityMap(
+			new TestItem("UserId", "secretID"),
+			new TestItem("InvalidEmpty", ""),
+			new TestItem("InvalidNull", null),
+			new TestECIDItem("primaryECID"),
+			new TestECIDItem("secondaryECID")
+		);
+
+		// test
+		IdentityProperties props = new IdentityProperties(persistedIdentifiers);
+
+		// verify
+		Map<String, String> flatMap = flattenMap(props.toXDMData(false));
+		assertEquals(9, flatMap.size()); // 3x3
+		assertEquals("primaryECID", props.getECID().toString());
+		assertEquals("secondaryECID", props.getECIDSecondary().toString());
+		assertEquals("secretID", flatMap.get("identityMap.UserId[0].id"));
+		assertNull(flatMap.get("identityMap.InvalidEmpty[0].id"));
+		assertNull(flatMap.get("identityMap.InvalidNull[0].id"));
+	}
+
 	// ======================================================================================================================
 	// Tests for method : setECID(final ECID newEcid)
 	// ======================================================================================================================

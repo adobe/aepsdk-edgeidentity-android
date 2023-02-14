@@ -311,6 +311,83 @@ public class IdentityMapTests {
 	}
 
 	@Test
+	public void test_FromData_removesItem_emptyId() throws Exception {
+		// setup
+		final String jsonStr =
+			"{\n" +
+			"      \"identityMap\": {\n" +
+			"        \"ECID\": [\n" +
+			"          {\n" +
+			"            \"id\":randomECID,\n" +
+			"            \"authenticatedState\": \"ambiguous\",\n" +
+			"            \"primary\": true\n" +
+			"          }\n" +
+			"        ],\n" +
+			"        \"USERID\": [\n" +
+			"          {\n" +
+			"            \"id\":\"\",\n" +
+			"            \"authenticatedState\": \"authenticated\",\n" +
+			"            \"primary\": false\n" +
+			"          }\n" +
+			"        ]\n" +
+			"      }\n" +
+			"}";
+
+		final JSONObject jsonObject = new JSONObject(jsonStr);
+		final Map<String, Object> xdmData = JSONUtils.toMap(jsonObject);
+
+		// test
+		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
+
+		// verify
+		Map<String, String> flattenedMap = IdentityTestUtil.flattenMap(map.asXDMMap(false));
+		assertEquals("randomECID", flattenedMap.get("identityMap.ECID[0].id"));
+		assertEquals("ambiguous", flattenedMap.get("identityMap.ECID[0].authenticatedState"));
+		assertEquals("true", flattenedMap.get("identityMap.ECID[0].primary"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].id"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].authenticatedState"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].primary"));
+	}
+
+	@Test
+	public void test_FromData_removesItem_missingId() throws Exception {
+		// setup
+		final String jsonStr =
+			"{\n" +
+			"      \"identityMap\": {\n" +
+			"        \"ECID\": [\n" +
+			"          {\n" +
+			"            \"id\":randomECID,\n" +
+			"            \"authenticatedState\": \"ambiguous\",\n" +
+			"            \"primary\": true\n" +
+			"          }\n" +
+			"        ],\n" +
+			"        \"USERID\": [\n" +
+			"          {\n" +
+			"            \"authenticatedState\": \"authenticated\",\n" +
+			"            \"primary\": false\n" +
+			"          }\n" +
+			"        ]\n" +
+			"      }\n" +
+			"}";
+
+		final JSONObject jsonObject = new JSONObject(jsonStr);
+		final Map<String, Object> xdmData = JSONUtils.toMap(jsonObject);
+
+		// test
+		IdentityMap map = IdentityMap.fromXDMMap(xdmData);
+
+		// verify
+		Map<String, String> flattenedMap = IdentityTestUtil.flattenMap(map.asXDMMap(false));
+		assertEquals("randomECID", flattenedMap.get("identityMap.ECID[0].id"));
+		assertEquals("ambiguous", flattenedMap.get("identityMap.ECID[0].authenticatedState"));
+		assertEquals("true", flattenedMap.get("identityMap.ECID[0].primary"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].id"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].authenticatedState"));
+		assertNull(flattenedMap.get("identityMap.USERID[0].primary"));
+	}
+
+	@Test
 	public void testFromXDMMap_NullAndEmptyData() {
 		assertNull(IdentityMap.fromXDMMap(null));
 		assertNull(IdentityMap.fromXDMMap(new HashMap<String, Object>()));

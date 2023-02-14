@@ -13,6 +13,7 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
@@ -36,12 +37,23 @@ public class IdentityItemTests {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void testIdentityItem_toObjectMap_missingId() {
-		// setup
+	public void testIdentityItem_ctor1_nullId_throwsIllegalArgumentException() {
 		IdentityItem item = new IdentityItem(null, AuthenticatedState.AUTHENTICATED, true);
+	}
 
-		// test
-		Map<String, Object> data = item.toObjectMap();
+	@Test(expected = IllegalArgumentException.class)
+	public void testIdentityItem_ctor1_emptyId_throwIllegalArgumentException() {
+		IdentityItem item = new IdentityItem("", AuthenticatedState.AUTHENTICATED, true);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testIdentityItem_ctor2_nullId_throwsIllegalArgumentException() {
+		IdentityItem item = new IdentityItem((String) null);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testIdentityItem_ctor2_emptyId_throwIllegalArgumentException() {
+		IdentityItem item = new IdentityItem("");
 	}
 
 	@Test
@@ -105,6 +117,38 @@ public class IdentityItemTests {
 		assertEquals("test-id", item.getId());
 		assertEquals("loggedOut", item.getAuthenticatedState().getName());
 		assertEquals(false, item.isPrimary());
+	}
+
+	@Test
+	public void testIdentityItem_fromData_missingId_returnNull() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("authenticatedState", "loggedOut");
+		map.put("primary", false);
+
+		assertNull(IdentityItem.fromData(map));
+	}
+
+	@Test
+	public void testIdentityItem_fromData_nullId_returnNull() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", null);
+		map.put("authenticatedState", "loggedOut");
+		map.put("primary", false);
+
+		assertNull(IdentityItem.fromData(map));
+	}
+
+	@Test
+	public void testIdentityItem_fromData_emptyId_returnNull() {
+		// setup
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", "");
+		map.put("authenticatedState", "loggedOut");
+		map.put("primary", false);
+
+		assertNull(IdentityItem.fromData(map));
 	}
 
 	@Test
