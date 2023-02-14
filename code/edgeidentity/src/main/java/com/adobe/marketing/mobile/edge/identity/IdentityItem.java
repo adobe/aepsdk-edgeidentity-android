@@ -43,7 +43,7 @@ public final class IdentityItem {
 	 * @param id                 id for the item; should not be null
 	 * @param authenticatedState {@link AuthenticatedState} for the item; if none is provided {@link AuthenticatedState#AMBIGUOUS} is used as default
 	 * @param primary            primary flag for the item
-	 * @throws IllegalArgumentException if id is null
+	 * @throws IllegalArgumentException if id is null or empty
 	 */
 	public IdentityItem(
 		@NonNull final String id,
@@ -65,6 +65,7 @@ public final class IdentityItem {
 	 * (@code primary} is set to false
 	 *
 	 * @param id the id for this {@link IdentityItem}; should not be null
+	 * @throws IllegalArgumentException if id is null or empty
 	 */
 	public IdentityItem(@NonNull final String id) {
 		this(id, AuthenticatedState.AMBIGUOUS, false);
