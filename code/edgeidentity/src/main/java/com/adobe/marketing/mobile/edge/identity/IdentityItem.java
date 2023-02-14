@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.DataReaderException;
+import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -49,8 +50,8 @@ public final class IdentityItem {
 		@Nullable final AuthenticatedState authenticatedState,
 		final boolean primary
 	) {
-		if (id == null) {
-			throw new IllegalArgumentException("id must be non-null");
+		if (StringUtils.isNullOrEmpty(id)) {
+			throw new IllegalArgumentException("id must be non-null and non-empty");
 		}
 
 		this.id = id;
@@ -193,7 +194,15 @@ public final class IdentityItem {
 			return new IdentityItem(id, authenticatedState, primary);
 		} catch (final DataReaderException e) {
 			Log.debug(LOG_TAG, LOG_SOURCE, "Failed to create IdentityItem from data.");
-			return null;
+		} catch (final IllegalArgumentException e) {
+			Log.debug(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Failed to create IdentityItem from data as 'id' is null or empty. %s",
+				e.getLocalizedMessage()
+			);
 		}
+
+		return null;
 	}
 }
