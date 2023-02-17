@@ -432,7 +432,7 @@ Identity.updateIdentities(identityMap)
 
 ### IdentityMap
 
-Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array, meaning that more than one identity of each namespace may be carried.
+Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array, meaning that more than one identity of each namespace may be carried. Identities, represented by [IdentityItem](#identityitem) objects, may not have null or empty identitifers and are ignored when adding to the IdentityMap.
 
 The format of the IdentityMap class is defined by the [XDM Identity Map Schema](https://github.com/adobe/xdm/blob/master/docs/reference/mixins/shared/identitymap.schema.md).
 
@@ -523,7 +523,7 @@ val hasNotIdentities = identityMap.isEmpty()
 
 ### IdentityItem
 
-Defines an identity to be included in an [IdentityMap](#identitymap).
+Defines an identity to be included in an [IdentityMap](#identitymap). IdentityItems may not have null or empty identifiers and are ignored when adding to an [IdentityMap](#identitymap) instance.
 
 The format of the IdentityItem class is defined by the [XDM Identity Item Schema](https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md).
 
@@ -566,7 +566,7 @@ val primary = item.isPrimary
 
 ### AuthenticatedState
 
-Defines the state an [Identity Item](#identityitem) is authenticated for.
+Defines the state for which an [Identity Item](#identityitem) is authenticated.
 
 The possible authenticated states are:
 
