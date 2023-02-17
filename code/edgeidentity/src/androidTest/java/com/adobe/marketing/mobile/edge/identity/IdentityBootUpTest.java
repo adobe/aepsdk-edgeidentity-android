@@ -14,6 +14,7 @@ package com.adobe.marketing.mobile.edge.identity;
 import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.*;
 import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.getXDMSharedStateFor;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
 import com.adobe.marketing.mobile.edge.identity.util.TestHelper;
@@ -64,6 +65,28 @@ public class IdentityBootUpTest {
 		);
 		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
 		assertEquals(12, persistedMap.size()); // 3 for ECID and 3 for secondaryECID + 6
+	}
+
+	@Test
+	public void testOnBootUp_LoadsAllIdentitiesFromPreference_ignoresEmptyItems() throws Exception {
+		// test
+		setEdgeIdentityPersistence(
+			createXDMIdentityMap(
+				new TestItem("ECID", "primaryECID"),
+				new TestItem("UserId", "JohnDoe"),
+				new TestItem("UserId", ""), // empty Item id
+				new TestItem("UserId", null) // null Item id
+			)
+		);
+
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
+		// verify xdm shared state
+		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
+		assertEquals(6, xdmSharedState.size()); // 3 for ECID and 3 UserId JohnDoe
+		assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
+		assertEquals("JohnDoe", xdmSharedState.get("identityMap.UserId[0].id"));
+		assertNull(xdmSharedState.get("identityMap.UserId[1].id"));
 	}
 	// --------------------------------------------------------------------------------------------
 	// All the other bootUp tests with to ECID is coded in IdentityECIDHandling

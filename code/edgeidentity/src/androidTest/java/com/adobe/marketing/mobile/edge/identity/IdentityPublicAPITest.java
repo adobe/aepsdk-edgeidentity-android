@@ -364,6 +364,36 @@ public class IdentityPublicAPITest {
 	}
 
 	@Test
+	public void testGetIdentities_itemWithEmptyId_notAddedToMap() {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
+		// setup
+		// update Identities through API
+		IdentityMap map = new IdentityMap();
+		map.addItem(new IdentityItem("primary@email.com"), "Email");
+		map.addItem(new IdentityItem("secondary@email.com"), "Email");
+		map.addItem(new IdentityItem("zzzyyyxxx"), "UserId");
+		map.addItem(new IdentityItem(""), "UserId");
+		map.addItem(new IdentityItem("John Doe"), "UserName");
+		map.addItem(new IdentityItem(""), "EmptyNamespace");
+		Identity.updateIdentities(map);
+
+		// test
+		Map<String, Object> getIdentitiesResponse = getIdentitiesSync();
+		waitForThreads(2000);
+
+		// verify
+		IdentityMap responseMap = (IdentityMap) getIdentitiesResponse.get(
+			IdentityTestConstants.GetIdentitiesHelper.VALUE
+		);
+		assertEquals(4, responseMap.getNamespaces().size());
+		assertEquals(2, responseMap.getIdentityItemsForNamespace("Email").size());
+		assertEquals(1, responseMap.getIdentityItemsForNamespace("UserId").size());
+		assertEquals(1, responseMap.getIdentityItemsForNamespace("UserName").size());
+		assertEquals(1, responseMap.getIdentityItemsForNamespace("ECID").size());
+	}
+
+	@Test
 	public void testGetIdentities_nullCallback() {
 		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
 
