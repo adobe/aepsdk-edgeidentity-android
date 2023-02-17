@@ -79,6 +79,7 @@ public class IdentityMap {
 	/**
 	 * Add an identity item which is used to clearly distinguish entities that are interacting
 	 * with digital experiences.
+	 * An {@link IdentityItem} with an empty {@code id} is not allowed and is ignored.
 	 *
 	 * @param item      {@link IdentityItem} to be added to the given {@code namespace}; should not be null
 	 * @param namespace the namespace integration code or namespace ID of the identity; should not be null
@@ -152,6 +153,7 @@ public class IdentityMap {
 	/**
 	 * Add an identity item which is used to clearly distinguish entities that are interacting
 	 * with digital experiences.
+	 * An {@link IdentityItem} with an empty {@code id} is not allowed and is ignored.
 	 *
 	 * @param item        {@link IdentityItem} to be added to the namespace
 	 * @param namespace   the namespace integration code or namespace ID of the identity
@@ -174,6 +176,7 @@ public class IdentityMap {
 	/**
 	 * Merge the given map on to this {@link IdentityMap}. Any {@link IdentityItem} in map which shares the same
 	 * namespace and id as an item in this {@code IdentityMap} will replace that {@code IdentityItem}.
+	 * Any {@link IdentityItem}s with an empty {@code id} are not allowed and are ignored.
 	 *
 	 * @param map {@link IdentityMap} to be merged into this object
 	 */
