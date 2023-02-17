@@ -41,9 +41,14 @@ public class IdentityItemTests {
 		IdentityItem item = new IdentityItem(null, AuthenticatedState.AUTHENTICATED, true);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testIdentityItem_ctor1_emptyId_throwIllegalArgumentException() {
+	@Test
+	public void testIdentityItem_ctor1_emptyId() {
 		IdentityItem item = new IdentityItem("", AuthenticatedState.AUTHENTICATED, true);
+
+		// For backward compatibility, an IdentityItem can contain empty identifiers.
+		assertEquals("", item.getId());
+		assertEquals("authenticated", item.getAuthenticatedState().getName());
+		assertTrue(item.isPrimary());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -51,9 +56,14 @@ public class IdentityItemTests {
 		IdentityItem item = new IdentityItem((String) null);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testIdentityItem_ctor2_emptyId_throwIllegalArgumentException() {
+	@Test
+	public void testIdentityItem_ctor2_emptyId() {
 		IdentityItem item = new IdentityItem("");
+
+		// For backward compatibility, an IdentityItem can contain empty identifiers.
+		assertEquals("", item.getId());
+		assertEquals("ambiguous", item.getAuthenticatedState().getName());
+		assertFalse(item.isPrimary());
 	}
 
 	@Test
@@ -141,14 +151,19 @@ public class IdentityItemTests {
 	}
 
 	@Test
-	public void testIdentityItem_fromData_emptyId_returnNull() {
+	public void testIdentityItem_fromData_emptyId() {
 		// setup
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", "");
 		map.put("authenticatedState", "loggedOut");
 		map.put("primary", false);
 
-		assertNull(IdentityItem.fromData(map));
+		IdentityItem item = IdentityItem.fromData(map);
+
+		// For backward compatibility, an IdentityItem can contain empty identifiers.
+		assertEquals("", item.getId());
+		assertEquals("loggedOut", item.getAuthenticatedState().getName());
+		assertFalse(item.isPrimary());
 	}
 
 	@Test

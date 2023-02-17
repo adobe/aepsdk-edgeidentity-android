@@ -35,6 +35,14 @@ public class IdentityMapTests {
 	}
 
 	@Test
+	public void test_addItem_withEmptyID_notAdded() {
+		// test
+		IdentityMap map = new IdentityMap();
+		map.addItem(new IdentityItem(""), "location");
+		assertTrue(map.isEmpty());
+	}
+
+	@Test
 	public void test_AddItem_InvalidInputs() {
 		// test
 		IdentityMap map = new IdentityMap();

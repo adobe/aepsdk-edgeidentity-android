@@ -18,7 +18,6 @@ import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.DataReaderException;
-import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,20 +37,23 @@ public final class IdentityItem {
 	private final boolean primary;
 
 	/**
-	 * Creates a new {@link IdentityItem}
+	 * Creates a new {@link IdentityItem}.
+	 * An {@code IdentityItem} should not have an empty or null {@code id} value. An {@link IdentityMap}
+	 * will reject {@code IdentityItem}s with null or empty identifiers.
+	 *
 	 *
 	 * @param id                 id for the item; should not be null
 	 * @param authenticatedState {@link AuthenticatedState} for the item; if none is provided {@link AuthenticatedState#AMBIGUOUS} is used as default
 	 * @param primary            primary flag for the item
-	 * @throws IllegalArgumentException if id is null or empty
+	 * @throws IllegalArgumentException if {@code id} is null
 	 */
 	public IdentityItem(
 		@NonNull final String id,
 		@Nullable final AuthenticatedState authenticatedState,
 		final boolean primary
 	) {
-		if (StringUtils.isNullOrEmpty(id)) {
-			throw new IllegalArgumentException("id must be non-null and non-empty");
+		if (id == null) {
+			throw new IllegalArgumentException("id must be non-null");
 		}
 
 		this.id = id;
@@ -199,7 +201,7 @@ public final class IdentityItem {
 			Log.debug(
 				LOG_TAG,
 				LOG_SOURCE,
-				"Failed to create IdentityItem from data as 'id' is null or empty. %s",
+				"Failed to create IdentityItem from data as 'id' is null. %s",
 				e.getLocalizedMessage()
 			);
 		}

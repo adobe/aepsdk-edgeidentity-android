@@ -313,6 +313,16 @@ public class IdentityMap {
 	// ========================================================================================
 
 	private void addItemToMap(final IdentityItem newItem, final String namespace, final boolean isFirstItem) {
+		if (StringUtils.isNullOrEmpty(newItem.getId())) {
+			Log.debug(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Unable to add IdentityItem to IdentityMap with null or empty identifier value: %s",
+				newItem
+			);
+			return;
+		}
+
 		// check if namespace exists
 		final List<IdentityItem> itemList;
 
