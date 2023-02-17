@@ -432,7 +432,7 @@ Identity.updateIdentities(identityMap)
 
 ### IdentityMap
 
-Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array, meaning that more than one identity of each namespace may be carried. Identities, represented by [IdentityItem](#identityitem) objects, may not have null or empty identitifers and are ignored when adding to the IdentityMap.
+Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array of [IdentityItem](@identityitem)s, meaning that more than one identity of each namespace may be carried. Each IdentityItem should have a valid, non-null and non-empty identifier, otherwise it will be ignored.
 
 The format of the IdentityMap class is defined by the [XDM Identity Map Schema](https://github.com/adobe/xdm/blob/master/docs/reference/mixins/shared/identitymap.schema.md).
 
