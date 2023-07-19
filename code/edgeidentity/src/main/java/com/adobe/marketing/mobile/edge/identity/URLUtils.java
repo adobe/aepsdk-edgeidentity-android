@@ -56,7 +56,7 @@ class URLUtils {
 			} else {
 				urlFragment.append(URLEncoder.encode(theIdString, Charset.forName("UTF-8").name()));
 			}
-		} catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException | IllegalArgumentException e) {
 			Log.debug(LOG_TAG, LOG_SOURCE, String.format("Failed to encode urlVariable string: %s", e));
 		}
 		return urlFragment.toString();
