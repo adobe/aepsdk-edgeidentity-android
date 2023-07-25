@@ -432,9 +432,9 @@ Identity.updateIdentities(identityMap)
 
 ### IdentityMap
 
-Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array of [IdentityItem](#identityitem)s, meaning that more than one identity of each namespace may be carried. Each IdentityItem should have a valid, non-null and non-empty identifier, otherwise it will be ignored.
+Defines a map containing a set of end user identities, keyed on either namespace integration code or the namespace ID of the identity. The values of the map are an array of [`IdentityItem`](#identityitem)s, meaning that more than one identity of each namespace may be carried. Each `IdentityItem` should have a valid, non-null and non-empty identifier, otherwise it will be ignored.
 
-The format of the IdentityMap class is defined by the [XDM Identity Map Schema](https://github.com/adobe/xdm/blob/master/docs/reference/mixins/shared/identitymap.schema.md).
+The format of the `IdentityMap` class is defined by the [XDM Identity Map Schema](https://github.com/adobe/xdm/blob/master/docs/reference/mixins/shared/identitymap.schema.md).
 
 For more information, please read an overview of the [Adobe Experience Platform Identity Service](https://experienceleague.adobe.com/docs/experience-platform/identity/home.html).
 
@@ -523,9 +523,9 @@ val hasNotIdentities = identityMap.isEmpty()
 
 ### IdentityItem
 
-Defines an identity to be included in an [IdentityMap](#identitymap). IdentityItems may not have null or empty identifiers and are ignored when adding to an [IdentityMap](#identitymap) instance.
+ Defines an identity to be included in an [`IdentityMap`](#identitymap). `IdentityItem`s may not have null or empty identifiers and are ignored when added to an [`IdentityMap`](#identitymap) instance.
 
-The format of the IdentityItem class is defined by the [XDM Identity Item Schema](https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md).
+ The format of the `IdentityItem` class is defined by the [XDM Identity Item Schema](https://github.com/adobe/xdm/blob/master/docs/reference/datatypes/identityitem.schema.md).
 
 **Example**
 
@@ -566,7 +566,7 @@ val primary = item.isPrimary
 
 ### AuthenticatedState
 
-Defines the state for which an [Identity Item](#identityitem) is authenticated.
+Defines the authentication state for an [`IdentityItem`](#identityitem).
 
 The possible authenticated states are:
 
