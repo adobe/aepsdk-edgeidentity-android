@@ -58,6 +58,7 @@ dependencies {
     implementation("com.google.android.material:material:1.3.0")
     implementation(project(":edgeidentity"))
 
+    //TO DO update to release versions
     implementation("com.adobe.marketing.mobile:core:$mavenCoreVersion-SNAPSHOT")
     implementation("com.adobe.marketing.mobile:identity:2.+")
     implementation("com.adobe.marketing.mobile:edgeconsent:2.0.0") {
