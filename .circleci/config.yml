@@ -16,6 +16,11 @@ orbs:
   android: circleci/android@2.4.0
   codecov: codecov/codecov@4.0.1
 
+parameters:
+  build_path:
+    type: string
+    default: "code/edgeidentity/build"
+
 # Workflows orchestrate a set of jobs to be run;
 workflows:
   version: 2
@@ -43,13 +48,13 @@ jobs:
 
       - android/restore-build-cache
 
-      # - run:
-      #     name: Check Format
-      #     command: make checkformat
+      - run:
+          name: Check Format
+          command: make checkformat
 
-      # - run:
-      #     name: Lint
-      #     command: make lint
+      - run:
+          name: Lint
+          command: make lint
 
       - android/save-gradle-cache
 
@@ -57,7 +62,7 @@ jobs:
 
       # Store Lint report
       - store_artifacts:
-          path: code/edgeidentity/build/reports     
+          path: << pipeline.parameters.build_path >>/reports   
 
   build-and-unit-test:
     executor:
@@ -77,7 +82,7 @@ jobs:
           command: make javadoc
 
       - store_artifacts:
-          path: code/edgeidentity/build/docs/javadoc
+          path: << pipeline.parameters.build_path >>/docs/javadoc
 
       - run:
           name: Assemble Phone
@@ -91,17 +96,17 @@ jobs:
           test-command: make unit-test-coverage
 
       - store_artifacts:
-          path: code/edgeidentity/build/reports/tests
+          path: << pipeline.parameters.build_path >>/reports/tests
 
       - store_test_results:
-          path: code/edgeidentity/build/test-results/testPhoneDebugUnitTest
+          path: << pipeline.parameters.build_path >>/test-results/testPhoneDebugUnitTest
 
       - android/save-gradle-cache
 
       - android/save-build-cache
 
       - codecov/upload:
-          file: code/edgeidentity/build/reports/coverage/test/phone/debug/report.xml
+          file: << pipeline.parameters.build_path >>/reports/coverage/test/phone/debug/report.xml
           flags: unit-tests
 
   functional-test:
@@ -130,11 +135,11 @@ jobs:
       - android/save-build-cache
 
       - codecov/upload:
-          file: code/edgeidentity/build/reports/coverage/androidTest/phone/debug/connected/report.xml
+          file: << pipeline.parameters.build_path >>/reports/coverage/androidTest/phone/debug/connected/report.xml
           flags: functional-tests
  
       - store_artifacts:
-          path: code/edgeidentity/build/reports/androidTests
+          path: << pipeline.parameters.build_path >>/reports/androidTests
 
       - store_test_results:
-          path: code/edgeidentity/build/outputs/androidTest-results
+          path: << pipeline.parameters.build_path >>/outputs/androidTest-results
