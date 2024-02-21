@@ -2,15 +2,10 @@
 .DS_Store
 
 # Generated files
+.gradle/
 bin/
 build/
 ci/
-
-# Gradle files
-.gradle/
-build/
-ci/
-jacoco.exec
 
 # IntelliJ
 *.iml
@@ -18,9 +13,6 @@ jacoco.exec
 
 # Log Files
 *.log
-
-# .Idea file
- code/.idea*
 
 #vscode
  .vscode
