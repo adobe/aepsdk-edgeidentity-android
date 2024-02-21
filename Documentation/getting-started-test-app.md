@@ -16,7 +16,7 @@ The test app needs to be configured with the following edge extensions before it
 Configure a new Assurance session by setting the Base URL to `testapp://main` and launch Assurance in the demo app by running the following command in your terminal:
 
 ```bash
-$ adb shell am start -W -a  android.intent.action.VIEW -d "testapp://main?adb_validation_sessionid=ADD_YOUR_SESSION_ID_HERE" com.adobe.marketing.edge.identity.app
+$ adb shell am start -W -a  android.intent.action.VIEW -d "testapp://main?adb_validation_sessionid=ADD_YOUR_SESSION_ID_HERE" com.adobe.marketing.edge.identity.testapp
 ```
 
 Note: replace `ADD_YOUR_SESSION_ID_HERE` with your Assurance session identifier.

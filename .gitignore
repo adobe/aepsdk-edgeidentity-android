@@ -6,9 +6,24 @@ bin/
 build/
 ci/
 
+# Gradle files
+.gradle/
+build/
+ci/
+jacoco.exec
+
 # IntelliJ
 *.iml
 **/.idea/
+
+# Log Files
+*.log
+
+# .Idea file
+ code/.idea*
+
+#vscode
+ .vscode
 
 # Secrets
 **/*/values/secrets.xml
@@ -28,3 +43,6 @@ jacoco.exec
 
 # Dex files for ART/Dalvik VM
 *.dex
+
+.externalNativeBuild
+.cxx

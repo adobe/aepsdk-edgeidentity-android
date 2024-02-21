@@ -22,7 +22,7 @@ android {
     compileSdk = BuildConstants.Versions.COMPILE_SDK_VERSION
 
     defaultConfig {
-        applicationId = "com.adobe.marketing.edge.identity.tester"
+        applicationId = "com.adobe.marketing.edge.identity.testapp"
         minSdk = BuildConstants.Versions.MIN_SDK_VERSION
         compileSdk = BuildConstants.Versions.COMPILE_SDK_VERSION
         targetSdk = BuildConstants.Versions.TARGET_SDK_VERSION
