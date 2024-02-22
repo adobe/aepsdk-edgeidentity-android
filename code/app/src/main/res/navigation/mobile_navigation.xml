@@ -26,19 +26,19 @@
 
     <fragment
         android:id="@+id/nav_custom_identity"
-        android:name="com.adobe.marketing.edge.identity.app.ui.CustomIdentityFragment"
+        android:name="com.adobe.marketing.edge.identity.testapp.ui.CustomIdentityFragment"
         android:label="@string/menu_custom_identity"
         tools:layout="@layout/fragment_custom_identity" />
 
     <fragment
         android:id="@+id/nav_multiple_identity"
-        android:name="com.adobe.marketing.edge.identity.app.ui.MultipleIdentityFragment"
+        android:name="com.adobe.marketing.edge.identity.testapp.ui.MultipleIdentityFragment"
         android:label="@string/menu_multiple_identity"
         tools:layout="@layout/fragment_multiple_identity" />
 
     <fragment
         android:id="@+id/nav_assurance"
-        android:name="com.adobe.marketing.edge.identity.app.ui.AssuranceFragment"
+        android:name="com.adobe.marketing.edge.identity.testapp.ui.AssuranceFragment"
         android:label="@string/menu_assurance"
         tools:layout="@layout/fragment_assurance" />
 </navigation>

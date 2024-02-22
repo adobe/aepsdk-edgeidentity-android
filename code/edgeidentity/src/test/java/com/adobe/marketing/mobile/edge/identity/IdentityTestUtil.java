@@ -35,6 +35,8 @@ import org.json.JSONObject;
  * Util class used by both Functional and Unit tests
  */
 class IdentityTestUtil {
+	private static final String LOG_SOURCE = "IdentityTestUtil";
+	private static final String LOG_TAG = "FunctionalTestUtils";
 
 	private static final String LOG_SOURCE = "IdentityTestUtil";
 	private static final String LOG_TAG = "FunctionalTestUtils";

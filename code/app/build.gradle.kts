@@ -33,7 +33,7 @@ android {
     compileSdk = BuildConstants.Versions.COMPILE_SDK_VERSION
 
     defaultConfig {
-        applicationId = "com.adobe.marketing.edge.identity.tester"
+        applicationId = "com.adobe.marketing.edge.identity.testapp"
         minSdk = BuildConstants.Versions.MIN_SDK_VERSION
         compileSdk = BuildConstants.Versions.COMPILE_SDK_VERSION
         targetSdk = BuildConstants.Versions.TARGET_SDK_VERSION
@@ -68,7 +68,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
     implementation("com.google.android.material:material:1.3.0")
     implementation(project(":edgeidentity"))
-
+    
     implementation("com.adobe.marketing.mobile:core:$mavenCoreVersion-SNAPSHOT")
     implementation("com.adobe.marketing.mobile:identity:2.+")
     implementation("com.adobe.marketing.mobile:edgeconsent:2.0.0") {
