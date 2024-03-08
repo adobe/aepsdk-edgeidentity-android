@@ -23,7 +23,7 @@ aepLibrary {
  
     publishing {
         gitRepoName = "aepsdk-edgeidentity-android"
-        addCoreDependency(mavenCoreVersion)
+        addCoreDependency("$mavenCoreVersion-SNAPSHOT")
     }
 }
 
