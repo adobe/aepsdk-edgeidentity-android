@@ -23,14 +23,12 @@ aepLibrary {
  
     publishing {
         gitRepoName = "aepsdk-edgeidentity-android"
-        addCoreDependency("$mavenCoreVersion-SNAPSHOT")
+        addCoreDependency("$mavenCoreVersion")
     }
 }
 
 dependencies {
-    // TODO: Use 3.x versions for testing
-    // TODO: Remove -SNAPSHOT suffix after Core 3.0.0 is published
-    implementation("com.adobe.marketing.mobile:core:$mavenCoreVersion-SNAPSHOT")
+    implementation("com.adobe.marketing.mobile:core:$mavenCoreVersion")
  
     // testImplementation dependencies provided by aep-library:
     // MOCKITO_CORE, JSON, ANDROIDX_TEST_EXT_JUNIT
