@@ -39,7 +39,7 @@ dependencies {
     // ANDROIDX_TEST_EXT_JUNIT, ESPRESSO_CORE
 
     androidTestImplementation ("com.fasterxml.jackson.core:jackson-databind:2.12.7")
-    androidTestImplementation("com.adobe.marketing.mobile:identity:$functionalTestIdentityVersion-SNAPSHOT")
+    androidTestImplementation("com.adobe.marketing.mobile:identity:$functionalTestIdentityVersion")
     {
         exclude(group = "com.adobe.marketing.mobile", module = "core")
     }
