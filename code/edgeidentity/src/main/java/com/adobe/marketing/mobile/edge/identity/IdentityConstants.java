@@ -16,7 +16,7 @@ final class IdentityConstants {
 	static final String LOG_TAG = "EdgeIdentity";
 	static final String EXTENSION_NAME = "com.adobe.edge.identity";
 	static final String EXTENSION_FRIENDLY_NAME = "Edge Identity";
-	static final String EXTENSION_VERSION = "3.0.0-beta.1";
+	static final String EXTENSION_VERSION = "3.0.0";
 
 	static final class Default {
 
