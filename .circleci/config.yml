@@ -17,6 +17,12 @@ orbs:
   codecov: codecov/codecov@4.0.1
 
 parameters:
+  gradle-cache-prefix:
+    type: string
+    default: v1
+  build-cache-prefix:
+    type: string
+    default: v1
   build_path:
     type: string
     default: "code/edgeidentity/build"
