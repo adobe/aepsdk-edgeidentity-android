@@ -43,7 +43,6 @@ make init
 | [Edge Network extension](https://github.com/adobe/aepsdk-edge-android) | The Edge Network extension allows you to send data to the Adobe Edge Network from a mobile application.               |
 | [Consent for Edge Network extension](https://github.com/adobe/aepsdk-edgeconsent-android) | The Consent extension enables consent preferences collection from your mobile app when using the AEP SDK and the Edge Network extension.              |
 | [Assurance extension](https://github.com/adobe/aepsdk-assurance-android) | The Assurance extension enables validation workflows for your SDK implementation.                |
-| [Adobe Experience Platform sample app for Android](https://github.com/adobe/aepsdk-sample-app-android) | Contains a fully implemented Android sample app using the Experience Platform SDKs.                 |
 
 ## Documentation
 
