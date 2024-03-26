@@ -158,14 +158,14 @@ jobs:
       - checkout
 
       - android/restore-gradle-cache
-      
+
       - android/restore-build-cache
-        
+
       - run:
           name: Assemble App
           command: make assemble-app
 
-      - android/save-gradle-cache:
-          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
-      - android/save-build-cache:
-          cache-prefix: << pipeline.parameters.build-cache-prefix >>
+      - android/save-gradle-cache
+
+      - android/save-build-cache
+
