@@ -23,7 +23,7 @@ The Adobe Experience Platform Identity for Edge Network extension depends on the
 
 1. Add the Mobile Core, Edge, and Edge Identity extensions to your project using the app's Gradle file:
   
-### Kotlin
+#### Kotlin
 ```kotlin
 implementation(platform("com.adobe.marketing.mobile:sdk-bom:3.+"))
 implementation("com.adobe.marketing.mobile:core")
@@ -31,7 +31,7 @@ implementation("com.adobe.marketing.mobile:edge")
 implementation("com.adobe.marketing.mobile:edgeidentity")   
 ```
 
-### Groovy
+#### Groovy
 
 ```groovy
 implementation platform('com.adobe.marketing.mobile:sdk-bom:3.+')

@@ -10,11 +10,10 @@ When using both Adobe Experience Platform Edge and Adobe Solutions extensions, b
 The following instructions are for configuring an application using both Edge Network and Adobe Solutions mobile extensions. If an application will include only Adobe Experience Platform Edge extensions, follow the instructions here.
 
 Download and import the Identity and Identity for Edge Network extensions
-#### Java
  
 1. Add the Mobile Core and Edge extensions to your project using the app's Gradle file.
 
-    ### Kotlin
+    #### Kotlin
     ```kotlin
     implementation(platform("com.adobe.marketing.mobile:sdk-bom:3.+"))
     implementation("com.adobe.marketing.mobile:core")
@@ -23,7 +22,7 @@ Download and import the Identity and Identity for Edge Network extensions
     implementation("com.adobe.marketing.mobile:edgeidentity")
     ```
 
-    ### Groovy
+    #### Groovy
 
     ```groovy
     implementation platform('com.adobe.marketing.mobile:sdk-bom:3.+')
