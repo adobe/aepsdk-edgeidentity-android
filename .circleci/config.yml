@@ -157,12 +157,10 @@ jobs:
     steps:
       - checkout
 
-      - android/restore-gradle-cache:
-          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
-
-      - android/restore-build-cache:
-          cache-prefix: << pipeline.parameters.build-cache-prefix >>
-
+      - android/restore-gradle-cache
+      
+      - android/restore-build-cache
+        
       - run:
           name: Assemble App
           command: make assemble-app
