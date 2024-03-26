@@ -52,9 +52,11 @@ jobs:
     steps:
       - checkout
 
-      - android/restore-gradle-cache
+      - android/restore-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
-      - android/restore-build-cache
+      - android/restore-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - run:
           name: Check Format
@@ -64,9 +66,11 @@ jobs:
           name: Lint
           command: make lint
 
-      - android/save-gradle-cache
+      - android/save-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
-      - android/save-build-cache
+      - android/save-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       # Store Lint report
       - store_artifacts:
@@ -81,9 +85,11 @@ jobs:
     steps:
       - checkout
 
-      - android/restore-gradle-cache
+      - android/restore-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
        
       - android/restore-build-cache
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - run:
           name: Javadoc
@@ -105,9 +111,11 @@ jobs:
       - store_test_results:
           path: << pipeline.parameters.build_path >>/test-results/testPhoneDebugUnitTest
 
-      - android/save-gradle-cache
+      - android/save-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
-      - android/save-build-cache
+      - android/save-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - codecov/upload:
           file: << pipeline.parameters.build_path >>/reports/coverage/test/phone/debug/report.xml
@@ -122,7 +130,8 @@ jobs:
     steps:
       - checkout
 
-      - android/restore-build-cache
+      - android/restore-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - run:
           name: List available emulator images
@@ -136,7 +145,8 @@ jobs:
           #   The test command
           test-command: make functional-test-coverage
    
-      - android/save-build-cache
+      - android/save-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - codecov/upload:
           file: << pipeline.parameters.build_path >>/reports/coverage/androidTest/phone/debug/connected/report.xml
@@ -157,15 +167,19 @@ jobs:
     steps:
       - checkout
 
-      - android/restore-gradle-cache
+      - android/restore-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
-      - android/restore-build-cache
+      - android/restore-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
       - run:
           name: Assemble App
           command: make assemble-app
 
-      - android/save-gradle-cache
+      - android/save-gradle-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
-      - android/save-build-cache
+      - android/save-build-cache:
+          cache-prefix: << pipeline.parameters.gradle-cache-prefix >>
 
