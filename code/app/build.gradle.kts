@@ -74,7 +74,7 @@ dependencies {
     implementation("com.adobe.marketing.mobile:edgeconsent:3.0.0-SNAPSHOT") {
         exclude(group = "com.adobe.marketing.mobile", module = "edge")
     }
-    implementation("com.adobe.marketing.mobile:assurance:2.+")
+    implementation("com.adobe.marketing.mobile:assurance:3.0.0")
     implementation("com.adobe.marketing.mobile:edge:3.0.0-SNAPSHOT") {
         exclude(group = "com.adobe.marketing.mobile", module = "edgeidentity")
     }
