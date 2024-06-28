@@ -33,8 +33,6 @@ dependencies {
 
     // androidTestImplementation dependencies provided by aep-library:
     // ANDROIDX_TEST_EXT_JUNIT, ESPRESSO_CORE
-
-    androidTestImplementation ("com.fasterxml.jackson.core:jackson-databind:2.12.7")
     androidTestImplementation("com.adobe.marketing.mobile:identity:$functionalTestIdentityVersion")
     androidTestImplementation("com.github.adobe:aepsdk-testutils-android:0bfafc7296")
 }
