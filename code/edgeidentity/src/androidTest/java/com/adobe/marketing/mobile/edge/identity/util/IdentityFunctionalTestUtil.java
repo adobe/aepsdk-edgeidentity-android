@@ -11,34 +11,25 @@
 
 package com.adobe.marketing.mobile.edge.identity.util;
 
-import static com.adobe.marketing.mobile.edge.identity.util.IdentityTestConstants.LOG_TAG;
-import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.*;
+import static com.adobe.marketing.mobile.util.TestHelper.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
-import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
 import com.adobe.marketing.mobile.AdobeError;
-import com.adobe.marketing.mobile.Extension;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.edge.identity.AuthenticatedState;
 import com.adobe.marketing.mobile.edge.identity.Identity;
 import com.adobe.marketing.mobile.edge.identity.IdentityItem;
 import com.adobe.marketing.mobile.edge.identity.IdentityMap;
-import com.adobe.marketing.mobile.services.Log;
-import com.adobe.marketing.mobile.util.JSONUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import java.io.IOException;
+import com.adobe.marketing.mobile.util.ADBCountDownLatch;
+import com.adobe.marketing.mobile.util.CollectionEqualCount;
+import com.adobe.marketing.mobile.util.JSONAsserts;
+import com.adobe.marketing.mobile.util.TestHelper;
+import com.adobe.marketing.mobile.util.TestPersistenceHelper;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -48,32 +39,6 @@ public class IdentityFunctionalTestUtil {
 
 	private static final String LOG_SOURCE = "IdentityFunctionalTestUtil";
 	private static final long REGISTRATION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(2);
-
-	/**
-	 * Applies the configuration provided, registers the extensions and then starts
-	 * core.
-	 * @param extensions the extensions that need to be registered
-	 * @param configuration the initial configuration update that needs to be applied
-	 */
-	public static void registerExtensions(
-		final List<Class<? extends Extension>> extensions,
-		@Nullable final Map<String, Object> configuration
-	) {
-		if (configuration != null) {
-			MobileCore.updateConfiguration(configuration);
-		}
-
-		final ADBCountDownLatch latch = new ADBCountDownLatch(1);
-		MobileCore.registerExtensions(extensions, o -> latch.countDown());
-
-		try {
-			latch.await(REGISTRATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			fail("Failed to register extensions");
-		}
-		TestHelper.waitForThreads(2000);
-		resetTestExpectations();
-	}
 
 	/**
 	 * Updates configuration shared state with an orgId
@@ -161,66 +126,6 @@ public class IdentityFunctionalTestUtil {
 		final Map<String, Object> identityMapDict = new HashMap<>();
 		identityMapDict.put(IdentityTestConstants.XDMKeys.IDENTITY_MAP, allItems);
 		return identityMapDict;
-	}
-
-	/**
-	 * Serialize the given {@code map} to a JSON Object, then flattens to {@code Map<String, String>}.
-	 * For example, a JSON such as "{xdm: {stitchId: myID, eventType: myType}}" is flattened
-	 * to two map elements "xdm.stitchId" = "myID" and "xdm.eventType" = "myType".
-	 *
-	 * @param map map with JSON structure to flatten
-	 * @return new map with flattened structure
-	 */
-	public static Map<String, String> flattenMap(final Map<String, Object> map) {
-		if (map == null || map.isEmpty()) {
-			return Collections.emptyMap();
-		}
-
-		try {
-			JSONObject jsonObject = new JSONObject(map);
-			Map<String, String> payloadMap = new HashMap<>();
-			addKeys("", new ObjectMapper().readTree(jsonObject.toString()), payloadMap);
-			return payloadMap;
-		} catch (IOException e) {
-			Log.error(LOG_TAG, LOG_SOURCE, "Failed to parse JSON object to tree structure.");
-		}
-
-		return Collections.emptyMap();
-	}
-
-	/**
-	 * Deserialize {@code JsonNode} and flatten to provided {@code map}.
-	 * For example, a JSON such as "{xdm: {stitchId: myID, eventType: myType}}" is flattened
-	 * to two map elements "xdm.stitchId" = "myID" and "xdm.eventType" = "myType".
-	 * <p>
-	 * Method is called recursively. To use, call with an empty path such as
-	 * {@code addKeys("", new ObjectMapper().readTree(JsonNodeAsString), map);}
-	 *
-	 * @param currentPath the path in {@code JsonNode} to process
-	 * @param jsonNode    {@link JsonNode} to deserialize
-	 * @param map         {@code Map<String, String>} instance to store flattened JSON result
-	 * @see <a href="https://stackoverflow.com/a/24150263">Stack Overflow post</a>
-	 */
-	public static void addKeys(String currentPath, JsonNode jsonNode, Map<String, String> map) {
-		if (jsonNode.isObject()) {
-			ObjectNode objectNode = (ObjectNode) jsonNode;
-			Iterator<Map.Entry<String, JsonNode>> iter = objectNode.fields();
-			String pathPrefix = currentPath.isEmpty() ? "" : currentPath + ".";
-
-			while (iter.hasNext()) {
-				Map.Entry<String, JsonNode> entry = iter.next();
-				addKeys(pathPrefix + entry.getKey(), entry.getValue(), map);
-			}
-		} else if (jsonNode.isArray()) {
-			ArrayNode arrayNode = (ArrayNode) jsonNode;
-
-			for (int i = 0; i < arrayNode.size(); i++) {
-				addKeys(currentPath + "[" + i + "]", arrayNode.get(i), map);
-			}
-		} else if (jsonNode.isValueNode()) {
-			ValueNode valueNode = (ValueNode) jsonNode;
-			map.put(currentPath, valueNode.asText());
-		}
 	}
 
 	/**
@@ -349,11 +254,12 @@ public class IdentityFunctionalTestUtil {
 		String ecid = getExperienceCloudIdSync();
 		assertNotNull(ecid);
 
-		// verify xdm shared state is has ECID
-		Map<String, String> xdmSharedState = flattenMap(
-			getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000)
-		);
-		assertNotNull(xdmSharedState.get("identityMap.ECID[0].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000);
+
+		// Validates "ECID" array has a single object element, with no restriction on what is inside that element
+		String expected = "{\"identityMap\": {\"ECID\": [{}]}}";
+
+		JSONAsserts.assertTypeMatch(expected, xdmSharedState);
 	}
 
 	/**
@@ -365,18 +271,30 @@ public class IdentityFunctionalTestUtil {
 		assertEquals(primaryECID, ecid);
 
 		// verify xdm shared state is has correct primary ECID
-		Map<String, String> xdmSharedState = flattenMap(
-			getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000)
-		);
-		assertEquals(primaryECID, xdmSharedState.get("identityMap.ECID[0].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000);
+
+		String expected =
+			"{\n" +
+			"  \"identityMap\": {\n" +
+			"    \"ECID\": [\n" +
+			"      {\n" +
+			"        \"id\": \"" +
+			primaryECID +
+			"\"\n" +
+			"      }\n" +
+			"    ]\n" +
+			"  }\n" +
+			"}";
+
+		JSONAsserts.assertExactMatch(expected, xdmSharedState);
 
 		// verify primary ECID in persistence
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityTestConstants.DataStoreKey.IDENTITY_DATASTORE,
 			IdentityTestConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		assertEquals(primaryECID, persistedMap.get("identityMap.ECID[0].id"));
+
+		JSONAsserts.assertExactMatch(expected, persistedJson);
 	}
 
 	/**
@@ -385,17 +303,33 @@ public class IdentityFunctionalTestUtil {
 	 */
 	public static void verifySecondaryECID(final String secondaryECID) throws Exception {
 		// verify xdm shared state is has correct secondary ECID
-		Map<String, String> xdmSharedState = flattenMap(
-			getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000)
-		);
-		assertEquals(secondaryECID, xdmSharedState.get("identityMap.ECID[1].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityTestConstants.EXTENSION_NAME, 1000);
+
+		if (secondaryECID == null) {
+			String json = "{" + "  \"identityMap\": {" + "    \"ECID\": [" + "      {}" + "    ]" + "  }" + "}";
+			JSONAsserts.assertTypeMatch(json, xdmSharedState, new CollectionEqualCount("identityMap.ECID"));
+			return;
+		}
+		String expected =
+			"{" +
+			"  \"identityMap\": {" +
+			"    \"ECID\": [" +
+			"      {}," + // Empty first ECID object
+			"      {" +
+			"        \"id\": \"" +
+			secondaryECID +
+			"\"" +
+			"      }" +
+			"    ]" +
+			"  }" +
+			"}";
+		JSONAsserts.assertTypeMatch(expected, xdmSharedState);
 
 		// verify secondary ECID in persistence
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityTestConstants.DataStoreKey.IDENTITY_DATASTORE,
 			IdentityTestConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		assertEquals(secondaryECID, persistedMap.get("identityMap.ECID[1].id"));
+		JSONAsserts.assertTypeMatch(expected, persistedJson);
 	}
 }

@@ -11,7 +11,10 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.*;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.TestItem;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildRemoveIdentityRequest;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.buildUpdateIdentityRequest;
+import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.createXDMIdentityMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
