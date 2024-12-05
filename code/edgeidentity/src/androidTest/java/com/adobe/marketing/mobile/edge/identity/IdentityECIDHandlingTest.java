@@ -11,14 +11,26 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.*;
-import static org.junit.Assert.*;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.TestItem;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.createIdentityMap;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.createXDMIdentityMap;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.getExperienceCloudIdSync;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.getIdentityDirectECIDSync;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.setEdgeIdentityPersistence;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.setIdentityDirectPersistedECID;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.verifyPrimaryECID;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.verifyPrimaryECIDNotNull;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.verifySecondaryECID;
+import static com.adobe.marketing.mobile.util.TestHelper.registerExtensions;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.MobilePrivacyStatus;
-import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
-import com.adobe.marketing.mobile.edge.identity.util.TestHelper;
+import com.adobe.marketing.mobile.util.MonitorExtension;
+import com.adobe.marketing.mobile.util.TestHelper;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.junit.Rule;

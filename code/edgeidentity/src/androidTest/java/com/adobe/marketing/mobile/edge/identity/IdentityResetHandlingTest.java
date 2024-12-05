@@ -11,21 +11,27 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.*;
-import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.*;
-import static org.junit.Assert.*;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.getExperienceCloudIdSync;
+import static com.adobe.marketing.mobile.util.JSONAsserts.assertExactMatch;
+import static com.adobe.marketing.mobile.util.NodeConfig.Scope.Subtree;
+import static com.adobe.marketing.mobile.util.TestHelper.SetupCoreRule;
+import static com.adobe.marketing.mobile.util.TestHelper.getDispatchedEventsWith;
+import static com.adobe.marketing.mobile.util.TestHelper.getXDMSharedStateFor;
+import static com.adobe.marketing.mobile.util.TestHelper.registerExtensions;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
-import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
-import com.adobe.marketing.mobile.util.JSONUtils;
+import com.adobe.marketing.mobile.util.ElementCount;
+import com.adobe.marketing.mobile.util.MonitorExtension;
+import com.adobe.marketing.mobile.util.TestPersistenceHelper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,17 +79,36 @@ public class IdentityResetHandlingTest {
 		assertEquals(1, resetCompleteEvent.size());
 
 		// verify shared state is updated
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		assertEquals(3, xdmSharedState.size()); // 3 for ECID still exists
-		assertEquals(newECID, xdmSharedState.get("identityMap.ECID[0].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
 
+		String expected =
+			"{" +
+			"  \"identityMap\": {" +
+			"    \"ECID\": [" +
+			"      {" +
+			"        \"id\": \"" +
+			newECID +
+			"\"" +
+			"      }" +
+			"    ]" +
+			"  }" +
+			"}";
+
+		assertExactMatch(
+			expected,
+			xdmSharedState,
+			new ElementCount(3, Subtree) // 3 for ECID still exists
+		);
 		// verify persistence is updated
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		assertEquals(3, persistedMap.size()); // 3 for ECID
-		assertEquals(newECID, persistedMap.get("identityMap.ECID[0].id"));
+
+		assertExactMatch(
+			expected,
+			persistedJson,
+			new ElementCount(3, Subtree) // 3 for ECID
+		);
 	}
 }

@@ -11,18 +11,21 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.*;
-import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.getXDMSharedStateFor;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.TestItem;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.createXDMIdentityMap;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.setEdgeIdentityPersistence;
+import static com.adobe.marketing.mobile.util.JSONAsserts.assertExactMatch;
+import static com.adobe.marketing.mobile.util.NodeConfig.Scope.Subtree;
+import static com.adobe.marketing.mobile.util.TestHelper.getXDMSharedStateFor;
+import static com.adobe.marketing.mobile.util.TestHelper.registerExtensions;
 
-import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
-import com.adobe.marketing.mobile.edge.identity.util.TestHelper;
-import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
-import com.adobe.marketing.mobile.util.JSONUtils;
+import com.adobe.marketing.mobile.util.ElementCount;
+import com.adobe.marketing.mobile.util.KeyMustBeAbsent;
+import com.adobe.marketing.mobile.util.MonitorExtension;
+import com.adobe.marketing.mobile.util.TestHelper;
+import com.adobe.marketing.mobile.util.TestPersistenceHelper;
 import java.util.Arrays;
 import java.util.Map;
-import org.json.JSONObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -51,20 +54,44 @@ public class IdentityBootUpTest {
 		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
 
 		// verify xdm shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		assertEquals(12, xdmSharedState.size()); // 3 for ECID and 3 for secondaryECID + 6
-		assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
-		assertEquals("secondaryECID", xdmSharedState.get("identityMap.ECID[1].id"));
-		assertEquals("example@email.com", xdmSharedState.get("identityMap.Email[0].id"));
-		assertEquals("JohnDoe", xdmSharedState.get("identityMap.UserId[0].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+
+		String expected =
+			"{" +
+			"\"identityMap\": {" +
+			"    \"ECID\": [" +
+			"        {" +
+			"            \"id\": \"primaryECID\"" +
+			"        }," +
+			"        {" +
+			"            \"id\": \"secondaryECID\"" +
+			"        }" +
+			"    ]," +
+			"    \"Email\": [" +
+			"        {" +
+			"            \"id\": \"example@email.com\"" +
+			"        }" +
+			"    ]," +
+			"    \"UserId\": [" +
+			"        {" +
+			"            \"id\": \"JohnDoe\"" +
+			"        }" +
+			"    ]" +
+			"  }" +
+			"}";
+		assertExactMatch(
+			expected,
+			xdmSharedState,
+			new ElementCount(12, Subtree) // 3 for ECID and 3 for secondaryECID + 6
+		);
 
 		//verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		assertEquals(12, persistedMap.size()); // 3 for ECID and 3 for secondaryECID + 6
+
+		assertExactMatch("{}", persistedJson, new ElementCount(12, Subtree));
 	}
 
 	@Test
@@ -82,14 +109,31 @@ public class IdentityBootUpTest {
 		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
 
 		// verify xdm shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		assertEquals(6, xdmSharedState.size()); // 3 for ECID and 3 UserId JohnDoe
-		assertEquals("primaryECID", xdmSharedState.get("identityMap.ECID[0].id"));
-		assertEquals("JohnDoe", xdmSharedState.get("identityMap.UserId[0].id"));
-		assertNull(xdmSharedState.get("identityMap.UserId[1].id"));
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+
+		String expected =
+			"{" +
+			"\"identityMap\": {" +
+			"    \"ECID\": [" +
+			"        {" +
+			"            \"id\": \"primaryECID\"" +
+			"        }" +
+			"    ]," +
+			"    \"UserId\": [" +
+			"        {" +
+			"            \"id\": \"JohnDoe\"" +
+			"        }" +
+			"    ]" +
+			"  }" +
+			"}";
+		assertExactMatch(
+			expected,
+			xdmSharedState,
+			new ElementCount(6, Subtree), // 3 for ECID and 3 UserId JohnDoe
+			new KeyMustBeAbsent("identityMap.UserId[1].id")
+		);
 	}
 	// --------------------------------------------------------------------------------------------
 	// All the other bootUp tests with to ECID is coded in IdentityECIDHandling
 	// --------------------------------------------------------------------------------------------
-
 }

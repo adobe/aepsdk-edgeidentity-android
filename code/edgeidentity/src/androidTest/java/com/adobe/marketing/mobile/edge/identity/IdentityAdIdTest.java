@@ -11,8 +11,14 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.*;
-import static com.adobe.marketing.mobile.edge.identity.util.TestHelper.*;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.TestItem;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.createXDMIdentityMap;
+import static com.adobe.marketing.mobile.edge.identity.util.IdentityFunctionalTestUtil.setEdgeIdentityPersistence;
+import static com.adobe.marketing.mobile.util.TestHelper.getDispatchedEventsWith;
+import static com.adobe.marketing.mobile.util.TestHelper.getXDMSharedStateFor;
+import static com.adobe.marketing.mobile.util.TestHelper.registerExtensions;
+import static com.adobe.marketing.mobile.util.TestHelper.resetTestExpectations;
+import static com.adobe.marketing.mobile.util.TestHelper.waitForThreads;
 import static org.junit.Assert.assertEquals;
 
 import androidx.annotation.NonNull;
@@ -21,10 +27,12 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
-import com.adobe.marketing.mobile.edge.identity.util.MonitorExtension;
-import com.adobe.marketing.mobile.edge.identity.util.TestPersistenceHelper;
+import com.adobe.marketing.mobile.util.JSONAsserts;
 import com.adobe.marketing.mobile.util.JSONUtils;
+import com.adobe.marketing.mobile.util.MonitorExtension;
 import com.adobe.marketing.mobile.util.StringUtils;
+import com.adobe.marketing.mobile.util.TestHelper;
+import com.adobe.marketing.mobile.util.TestPersistenceHelper;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +45,7 @@ import org.junit.rules.TestRule;
 public class IdentityAdIdTest {
 
 	@Rule
-	public TestRule rule = new SetupCoreRule();
+	public TestRule rule = new TestHelper.SetupCoreRule();
 
 	@Test
 	public void testGenericIdentityRequest_whenValidAdId_thenNewValidAdId() throws Exception {
@@ -59,16 +67,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, newAdId);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, newAdId);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, newAdId);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, newAdId);
 	}
 
 	@Test
@@ -88,16 +96,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(false, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, initialAdId);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, initialAdId);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, initialAdId);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, initialAdId);
 	}
 
 	@Test
@@ -117,16 +125,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, newAdId);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, newAdId);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, newAdId);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, newAdId);
 	}
 
 	@Test
@@ -146,16 +154,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, "n");
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, null);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, null);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, null);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, null);
 	}
 
 	@Test
@@ -175,16 +183,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, "n");
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, null);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, null);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, null);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, null);
 	}
 
 	@Test
@@ -202,16 +210,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, "y");
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, newAdId);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, newAdId);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, newAdId);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, newAdId);
 	}
 
 	@Test
@@ -228,16 +236,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(false, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, null);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, null);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, null);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, null);
 	}
 
 	@Test
@@ -254,16 +262,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, null);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, null);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, null);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, null);
 	}
 
 	@Test
@@ -280,16 +288,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState, null);
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState, null);
 
 		// Verify persisted data
 		final String persistedJson = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson)));
-		verifyFlatIdentityMap(persistedMap, null);
+		Map<String, Object> persistedMap = JSONUtils.toMap(new JSONObject(persistedJson));
+		verifyIdentityMap(persistedMap, null);
 
 		// Reset wildcard listener
 		resetTestExpectations();
@@ -301,16 +309,16 @@ public class IdentityAdIdTest {
 		verifyDispatchedEvents(true, null);
 
 		// Verify XDM shared state
-		Map<String, String> xdmSharedState2 = flattenMap(getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000));
-		verifyFlatIdentityMap(xdmSharedState2, null);
+		Map<String, Object> xdmSharedState2 = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		verifyIdentityMap(xdmSharedState2, null);
 
 		// Verify persisted data
 		final String persistedJson2 = TestPersistenceHelper.readPersistedData(
 			IdentityConstants.DataStoreKey.DATASTORE_NAME,
 			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
 		);
-		Map<String, String> persistedMap2 = flattenMap(JSONUtils.toMap(new JSONObject(persistedJson2)));
-		verifyFlatIdentityMap(persistedMap2, null);
+		Map<String, Object> persistedMap2 = JSONUtils.toMap(new JSONObject(persistedJson2));
+		verifyIdentityMap(persistedMap2, null);
 	}
 
 	/**
@@ -338,36 +346,64 @@ public class IdentityAdIdTest {
 		// Verify Edge Consent event
 		List<Event> dispatchedConsentEvents = getDispatchedEventsWith(EventType.CONSENT, EventSource.UPDATE_CONSENT);
 		assertEquals(StringUtils.isNullOrEmpty(expectedConsentValue) ? 0 : 1, dispatchedConsentEvents.size());
+
 		if (!StringUtils.isNullOrEmpty(expectedConsentValue)) {
-			Map<String, String> consentDataMap = flattenMap(dispatchedConsentEvents.get(0).getEventData());
-			assertEquals("GAID", consentDataMap.get("consents.adID.idType"));
-			assertEquals(expectedConsentValue, consentDataMap.get("consents.adID.val"));
+			String expected =
+				"{" +
+				"  \"consents\": {" +
+				"    \"adID\": {" +
+				"      \"idType\": \"GAID\"," +
+				"      \"val\": \"" +
+				expectedConsentValue +
+				"\"" +
+				"    }" +
+				"  }" +
+				"}";
+			JSONAsserts.assertExactMatch(expected, dispatchedConsentEvents.get(0).getEventData());
 		}
 	}
 
 	/**
-	 * Verifies the flat map contains the required ad ID and ECID
-	 * Valid ECID string and flat identity map is always required
-	 * @param flatIdentityMap the flat identity map to check
+	 * Verifies the map contains the required ad ID and ECID
+	 * Valid ECID string and identity map is always required
+	 * @param identityMap the identity map to check
 	 * @param expectedAdId the ad ID to check, should be null if no ad ID should be present; then the absence of ad ID will be verified
 	 * @return true if identity map contains the required identity properties, false otherwise
 	 */
-	private void verifyFlatIdentityMap(
-		@NonNull final Map<String, String> flatIdentityMap,
+	private void verifyIdentityMap(
+		@NonNull final Map<String, Object> identityMap,
 		@Nullable final String expectedAdId
 	) {
-		if (expectedAdId != null) {
-			assertEquals(6, flatIdentityMap.size()); // updated ad ID + ECID
-			assertEquals("false", flatIdentityMap.get("identityMap.GAID[0].primary"));
-			assertEquals(expectedAdId, flatIdentityMap.get("identityMap.GAID[0].id"));
-			assertEquals("ambiguous", flatIdentityMap.get("identityMap.GAID[0].authenticatedState"));
-		} else {
-			assertEquals(3, flatIdentityMap.size()); // ECID
-		}
-		String expectedECID = "primaryECID";
-		assertEquals("false", flatIdentityMap.get("identityMap.ECID[0].primary"));
-		assertEquals(expectedECID, flatIdentityMap.get("identityMap.ECID[0].id"));
-		assertEquals("ambiguous", flatIdentityMap.get("identityMap.ECID[0].authenticatedState"));
+		String baseIdentityMap =
+			"{" +
+			"\"identityMap\": {" +
+			"    \"ECID\": [" +
+			"        {" +
+			"            \"id\": \"primaryECID\"," +
+			"            \"authenticatedState\": \"ambiguous\"," +
+			"            \"primary\": false" +
+			"        }" +
+			"    ]" +
+			"%s" + // Placeholder for optional GAID
+			"  }" +
+			"}";
+
+		String gaidTemplate =
+			"," + // Leading comma required since GAID will be another property at the identityMap level
+			"    \"GAID\": [" +
+			"        {" +
+			"            \"id\": \"" +
+			expectedAdId +
+			"\"," +
+			"            \"authenticatedState\": \"ambiguous\"," +
+			"            \"primary\": false" +
+			"        }" +
+			"    ]";
+
+		String gaidProperty = expectedAdId != null ? gaidTemplate : "";
+		String expectedJson = String.format(baseIdentityMap, gaidProperty);
+
+		JSONAsserts.assertEquals(expectedJson, identityMap);
 	}
 
 	/**
