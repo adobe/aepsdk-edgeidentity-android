@@ -21,7 +21,10 @@ import static com.adobe.marketing.mobile.util.TestHelper.registerExtensions;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import com.adobe.marketing.mobile.AdobeCallbackWithError;
+import com.adobe.marketing.mobile.AdobeError;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
@@ -32,6 +35,9 @@ import com.adobe.marketing.mobile.util.TestPersistenceHelper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -110,5 +116,30 @@ public class IdentityResetHandlingTest {
 			persistedJson,
 			new ElementCount(3, Subtree) // 3 for ECID
 		);
+	}
+
+	@Test
+	public void testReset_resetCompleteDispatchedToListeners() throws Exception {
+		// Verify the reset complete event dispatched by Identity is listenable
+		final CountDownLatch latch = new CountDownLatch(1);
+		MobileCore.registerEventListener(
+			EventType.EDGE_IDENTITY,
+			EventSource.RESET_COMPLETE,
+			new AdobeCallbackWithError<Event>() {
+				@Override
+				public void fail(AdobeError adobeError) {
+					Assert.fail("Reset Complete event listener called fail: " + adobeError.toString());
+				}
+
+				@Override
+				public void call(Event event) {
+					latch.countDown();
+				}
+			}
+		);
+
+		MobileCore.resetIdentities();
+
+		assertTrue("Failed to receive reset complete event.", latch.await(1, TimeUnit.SECONDS));
 	}
 }
