@@ -345,7 +345,7 @@ class IdentityExtension extends Extension {
 			EventType.EDGE_IDENTITY,
 			EventSource.RESET_COMPLETE
 		)
-			.inResponseToEvent(event)
+			.chainToParentEvent(event)
 			.build();
 
 		getApi().dispatch(responseEvent);
