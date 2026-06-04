@@ -36,6 +36,7 @@ final class IdentityConstants {
 		static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
 		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
+		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
 
 		private EventNames() {}
 	}
@@ -45,6 +46,8 @@ final class IdentityConstants {
 		static final String ADVERTISING_IDENTIFIER = "advertisingidentifier";
 		static final String STATE_OWNER = "stateowner";
 		static final String URL_VARIABLES = "urlvariables";
+		// Set true by the upstream consent logic when stored profile attributes must be re-synced.
+		static final String COLLECT_CONSENT_RESYNC_REQUIRED = "collectConsentResyncRequired";
 
 		private EventDataKeys() {}
 	}
@@ -115,6 +118,7 @@ final class IdentityConstants {
 		static final String IDENTITY_PROPERTIES = "identity.properties";
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
+		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "com.adobe.mobilecore.profileattributes";
 
 		private DataStoreKey() {}
 	}
@@ -127,6 +131,27 @@ final class IdentityConstants {
 		static final String PAYLOAD = "adobe_mc";
 
 		private UrlKeys() {}
+	}
+
+	/**
+	 * Constants for the profile attribute sync feature driven by
+	 * {@code MobileCore.updateProfileAttributes}.
+	 */
+	static final class ProfileAttributes {
+
+		// EventData key on the incoming PROFILE_ATTRIBUTE request and the persistence key for the
+		// last-synced timezone value.
+		static final String TIMEZONE = "timezone";
+
+		// Keys for the outgoing generic EDGE request event payload. The event carries the collated
+		// data from every profile-attribute helper under a single "profile.updateAttributes" type.
+		static final String XDM = "xdm";
+		static final String DATA = "data";
+		static final String EVENT_TYPE = "eventType";
+		static final String XDM_EVENT_TYPE_UPDATE_ATTRIBUTES = "profile.updateAttributes";
+		static final String DATA_KEY_TIME_ZONE = "timeZone";
+
+		private ProfileAttributes() {}
 	}
 
 	private IdentityConstants() {}

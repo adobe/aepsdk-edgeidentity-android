@@ -30,11 +30,14 @@ class IdentityStorageManager {
 	private static final String LOG_SOURCE = "IdentityStorageManager";
 	private final NamedCollection edgeIdentityStore;
 	private final NamedCollection directIdentityStore;
+	private final NamedCollection profileAttributesStore;
 
 	IdentityStorageManager(final DataStoring dataStoreService) {
 		this.edgeIdentityStore = dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DATASTORE_NAME);
 		this.directIdentityStore =
 			dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME);
+		this.profileAttributesStore =
+			dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME);
 	}
 
 	/**
@@ -125,5 +128,65 @@ class IdentityStorageManager {
 		);
 
 		return StringUtils.isNullOrEmpty(ecidString) ? null : new ECID(ecidString);
+	}
+
+	/**
+	 * Retrieves the last-synced timezone identifier from the profile attributes collection.
+	 *
+	 * @return the stored timezone identifier, or {@code null} if none is stored
+	 */
+	String loadTimeZone() {
+		if (profileAttributesStore == null) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Profile attributes named collection is null. Unable to load timezone from persistence."
+			);
+			return null;
+		}
+
+		return profileAttributesStore.getString(IdentityConstants.ProfileAttributes.TIMEZONE, null);
+	}
+
+	/**
+	 * Saves the last-synced timezone identifier to the profile attributes collection. A {@code null}
+	 * value removes the stored timezone.
+	 *
+	 * @param timeZone the timezone identifier to store
+	 */
+	void saveTimeZone(final String timeZone) {
+		if (profileAttributesStore == null) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Profile attributes named collection is null. Unable to write timezone to persistence."
+			);
+			return;
+		}
+
+		if (timeZone == null) {
+			profileAttributesStore.remove(IdentityConstants.ProfileAttributes.TIMEZONE);
+			return;
+		}
+
+		profileAttributesStore.setString(IdentityConstants.ProfileAttributes.TIMEZONE, timeZone);
+	}
+
+	/**
+	 * Removes all stored profile attribute values from persistence. Invoked on reset to force a
+	 * fresh sync against the new ECID.
+	 */
+	void clearProfileAttributes() {
+		if (profileAttributesStore == null) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Profile attributes named collection is null. Unable to clear profile attributes from persistence."
+			);
+			return;
+		}
+
+		// Clears every key in the dedicated profile attributes collection, not just timezone.
+		profileAttributesStore.removeAll();
 	}
 }

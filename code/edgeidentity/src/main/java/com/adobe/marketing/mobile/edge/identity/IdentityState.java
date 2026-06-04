@@ -26,6 +26,7 @@ import com.adobe.marketing.mobile.services.ServiceProvider;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.MapUtils;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +39,7 @@ class IdentityState {
 	private final IdentityStorageManager identityStorageManager;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
+	private final List<ProfileAttributeHandler> profileAttributeHandlers;
 
 	IdentityState() {
 		this(new IdentityStorageManager(ServiceProvider.getInstance().getDataStoreService()));
@@ -49,6 +51,7 @@ class IdentityState {
 	@VisibleForTesting
 	IdentityState(final IdentityStorageManager identityStorageManager) {
 		this.identityStorageManager = identityStorageManager;
+		this.profileAttributeHandlers = List.of(new ProfileAttributeHandler.TimeZoneAttributeHandler(identityStorageManager));
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -138,6 +141,8 @@ class IdentityState {
 		hasBooted = true;
 		Log.debug(LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
 		callback.createXDMSharedState(identityProperties.toXDMData(), null);
+		// Hydrate the profile-attributes shared state from persistence so it mirrors storage on launch.
+		publishProfileAttributesSharedState(callback, null);
 
 		return hasBooted;
 	}
@@ -335,5 +340,123 @@ class IdentityState {
 			.build();
 
 		MobileCore.dispatchEvent(consentEvent);
+	}
+
+	/**
+	 * Collector layer for profile-attribute update requests. Runs every {@link ProfileAttributeHandler}
+	 * against the incoming event (each owns its own dedup + persistence) and dispatches a single
+	 * collated {@code profile.updateAttributes} Edge event with whatever changed. Persistence writes
+	 * happen <b>before</b> the dispatch so that an event dropped due to collect consent still leaves
+	 * the pending value in storage, enabling a later re-sync.
+	 *
+	 * <p>When anything changed, the profile-attributes shared state is also (re)published from
+	 * persistence so it stays in sync with storage.
+	 *
+	 * @param event the profile attributes update {@link Event}
+	 * @param callback {@link SharedStateCallback} used to publish the profile-attributes shared state
+	 */
+	void updateProfileAttributes(final Event event, final SharedStateCallback callback) {
+		final Map<String, Object> changed = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			handler.collectFromUpdate(event, changed);
+		}
+
+		if (changed.isEmpty()) {
+			return;
+		}
+
+		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
+		publishProfileAttributesSharedState(callback, event);
+		dispatchProfileAttributesEdgeEvent(changed);
+	}
+
+	/**
+	 * Handles an Edge Consent response. The upstream consent logic decides whether a re-sync is
+	 * needed and flags it via the {@link IdentityConstants.EventDataKeys#COLLECT_CONSENT_RESYNC_REQUIRED}
+	 * boolean on the event. When that flag is {@code true}, the last stored profile attributes are
+	 * replayed to the Edge Network from the SDK's persisted state (never a device/OS read); otherwise
+	 * the event is ignored.
+	 *
+	 * @param event the edge consent response {@link Event}
+	 */
+	void handleCollectConsentResponse(final Event event) {
+		if (!EventUtils.isCollectConsentResyncRequired(event)) {
+			return;
+		}
+
+		// Replay the persisted state (the SDK's stored values), never a device/OS read. Each handler
+		// contributes its stored value; the collator dispatches one unified event (no-op if empty).
+		final Map<String, Object> data = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			handler.collectFromStorage(data);
+		}
+		dispatchProfileAttributesEdgeEvent(data);
+	}
+
+	/**
+	 * Clears all stored profile attributes and updates the shared state to match (now empty). Invoked
+	 * on reset so that the next update re-syncs the attributes against the newly generated ECID.
+	 *
+	 * @param callback {@link SharedStateCallback} used to publish the updated (empty) shared state
+	 * @param event the reset {@link Event} the shared state is versioned at
+	 */
+	void clearProfileAttributes(final SharedStateCallback callback, final Event event) {
+		identityStorageManager.clearProfileAttributes();
+		publishProfileAttributesSharedState(callback, event);
+	}
+
+	/**
+	 * Dispatches a single generic {@code profile.updateAttributes} {@link EventType#EDGE} /
+	 * {@link EventSource#REQUEST_CONTENT} event whose {@code data} is the collated contribution of all
+	 * {@link ProfileAttributeHandler}s (currently only the timezone handler). No event is
+	 * dispatched when {@code data} is empty. The payload shape is
+	 * {@code {"xdm": {"eventType": "profile.updateAttributes"}, "data": { ...collated attributes... }}};
+	 * the Edge extension enriches it with {@code _id}, {@code timestamp}, implementationDetails, and
+	 * identityMap.
+	 *
+	 * @param data the collated profile attributes payload
+	 */
+	private void dispatchProfileAttributesEdgeEvent(final Map<String, Object> data) {
+		if (MapUtils.isNullOrEmpty(data)) {
+			Log.debug(LOG_TAG, LOG_SOURCE, "No profile attributes to sync, skipping Edge event dispatch.");
+			return;
+		}
+
+		final Map<String, Object> xdm = new HashMap<>();
+		xdm.put(
+			IdentityConstants.ProfileAttributes.EVENT_TYPE,
+			IdentityConstants.ProfileAttributes.XDM_EVENT_TYPE_UPDATE_ATTRIBUTES
+		);
+
+		final Map<String, Object> eventData = new HashMap<>();
+		eventData.put(IdentityConstants.ProfileAttributes.XDM, xdm);
+		eventData.put(IdentityConstants.ProfileAttributes.DATA, data);
+
+		final Event edgeEvent = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_PROFILE_ATTRIBUTES,
+			EventType.EDGE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(eventData)
+			.build();
+
+		MobileCore.dispatchEvent(edgeEvent);
+	}
+
+	/**
+	 * Builds the current profile attributes from persistence (collating every {@link
+	 * ProfileAttributeHandler}) and publishes them as the extension's regular (non-XDM) shared state,
+	 * keeping it in sync with storage. An empty map is published when nothing is stored (e.g. after
+	 * reset).
+	 *
+	 * @param callback {@link SharedStateCallback} used to create the shared state
+	 * @param event the {@link Event} the shared state is versioned at; {@code null} for the next version
+	 */
+	private void publishProfileAttributesSharedState(final SharedStateCallback callback, final Event event) {
+		final Map<String, Object> currentAttributes = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			handler.collectFromStorage(currentAttributes);
+		}
+		callback.createSharedState(currentAttributes, event);
 	}
 }

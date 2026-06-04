@@ -111,12 +111,18 @@ public class IdentityStateTests {
 		final IdentityState identityState = new IdentityState(mockIdentityStorageManager);
 		when(mockSharedStateCallback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null))
 			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Collections.EMPTY_MAP));
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn("Asia/Kolkata");
 
 		assertTrue(identityState.bootupIfReady(mockSharedStateCallback));
 		assertNotNull(identityState.getIdentityProperties().getECID());
 		verify(mockIdentityStorageManager).savePropertiesToPersistence(identityState.getIdentityProperties());
 		verify(mockSharedStateCallback)
 			.createXDMSharedState(identityState.getIdentityProperties().toXDMData(false), null);
+
+		// Bootup also hydrates the profile-attributes shared state from persistence
+		final ArgumentCaptor<Map> bootSharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(mockSharedStateCallback).createSharedState(bootSharedStateCaptor.capture(), any());
+		JSONAsserts.assertEquals("{ \"timeZone\": \"Asia/Kolkata\" }", bootSharedStateCaptor.getValue());
 	}
 
 	@Test
@@ -791,6 +797,158 @@ public class IdentityStateTests {
 		assertEquals(expectedAdId, state.getIdentityProperties().getAdId());
 	}
 
+	// ======================================================================================================================
+	// Tests for method : updateProfileAttributes(final Event event)
+	// ======================================================================================================================
+
+	@Test
+	public void testUpdateTimeZone_whenChanged_savesThenDispatchesEdgeEvent() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		// First read (dedup) sees no stored value; after the handler persists, subsequent reads return
+		// the new value — the mock simulating the write-through a real DataStore would do.
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn(null, "America/New_York");
+		final Event event = fakeUpdateTimeZoneEvent("America/New_York");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			// Persistence write happens (before dispatch) with the new value
+			verify(mockIdentityStorageManager, times(1)).saveTimeZone("America/New_York");
+
+			// One Edge request event is dispatched with the expected payload
+			final ArgumentCaptor<Event> edgeEventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(edgeEventCaptor.capture()), times(1));
+
+			final Event edgeEvent = edgeEventCaptor.getValue();
+			assertEquals("Update Profile Attributes", edgeEvent.getName());
+			assertEquals(EventType.EDGE, edgeEvent.getType());
+			assertEquals(EventSource.REQUEST_CONTENT, edgeEvent.getSource());
+
+			final String expected =
+				"{" +
+				"  \"xdm\": { \"eventType\": \"profile.updateAttributes\" }," +
+				"  \"data\": { \"timeZone\": \"America/New_York\" }" +
+				"}";
+			JSONAsserts.assertEquals(expected, edgeEvent.getEventData());
+
+			// Shared state is (re)published from persistence, mirroring the new value
+			final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+			verify(mockSharedStateCallback).createSharedState(sharedStateCaptor.capture(), any());
+			JSONAsserts.assertEquals("{ \"timeZone\": \"America/New_York\" }", sharedStateCaptor.getValue());
+		}
+	}
+
+	@Test
+	public void testUpdateTimeZone_whenUnchanged_skipsSaveAndDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn("America/New_York");
+		final Event event = fakeUpdateTimeZoneEvent("America/New_York");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			verify(mockIdentityStorageManager, never()).saveTimeZone(any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
+		}
+	}
+
+	@Test
+	public void testUpdateTimeZone_whenNoTimeZoneValue_skipsSaveAndDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event event = fakeUpdateTimeZoneEvent("");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			verify(mockIdentityStorageManager, never()).saveTimeZone(any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
+		}
+	}
+
+	// ======================================================================================================================
+	// Tests for method : handleCollectConsentResponse(final Event event)
+	// ======================================================================================================================
+
+	@Test
+	public void testHandleCollectConsentResponse_resyncRequired_replaysStoredTimeZone() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn("Asia/Kolkata");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.handleCollectConsentResponse(fakeCollectConsentEvent(true));
+
+			final ArgumentCaptor<Event> edgeEventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(edgeEventCaptor.capture()), times(1));
+
+			final Event edgeEvent = edgeEventCaptor.getValue();
+			assertEquals(EventType.EDGE, edgeEvent.getType());
+			assertEquals(EventSource.REQUEST_CONTENT, edgeEvent.getSource());
+
+			final String expected =
+				"{" +
+				"  \"xdm\": { \"eventType\": \"profile.updateAttributes\" }," +
+				"  \"data\": { \"timeZone\": \"Asia/Kolkata\" }" +
+				"}";
+			JSONAsserts.assertEquals(expected, edgeEvent.getEventData());
+		}
+	}
+
+	@Test
+	public void testHandleCollectConsentResponse_resyncRequiredButNoStoredTimeZone_doesNotDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn(null);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.handleCollectConsentResponse(fakeCollectConsentEvent(true));
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+		}
+	}
+
+	@Test
+	public void testHandleCollectConsentResponse_resyncNotRequired_doesNotDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn("Asia/Kolkata");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.handleCollectConsentResponse(fakeCollectConsentEvent(false));
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+		}
+	}
+
+	@Test
+	public void testHandleCollectConsentResponse_flagAbsent_doesNotDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockIdentityStorageManager.loadTimeZone()).thenReturn("Asia/Kolkata");
+
+		final Event event = new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
+			.setEventData(new HashMap<>())
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.handleCollectConsentResponse(event);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+		}
+	}
+
+	@Test
+	public void testClearProfileAttributes_clearsStorageAndPublishesEmptySharedState() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event resetEvent = new Event.Builder("Reset", EventType.EDGE_IDENTITY, EventSource.REQUEST_RESET).build();
+
+		state.clearProfileAttributes(mockSharedStateCallback, resetEvent);
+
+		verify(mockIdentityStorageManager, times(1)).clearProfileAttributes();
+
+		final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(mockSharedStateCallback).createSharedState(sharedStateCaptor.capture(), any());
+		assertTrue(sharedStateCaptor.getValue().isEmpty());
+	}
+
 	// Test helpers
 
 	/**
@@ -807,6 +965,38 @@ public class IdentityStateTests {
 					}
 				}
 			)
+			.build();
+	}
+
+	/**
+	 * Creates a GenericIdentity request content event carrying a timezone, as dispatched by
+	 * {@code MobileCore.updateProfileAttributes}.
+	 * @param timeZone the timezone identifier
+	 * @return the event
+	 */
+	private Event fakeUpdateTimeZoneEvent(final String timeZone) {
+		return new Event.Builder("Update Profile Attributes", EventType.GENERIC_IDENTITY, EventSource.REQUEST_CONTENT)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put(IdentityConstants.ProfileAttributes.TIMEZONE, timeZone);
+					}
+				}
+			)
+			.build();
+	}
+
+	/**
+	 * Creates an Edge Consent response event with the given collect consent value.
+	 * @param collectValue the collect consent value (for example {@code "y"} or {@code "n"})
+	 * @return the event
+	 */
+	private Event fakeCollectConsentEvent(final boolean resyncRequired) {
+		final Map<String, Object> eventData = new HashMap<>();
+		eventData.put("collectConsentResyncRequired", resyncRequired);
+
+		return new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
+			.setEventData(eventData)
 			.build();
 	}
 
