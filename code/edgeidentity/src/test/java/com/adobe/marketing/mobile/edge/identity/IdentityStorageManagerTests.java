@@ -207,60 +207,27 @@ public class IdentityStorageManagerTests {
 	}
 
 	@Test
-	public void testLoadTimeZone_whenStoreIsNull_returnsNull() {
+	public void testGetProfileAttributeStore_returnsStoreBackedByProfileAttributesCollection() {
+		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
+
+		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
+
+		// Round-trip a write through the store; assert it lands on the underlying NamedCollection.
+		store.setString("timezone", "Asia/Kolkata");
+		verify(mockProfileAttributesNamedCollection, times(1)).setString("timezone", "Asia/Kolkata");
+	}
+
+	@Test
+	public void testGetProfileAttributeStore_whenCollectionIsNull_storeNoOps() {
 		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME))
 			.thenReturn(null);
 		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
 
-		assertNull(identityStorageManager.loadTimeZone());
-	}
-
-	@Test
-	public void testLoadTimeZone_returnsStoredValue() {
-		when(mockProfileAttributesNamedCollection.getString(IdentityConstants.ProfileAttributes.TIMEZONE, null))
-			.thenReturn("America/New_York");
-		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
-
-		assertEquals("America/New_York", identityStorageManager.loadTimeZone());
-	}
-
-	@Test
-	public void testSaveTimeZone_writesValue() {
-		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
-
-		identityStorageManager.saveTimeZone("Asia/Kolkata");
-
-		verify(mockProfileAttributesNamedCollection, times(1))
-			.setString(IdentityConstants.ProfileAttributes.TIMEZONE, "Asia/Kolkata");
-	}
-
-	@Test
-	public void testSaveTimeZone_whenNull_removesValue() {
-		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
-
-		identityStorageManager.saveTimeZone(null);
-
-		verify(mockProfileAttributesNamedCollection, times(1)).remove(IdentityConstants.ProfileAttributes.TIMEZONE);
-		verify(mockProfileAttributesNamedCollection, never()).setString(any(), any());
-	}
-
-	@Test
-	public void testSaveTimeZone_whenStoreIsNull_doesNotThrow() {
-		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME))
-			.thenReturn(null);
-		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
-
-		// no NamedCollection to write to; should be a no-op without throwing
-		identityStorageManager.saveTimeZone("Asia/Kolkata");
-	}
-
-	@Test
-	public void testClearProfileAttributes_removesAllKeys() {
-		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
-
-		identityStorageManager.clearProfileAttributes();
-
-		verify(mockProfileAttributesNamedCollection, times(1)).removeAll();
+		// Wraps a null NamedCollection but never throws; reads return null, writes are no-ops.
+		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
+		assertNull(store.getString("timezone"));
+		store.setString("timezone", "Asia/Kolkata");
+		store.clearAll();
 	}
 
 	@After

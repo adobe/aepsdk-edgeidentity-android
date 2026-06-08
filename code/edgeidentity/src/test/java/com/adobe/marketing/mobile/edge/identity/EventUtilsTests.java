@@ -383,59 +383,6 @@ public class EventUtilsTests {
 		assertNull(EventUtils.getECID(identityDirectState));
 	}
 
-	// ======================================================================================================================
-	// Tests for method : getTimeZone(final Event event)
-	// ======================================================================================================================
-
-	@Test
-	public void test_getTimeZone_whenPresent_returnsValue() {
-		final Event event = createGenericIdentityEvent(
-			new HashMap<String, Object>() {
-				{
-					put(IdentityConstants.ProfileAttributes.TIMEZONE, "Asia/Kolkata");
-				}
-			}
-		);
-		assertEquals("Asia/Kolkata", EventUtils.getTimeZone(event));
-	}
-
-	@Test
-	public void test_getTimeZone_whenAbsent_returnsNull() {
-		final Event event = createGenericIdentityEvent(new HashMap<String, Object>());
-		assertNull(EventUtils.getTimeZone(event));
-	}
-
-	// ======================================================================================================================
-	// Tests for method : isCollectConsentResyncRequired(final Event event)
-	// ======================================================================================================================
-
-	@Test
-	public void test_isCollectConsentResyncRequired_whenTrue_returnsTrue() {
-		final Event event = new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
-			.setEventData(Collections.singletonMap("collectConsentResyncRequired", true))
-			.build();
-
-		assertTrue(EventUtils.isCollectConsentResyncRequired(event));
-	}
-
-	@Test
-	public void test_isCollectConsentResyncRequired_whenFalse_returnsFalse() {
-		final Event event = new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
-			.setEventData(Collections.singletonMap("collectConsentResyncRequired", false))
-			.build();
-
-		assertFalse(EventUtils.isCollectConsentResyncRequired(event));
-	}
-
-	@Test
-	public void test_isCollectConsentResyncRequired_whenAbsent_returnsFalse() {
-		final Event event = new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
-			.setEventData(Collections.EMPTY_MAP)
-			.build();
-
-		assertFalse(EventUtils.isCollectConsentResyncRequired(event));
-	}
-
 	// Test helpers
 
 	/**

@@ -14,8 +14,6 @@ package com.adobe.marketing.mobile.edge.identity;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.StringUtils;
-
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -32,33 +30,6 @@ final class EventUtils {
 	static boolean isAdIdEvent(final Event event) {
 		final Map<String, Object> data = event.getEventData();
 		return data.containsKey(IdentityConstants.EventDataKeys.ADVERTISING_IDENTIFIER);
-	}
-
-	/**
-	 * Reads the timezone identifier from the event data using the key
-	 * {@link IdentityConstants.ProfileAttributes#TIMEZONE}.
-	 *
-	 * @param event the event containing the timezone
-	 * @return the timezone identifier, or {@code null} if not present
-	 */
-	static String getTimeZone(final Event event) {
-		return DataReader.optString(event.getEventData(), IdentityConstants.ProfileAttributes.TIMEZONE, null);
-	}
-
-	/**
-	 * Reads the {@link IdentityConstants.EventDataKeys#COLLECT_CONSENT_RESYNC_REQUIRED} flag from an
-	 * Edge Consent response event. The upstream consent logic sets this to {@code true} when the
-	 * stored profile attributes should be re-synced to the Edge Network.
-	 *
-	 * @param event the edge consent response event
-	 * @return {@code true} if a re-sync is required; {@code false} otherwise (including when absent)
-	 */
-	static boolean isCollectConsentResyncRequired(final Event event) {
-		return DataReader.optBoolean(
-			event.getEventData(),
-			IdentityConstants.EventDataKeys.COLLECT_CONSENT_RESYNC_REQUIRED,
-			false
-		);
 	}
 
 	/**

@@ -89,7 +89,6 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REMOVE_IDENTITY), any());
 		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
-		verify(mockExtensionApi).registerEventListener(eq(EventType.CONSENT), eq(EventSource.RESPONSE_CONTENT), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
 	}
@@ -916,7 +915,7 @@ public class IdentityExtensionTests {
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
-						put(IdentityConstants.ProfileAttributes.TIMEZONE, "America/New_York");
+						put("timezone", "America/New_York");
 					}
 				}
 			)
@@ -928,22 +927,6 @@ public class IdentityExtensionTests {
 		extension.handleProfileAttributes(event);
 
 		verify(mockIdentityState).updateProfileAttributes(eq(event), any());
-	}
-
-	// ========================================================================================
-	// handleConsentResponse
-	// ========================================================================================
-
-	@Test
-	public void test_handleConsentResponse_routesToState() {
-		final Event event = new Event.Builder("Consent Response", EventType.CONSENT, EventSource.RESPONSE_CONTENT)
-			.build();
-
-		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-
-		extension.handleConsentResponse(event);
-
-		verify(mockIdentityState).handleCollectConsentResponse(eq(event));
 	}
 
 	// ========================================================================================

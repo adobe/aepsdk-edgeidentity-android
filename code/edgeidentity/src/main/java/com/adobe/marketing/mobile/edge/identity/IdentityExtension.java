@@ -101,7 +101,6 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
-	 *     <li> EventType {@link EventType#CONSENT} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -131,10 +130,6 @@ class IdentityExtension extends Extension {
 
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
-
-		// EDGE CONSENT event listener (for re-syncing profile attributes)
-		getApi()
-			.registerEventListener(EventType.CONSENT, EventSource.RESPONSE_CONTENT, this::handleConsentResponse);
 	}
 
 	@Override
@@ -421,16 +416,6 @@ class IdentityExtension extends Extension {
 	 */
 	void handleProfileAttributes(@NonNull final Event event) {
 		state.updateProfileAttributes(event, sharedStateHandle);
-	}
-
-	/**
-	 * Handles {@link EventType#CONSENT} response content events. Delegates to {@link IdentityState}
-	 * to re-sync stored profile attributes when collect consent transitions to granted.
-	 *
-	 * @param event the edge consent response {@link Event}
-	 */
-	void handleConsentResponse(@NonNull final Event event) {
-		state.handleCollectConsentResponse(event);
 	}
 
 	/**
