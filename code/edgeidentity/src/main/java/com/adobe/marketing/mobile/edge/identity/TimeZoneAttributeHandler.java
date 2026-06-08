@@ -22,8 +22,8 @@ import java.util.Map;
 
 /**
  * {@link ProfileAttributeHandler} for the device timezone. Reads the IANA identifier from the
- * incoming event under {@code "timezone"}, persists the last-synced value through the
- * {@link ProfileAttributeStore}, and contributes to the outgoing payload under {@code "timeZone"}.
+ * incoming event under {@code "timeZone"}, persists it, and contributes to the outgoing payload
+ * under the same {@code "timeZone"} key (XDM field name).
  */
 final class TimeZoneAttributeHandler implements ProfileAttributeHandler {
 
@@ -37,7 +37,7 @@ final class TimeZoneAttributeHandler implements ProfileAttributeHandler {
 
 	@Override
 	public String getAttributeKey() {
-		return "timezone";
+		return "timeZone";
 	}
 
 	@Override
@@ -57,8 +57,8 @@ final class TimeZoneAttributeHandler implements ProfileAttributeHandler {
 	}
 
 	@Override
-	public String collectFromStorage() {
-		final String storedTimeZone = store.getString(getAttributeKey()                         );
-		return StringUtils.isNullOrEmpty(storedTimeZone) ? null : storedTimeZone;
+	public Map<String, Object> collectFromStorage() {
+		final String storedTimeZone = store.getString(getAttributeKey());
+		return StringUtils.isNullOrEmpty(storedTimeZone) ? null : Map.of(getAttributeKey(), storedTimeZone);
 	}
 }

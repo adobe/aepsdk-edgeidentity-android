@@ -28,7 +28,7 @@ import java.util.Map;
 interface ProfileAttributeHandler {
 	/**
 	 * Returns the key on the incoming {@code PROFILE_ATTRIBUTE} event data that this handler
-	 * claims (e.g. {@code "timezone"}). The collector uses this purely as an input filter:
+	 * claims (e.g. {@code "timeZone"}). The collector uses this purely as an input filter:
 	 * {@link #collectFromEvent(Event)} is invoked only when this key is present in the event
 	 * data.
 	 *

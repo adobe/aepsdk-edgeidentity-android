@@ -67,10 +67,8 @@ public class IdentityStateTests {
 	@Mock
 	private SharedStateCallback mockSharedStateCallback;
 
-	// Must mirror TimeZoneAttributeHandler's STORE_KEY constant. Tied to upgrade compat.
-	private static final String TIMEZONE_STORE_KEY = "timezone";
-	// Must mirror TimeZoneAttributeHandler's EVENT_KEY constant. Public Core API contract.
-	private static final String TIMEZONE_EVENT_KEY = "timezone";
+	// Must mirror TimeZoneAttributeHandler's getAttributeKey() — used for event input, persistence, and payload.
+	private static final String TIMEZONE_KEY = "timeZone";
 
 	@Before
 	public void before() throws Exception {
@@ -124,7 +122,7 @@ public class IdentityStateTests {
 		final IdentityState identityState = new IdentityState(mockIdentityStorageManager);
 		when(mockSharedStateCallback.getSharedState(IdentityConstants.SharedState.Hub.NAME, null))
 			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Collections.EMPTY_MAP));
-		when(mockProfileAttributeStore.getString(TIMEZONE_STORE_KEY)).thenReturn("Asia/Kolkata");
+		when(mockProfileAttributeStore.getString(TIMEZONE_KEY)).thenReturn("Asia/Kolkata");
 
 		assertTrue(identityState.bootupIfReady(mockSharedStateCallback));
 		assertNotNull(identityState.getIdentityProperties().getECID());
@@ -819,14 +817,14 @@ public class IdentityStateTests {
 		final IdentityState state = new IdentityState(mockIdentityStorageManager);
 		// First read (dedup) sees no stored value; after the handler persists, subsequent reads return
 		// the new value — the mock simulating the write-through a real DataStore would do.
-		when(mockProfileAttributeStore.getString(TIMEZONE_STORE_KEY)).thenReturn(null, "America/New_York");
+		when(mockProfileAttributeStore.getString(TIMEZONE_KEY)).thenReturn(null, "America/New_York");
 		final Event event = fakeUpdateTimeZoneEvent("America/New_York");
 
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
 			state.updateProfileAttributes(event, mockSharedStateCallback);
 
 			// Persistence write happens (before dispatch) with the new value
-			verify(mockProfileAttributeStore, times(1)).setString(TIMEZONE_STORE_KEY, "America/New_York");
+			verify(mockProfileAttributeStore, times(1)).setString(TIMEZONE_KEY, "America/New_York");
 
 			// One Edge request event is dispatched with the expected payload
 			final ArgumentCaptor<Event> edgeEventCaptor = ArgumentCaptor.forClass(Event.class);
@@ -854,13 +852,13 @@ public class IdentityStateTests {
 	@Test
 	public void testUpdateTimeZone_whenUnchanged_skipsSaveAndDispatch() {
 		final IdentityState state = new IdentityState(mockIdentityStorageManager);
-		when(mockProfileAttributeStore.getString(TIMEZONE_STORE_KEY)).thenReturn("America/New_York");
+		when(mockProfileAttributeStore.getString(TIMEZONE_KEY)).thenReturn("America/New_York");
 		final Event event = fakeUpdateTimeZoneEvent("America/New_York");
 
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
 			state.updateProfileAttributes(event, mockSharedStateCallback);
 
-			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_STORE_KEY), any());
+			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
 		}
@@ -874,7 +872,7 @@ public class IdentityStateTests {
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
 			state.updateProfileAttributes(event, mockSharedStateCallback);
 
-			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_STORE_KEY), any());
+			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
 		}
@@ -924,7 +922,7 @@ public class IdentityStateTests {
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
-						put(TIMEZONE_EVENT_KEY, timeZone);
+						put(TIMEZONE_KEY, timeZone);
 					}
 				}
 			)

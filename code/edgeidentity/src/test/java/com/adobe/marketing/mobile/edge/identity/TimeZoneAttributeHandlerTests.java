@@ -32,12 +32,8 @@ import org.mockito.MockitoAnnotations;
 
 public class TimeZoneAttributeHandlerTests {
 
-	// Must mirror TimeZoneAttributeHandler's STORE_KEY constant. Tied to upgrade compat (do not change).
-	private static final String STORE_KEY = "timezone";
-	// Must mirror TimeZoneAttributeHandler's EVENT_KEY constant. Public Core API contract.
-	private static final String EVENT_KEY = "timezone";
-	// Must mirror TimeZoneAttributeHandler's PAYLOAD_KEY constant. XDM convention.
-	private static final String PAYLOAD_KEY = "timeZone";
+	// Must mirror TimeZoneAttributeHandler's getAttributeKey(). Used for event input, persistence, and payload — all "timeZone".
+	private static final String KEY = "timeZone";
 
 	@Mock
 	private ProfileAttributeStore mockStore;
@@ -51,27 +47,27 @@ public class TimeZoneAttributeHandlerTests {
 	}
 
 	@Test
-	public void testGetAttributeKey_returnsEventKey() {
-		assertEquals(EVENT_KEY, handler.getAttributeKey());
+	public void testGetAttributeKey_returnsTimeZoneKey() {
+		assertEquals(KEY, handler.getAttributeKey());
 	}
 
 	@Test
 	public void testCollectFromEvent_whenChanged_persistsAndReturnsPayloadKeyedContribution() {
-		when(mockStore.getString(STORE_KEY)).thenReturn(null);
+		when(mockStore.getString(KEY)).thenReturn(null);
 
 		final Map<String, Object> result = handler.collectFromEvent(fakeTimeZoneEvent("America/New_York"));
 
-		verify(mockStore, times(1)).setString(STORE_KEY, "America/New_York");
-		assertEquals(Map.of(PAYLOAD_KEY, "America/New_York"), result);
+		verify(mockStore, times(1)).setString(KEY, "America/New_York");
+		assertEquals(Map.of(KEY, "America/New_York"), result);
 	}
 
 	@Test
 	public void testCollectFromEvent_whenUnchanged_returnsNull() {
-		when(mockStore.getString(STORE_KEY)).thenReturn("America/New_York");
+		when(mockStore.getString(KEY)).thenReturn("America/New_York");
 
 		final Map<String, Object> result = handler.collectFromEvent(fakeTimeZoneEvent("America/New_York"));
 
-		verify(mockStore, never()).setString(eq(STORE_KEY), any());
+		verify(mockStore, never()).setString(eq(KEY), any());
 		assertNull(result);
 	}
 
@@ -79,7 +75,7 @@ public class TimeZoneAttributeHandlerTests {
 	public void testCollectFromEvent_whenEmpty_returnsNull() {
 		final Map<String, Object> result = handler.collectFromEvent(fakeTimeZoneEvent(""));
 
-		verify(mockStore, never()).setString(eq(STORE_KEY), any());
+		verify(mockStore, never()).setString(eq(KEY), any());
 		assertNull(result);
 	}
 
@@ -95,27 +91,27 @@ public class TimeZoneAttributeHandlerTests {
 
 		final Map<String, Object> result = handler.collectFromEvent(event);
 
-		verify(mockStore, never()).setString(eq(STORE_KEY), any());
+		verify(mockStore, never()).setString(eq(KEY), any());
 		assertNull(result);
 	}
 
 	@Test
 	public void testCollectFromStorage_whenStored_returnsPayloadKeyedContribution() {
-		when(mockStore.getString(STORE_KEY)).thenReturn("Asia/Kolkata");
+		when(mockStore.getString(KEY)).thenReturn("Asia/Kolkata");
 
-		assertEquals(Map.of(PAYLOAD_KEY, "Asia/Kolkata"), handler.collectFromStorage());
+		assertEquals(Map.of(KEY, "Asia/Kolkata"), handler.collectFromStorage());
 	}
 
 	@Test
 	public void testCollectFromStorage_whenEmpty_returnsNull() {
-		when(mockStore.getString(STORE_KEY)).thenReturn(null);
+		when(mockStore.getString(KEY)).thenReturn(null);
 
 		assertNull(handler.collectFromStorage());
 	}
 
 	private Event fakeTimeZoneEvent(final String timeZone) {
 		final Map<String, Object> eventData = new HashMap<>();
-		eventData.put(EVENT_KEY, timeZone);
+		eventData.put(KEY, timeZone);
 		return new Event.Builder("Update Profile Attributes", EventType.PROFILE_ATTRIBUTE, EventSource.REQUEST_CONTENT)
 			.setEventData(eventData)
 			.build();

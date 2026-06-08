@@ -213,8 +213,8 @@ public class IdentityStorageManagerTests {
 		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
 
 		// Round-trip a write through the store; assert it lands on the underlying NamedCollection.
-		store.setString("timezone", "Asia/Kolkata");
-		verify(mockProfileAttributesNamedCollection, times(1)).setString("timezone", "Asia/Kolkata");
+		store.setString("timeZone", "Asia/Kolkata");
+		verify(mockProfileAttributesNamedCollection, times(1)).setString("timeZone", "Asia/Kolkata");
 	}
 
 	@Test
@@ -225,8 +225,8 @@ public class IdentityStorageManagerTests {
 
 		// Wraps a null NamedCollection but never throws; reads return null, writes are no-ops.
 		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
-		assertNull(store.getString("timezone"));
-		store.setString("timezone", "Asia/Kolkata");
+		assertNull(store.getString("timeZone"));
+		store.setString("timeZone", "Asia/Kolkata");
 		store.clearAll();
 	}
 

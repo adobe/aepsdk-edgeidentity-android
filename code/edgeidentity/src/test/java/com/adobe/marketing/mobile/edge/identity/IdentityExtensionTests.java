@@ -915,7 +915,7 @@ public class IdentityExtensionTests {
 			.setEventData(
 				new HashMap<String, Object>() {
 					{
-						put("timezone", "America/New_York");
+						put("timeZone", "America/New_York");
 					}
 				}
 			)
