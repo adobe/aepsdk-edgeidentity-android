@@ -17,7 +17,6 @@ import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.StringUtils;
-
 import java.util.Map;
 
 /**

@@ -116,7 +116,11 @@ class IdentityExtension extends Extension {
 
 		// PROFILE_ATTRIBUTE event listener
 		getApi()
-			.registerEventListener(EventType.PROFILE_ATTRIBUTE, EventSource.REQUEST_CONTENT, this::handleProfileAttributes);
+			.registerEventListener(
+				EventType.PROFILE_ATTRIBUTE,
+				EventSource.REQUEST_CONTENT,
+				this::handleProfileAttributes
+			);
 
 		// EDGE_IDENTITY event listeners
 		getApi()
