@@ -125,6 +125,7 @@
             android:scrollbars="vertical"
             android:background="@drawable/border"
             />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
