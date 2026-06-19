@@ -35,12 +35,4 @@ interface SharedStateCallback {
 	 * @param event current event for which to set the shared state; if null is passed, the next shared state version will be set
 	 */
 	void createXDMSharedState(final Map<String, Object> state, final Event event);
-
-	/**
-	 * Creates a (non-XDM) Shared State for the provided {@code event} with the specified {@code state}.
-	 *
-	 * @param state data to be set as Shared State
-	 * @param event current event for which to set the shared state; if null is passed, the next shared state version will be set
-	 */
-	void createSharedState(final Map<String, Object> state, final Event event);
 }

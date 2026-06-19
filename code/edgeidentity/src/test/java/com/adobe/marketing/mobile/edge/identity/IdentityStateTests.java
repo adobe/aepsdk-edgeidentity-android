@@ -127,13 +127,11 @@ public class IdentityStateTests {
 		assertTrue(identityState.bootupIfReady(mockSharedStateCallback));
 		assertNotNull(identityState.getIdentityProperties().getECID());
 		verify(mockIdentityStorageManager).savePropertiesToPersistence(identityState.getIdentityProperties());
-		verify(mockSharedStateCallback)
-			.createXDMSharedState(identityState.getIdentityProperties().toXDMData(false), null);
 
-		// Bootup also hydrates the profile-attributes shared state from persistence
-		final ArgumentCaptor<Map> bootSharedStateCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(mockSharedStateCallback).createSharedState(bootSharedStateCaptor.capture(), any());
-		JSONAsserts.assertEquals("{ \"timeZone\": \"Asia/Kolkata\" }", bootSharedStateCaptor.getValue());
+		// Bootup publishes a single XDM shared state combining identityMap + profileAttributes
+		final Map<String, Object> expectedXDMState = new HashMap<>(identityState.getIdentityProperties().toXDMData(false));
+		expectedXDMState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata"));
+		verify(mockSharedStateCallback).createXDMSharedState(expectedXDMState, null);
 	}
 
 	@Test
@@ -842,10 +840,13 @@ public class IdentityStateTests {
 				"}";
 			JSONAsserts.assertEquals(expected, edgeEvent.getEventData());
 
-			// Shared state is (re)published from persistence, mirroring the new value
+			// XDM shared state is (re)published with profileAttributes wrapping the new value
 			final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
-			verify(mockSharedStateCallback).createSharedState(sharedStateCaptor.capture(), any());
-			JSONAsserts.assertEquals("{ \"timeZone\": \"America/New_York\" }", sharedStateCaptor.getValue());
+			verify(mockSharedStateCallback).createXDMSharedState(sharedStateCaptor.capture(), any());
+			JSONAsserts.assertEquals(
+				"{ \"profileAttributes\": { \"timeZone\": \"America/New_York\" } }",
+				sharedStateCaptor.getValue()
+			);
 		}
 	}
 
@@ -860,7 +861,7 @@ public class IdentityStateTests {
 
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
-			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
 		}
 	}
 
@@ -874,7 +875,7 @@ public class IdentityStateTests {
 
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
-			verify(mockSharedStateCallback, never()).createSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
 		}
 	}
 
@@ -888,7 +889,7 @@ public class IdentityStateTests {
 		verify(mockProfileAttributeStore, times(1)).clearAll();
 
 		final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
-		verify(mockSharedStateCallback).createSharedState(sharedStateCaptor.capture(), any());
+		verify(mockSharedStateCallback).createXDMSharedState(sharedStateCaptor.capture(), any());
 		assertTrue(sharedStateCaptor.getValue().isEmpty());
 	}
 

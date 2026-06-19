@@ -91,6 +91,7 @@ final class IdentityConstants {
 	static final class XDMKeys {
 
 		static final String IDENTITY_MAP = "identityMap";
+		static final String PROFILE_ATTRIBUTES = "profileAttributes";
 		static final String ID = "id";
 		static final String AUTHENTICATED_STATE = "authenticatedState";
 		static final String PRIMARY = "primary";

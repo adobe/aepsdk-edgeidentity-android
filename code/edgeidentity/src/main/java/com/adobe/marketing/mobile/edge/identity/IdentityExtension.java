@@ -48,11 +48,6 @@ class IdentityExtension extends Extension {
 		public void createXDMSharedState(final Map<String, Object> state, final Event event) {
 			getApi().createXDMSharedState(state, event);
 		}
-
-		@Override
-		public void createSharedState(final Map<String, Object> state, final Event event) {
-			getApi().createSharedState(state, event);
-		}
 	};
 
 	private final IdentityState state;
@@ -428,6 +423,6 @@ class IdentityExtension extends Extension {
 	 * @param event the {@link Event} that triggered the XDM shared state change
 	 */
 	private void shareIdentityXDMSharedState(final Event event) {
-		sharedStateHandle.createXDMSharedState(state.getIdentityProperties().toXDMData(), event);
+		sharedStateHandle.createXDMSharedState(state.buildXDMSharedState(), event);
 	}
 }

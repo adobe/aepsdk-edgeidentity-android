@@ -142,8 +142,6 @@ class IdentityState {
 
 		hasBooted = true;
 		Log.debug(LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
-		callback.createXDMSharedState(identityProperties.toXDMData(), null);
-		// Hydrate the profile-attributes shared state from persistence so it mirrors storage on launch.
 		publishProfileAttributesSharedState(callback, null);
 
 		return hasBooted;
@@ -216,7 +214,7 @@ class IdentityState {
 
 		// Save to persistence
 		identityStorageManager.savePropertiesToPersistence(identityProperties);
-		callback.createXDMSharedState(identityProperties.toXDMData(), event);
+		callback.createXDMSharedState(buildXDMSharedState(), event);
 	}
 
 	/**
@@ -431,25 +429,39 @@ class IdentityState {
 	}
 
 	/**
-	 * Builds the current profile attributes from persistence (collating every {@link
-	 * ProfileAttributeHandler}) and publishes them as the extension's regular (non-XDM) shared
-	 * state, keeping it in sync with storage. An empty map is published when nothing is stored
-	 * (e.g. after reset).
+	 * Publishes the full XDM shared state, merging the identity map with any stored profile
+	 * attributes under the {@code profileAttributes} key. Called on bootup, after any profile
+	 * attribute change, and after reset.
 	 *
-	 * @param callback {@link SharedStateCallback} used to create the shared state
+	 * @param callback {@link SharedStateCallback} used to create the XDM shared state
 	 * @param event the {@link Event} the shared state is versioned at; {@code null} for the next version
 	 */
 	private void publishProfileAttributesSharedState(final SharedStateCallback callback, final Event event) {
-		callback.createSharedState(collectStoredAttributes(), event);
+		callback.createXDMSharedState(buildXDMSharedState(), event);
 	}
 
 	/**
-	 * Collates every {@link ProfileAttributeHandler}'s persisted contribution into a single map
-	 * for the profile-attributes shared state.
+	 * Builds the full XDM shared state map, combining the identity map with any stored profile
+	 * attributes nested under {@link IdentityConstants.XDMKeys#PROFILE_ATTRIBUTES}. The
+	 * {@code profileAttributes} key is omitted when no attributes are stored.
+	 *
+	 * @return the merged XDM state map
+	 */
+	Map<String, Object> buildXDMSharedState() {
+		final Map<String, Object> xdmState = new HashMap<>(identityProperties.toXDMData(false));
+		final Map<String, Object> attributes = collectStoredProfileAttributes();
+		if (!attributes.isEmpty()) {
+			xdmState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, attributes);
+		}
+		return xdmState;
+	}
+
+	/**
+	 * Collates every {@link ProfileAttributeHandler}'s persisted contribution into a single map.
 	 *
 	 * @return the collated stored attributes; empty when nothing is persisted
 	 */
-	private Map<String, Object> collectStoredAttributes() {
+	private Map<String, Object> collectStoredProfileAttributes() {
 		final Map<String, Object> mergedData = new HashMap<>();
 		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
 			final Map<String, Object> attributes = handler.collectFromStorage();
