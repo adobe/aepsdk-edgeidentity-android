@@ -117,7 +117,7 @@ final class IdentityConstants {
 		static final String IDENTITY_PROPERTIES = "identity.properties";
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
-		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "com.adobe.mobilecore.profileAttributes";
+		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
 
 		private DataStoreKey() {}
 	}
