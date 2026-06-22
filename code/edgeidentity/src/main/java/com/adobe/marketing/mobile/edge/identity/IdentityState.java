@@ -355,6 +355,11 @@ class IdentityState {
 	void updateProfileAttributes(final Event event, final SharedStateCallback callback) {
 		final Map<String, Object> eventData = event.getEventData();
 		if (MapUtils.isNullOrEmpty(eventData)) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Event data is null or empty for '" + event.getName() + "'; skipping update."
+			);
 			return;
 		}
 
@@ -370,6 +375,11 @@ class IdentityState {
 		}
 
 		if (mergedAttributes.isEmpty()) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"No profile attributes collected from event data; skipping update."
+			);
 			return;
 		}
 

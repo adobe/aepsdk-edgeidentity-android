@@ -129,8 +129,13 @@ public class IdentityStateTests {
 		verify(mockIdentityStorageManager).savePropertiesToPersistence(identityState.getIdentityProperties());
 
 		// Bootup publishes a single XDM shared state combining identityMap + profileAttributes
-		final Map<String, Object> expectedXDMState = new HashMap<>(identityState.getIdentityProperties().toXDMData(false));
-		expectedXDMState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata"));
+		final Map<String, Object> expectedXDMState = new HashMap<>(
+			identityState.getIdentityProperties().toXDMData(false)
+		);
+		expectedXDMState.put(
+			IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES,
+			Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata")
+		);
 		verify(mockSharedStateCallback).createXDMSharedState(expectedXDMState, null);
 	}
 
