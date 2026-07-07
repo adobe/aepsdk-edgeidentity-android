@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
@@ -46,7 +44,11 @@ final class TimeZoneAttributeHandler implements ProfileAttributeHandler {
 			return null;
 		}
 		if (newTimeZone.equals(store.getString(getAttributeKey()))) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Timezone '" + newTimeZone + "' is unchanged, skipping sync.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Timezone '" + newTimeZone + "' is unchanged, skipping sync."
+			);
 			return null;
 		}
 		// Persist before the caller dispatches, so an event dropped due to collect consent still leaves

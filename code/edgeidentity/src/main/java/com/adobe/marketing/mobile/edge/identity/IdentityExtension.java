@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
@@ -58,7 +56,7 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param extensionApi {@link ExtensionApi} instance
 	 */
-	protected IdentityExtension(ExtensionApi extensionApi) {
+	protected IdentityExtension(final ExtensionApi extensionApi) {
 		this(extensionApi, new IdentityState());
 	}
 
@@ -132,7 +130,7 @@ class IdentityExtension extends Extension {
 	}
 
 	@Override
-	public boolean readyForEvent(@NonNull Event event) {
+	public boolean readyForEvent(@NonNull final Event event) {
 		if (!state.bootupIfReady(sharedStateHandle)) return false;
 
 		// Get url variables request depends on Configuration shared state
@@ -246,7 +244,7 @@ class IdentityExtension extends Extension {
 			.build();
 
 		if (StringUtils.isNullOrEmpty(urlVariables) && !StringUtils.isNullOrEmpty(errorMsg)) {
-			Log.warning(LOG_TAG, LOG_SOURCE, errorMsg);
+			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, errorMsg);
 		}
 
 		getApi().dispatch(responseEvent);
@@ -264,7 +262,7 @@ class IdentityExtension extends Extension {
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
-			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot update identifiers, event data is null.");
+			Log.trace(IdentityConstants.LOG_TAG, LOG_SOURCE, "Cannot update identifiers, event data is null.");
 			resolver.resolve(state.getIdentityProperties().toXDMData());
 			return;
 		}
@@ -273,7 +271,7 @@ class IdentityExtension extends Extension {
 
 		if (map == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Failed to update identifiers as no identifiers were found in the event data."
 			);
@@ -297,7 +295,7 @@ class IdentityExtension extends Extension {
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
-			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot remove identifiers, event data is null.");
+			Log.trace(IdentityConstants.LOG_TAG, LOG_SOURCE, "Cannot remove identifiers, event data is null.");
 			resolver.resolve(state.getIdentityProperties().toXDMData());
 			return;
 		}
@@ -306,7 +304,7 @@ class IdentityExtension extends Extension {
 
 		if (map == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Failed to remove identifiers as no identifiers were found in the event data."
 			);

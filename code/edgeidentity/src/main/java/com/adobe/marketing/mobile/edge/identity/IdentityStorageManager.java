@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import com.adobe.marketing.mobile.services.DataStoring;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.services.NamedCollection;
@@ -61,7 +59,7 @@ class IdentityStorageManager {
 	IdentityProperties loadPropertiesFromPersistence() {
 		if (edgeIdentityStore == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"EdgeIdentity named collection is null. Unable to load saved identity properties from persistence."
 			);
@@ -71,7 +69,7 @@ class IdentityStorageManager {
 
 		if (jsonString == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"No previous properties were stored in persistence. Current identity properties are null"
 			);
@@ -84,7 +82,7 @@ class IdentityStorageManager {
 			return new IdentityProperties(propertyMap);
 		} catch (JSONException exception) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Serialization error while reading properties jsonString from persistence. Unable to load saved identity properties from persistence."
 			);
@@ -100,7 +98,7 @@ class IdentityStorageManager {
 	void savePropertiesToPersistence(final IdentityProperties properties) {
 		if (edgeIdentityStore == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"EdgeIdentity named collection is null. Unable to write identity properties to persistence."
 			);
@@ -108,7 +106,11 @@ class IdentityStorageManager {
 		}
 
 		if (properties == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Identity Properties are null, removing them from persistence.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Identity Properties are null, removing them from persistence."
+			);
 			edgeIdentityStore.remove(IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES);
 			return;
 		}
@@ -126,7 +128,7 @@ class IdentityStorageManager {
 	ECID loadEcidFromDirectIdentityPersistence() {
 		if (directIdentityStore == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Identity direct named collection is null. Unable to load ECID from Identity Direct persistence."
 			);
