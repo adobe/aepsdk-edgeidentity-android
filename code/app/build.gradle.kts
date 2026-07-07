@@ -70,11 +70,11 @@ dependencies {
     implementation(project(":edgeidentity"))
 
     implementation("com.adobe.marketing.mobile:core:$mavenCoreVersion")
-    implementation("com.adobe.marketing.mobile:identity:3.0.0")
+    implementation("com.adobe.marketing.mobile:identity:3.0.2")
     implementation("com.adobe.marketing.mobile:edgeconsent:3.0.0") {
         exclude(group = "com.adobe.marketing.mobile", module = "edge")
     }
-    implementation("com.adobe.marketing.mobile:assurance:3.0.0")
+    implementation("com.adobe.marketing.mobile:assurance:3.0.7")
     implementation("com.adobe.marketing.mobile:edge:3.0.0") {
         exclude(group = "com.adobe.marketing.mobile", module = "edgeidentity")
     }
