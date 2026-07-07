@@ -375,11 +375,7 @@ class IdentityState {
 		}
 
 		if (mergedAttributes.isEmpty()) {
-			Log.warning(
-				LOG_TAG,
-				LOG_SOURCE,
-				"No profile attributes collected from event data; skipping update."
-			);
+			Log.warning(LOG_TAG, LOG_SOURCE, "No profile attributes collected from event data; skipping update.");
 			return;
 		}
 
