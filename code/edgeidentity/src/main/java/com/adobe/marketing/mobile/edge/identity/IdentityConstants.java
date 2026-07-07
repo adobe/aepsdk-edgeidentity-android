@@ -36,6 +36,7 @@ final class IdentityConstants {
 		static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
 		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
+		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
 
 		private EventNames() {}
 	}
@@ -90,6 +91,7 @@ final class IdentityConstants {
 	static final class XDMKeys {
 
 		static final String IDENTITY_MAP = "identityMap";
+		static final String PROFILE_ATTRIBUTES = "profileAttributes";
 		static final String ID = "id";
 		static final String AUTHENTICATED_STATE = "authenticatedState";
 		static final String PRIMARY = "primary";
@@ -115,6 +117,7 @@ final class IdentityConstants {
 		static final String IDENTITY_PROPERTIES = "identity.properties";
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
+		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
 
 		private DataStoreKey() {}
 	}
@@ -127,6 +130,24 @@ final class IdentityConstants {
 		static final String PAYLOAD = "adobe_mc";
 
 		private UrlKeys() {}
+	}
+
+	/**
+	 * Constants for the profile attribute sync feature driven by
+	 * {@code MobileCore.updateProfileAttributes}.
+	 */
+	static final class ProfileAttributes {
+
+		// Keys for the outgoing generic EDGE request event payload. The event carries the collated
+		// data from every profile-attribute helper under a single "profile.updateAttributes" type.
+		// Per-attribute event-data keys, payload keys, and persistence keys are owned by the
+		// individual ProfileAttributeHandler implementations.
+		static final String XDM = "xdm";
+		static final String DATA = "data";
+		static final String EVENT_TYPE = "eventType";
+		static final String XDM_EVENT_TYPE_UPDATE_ATTRIBUTES = "profile.updateAttributes";
+
+		private ProfileAttributes() {}
 	}
 
 	private IdentityConstants() {}

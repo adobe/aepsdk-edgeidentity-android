@@ -26,6 +26,7 @@ import com.adobe.marketing.mobile.services.ServiceProvider;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.MapUtils;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,8 +37,10 @@ class IdentityState {
 	private static final String LOG_SOURCE = "IdentityState";
 
 	private final IdentityStorageManager identityStorageManager;
+	private final ProfileAttributeStore profileAttributeStore;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
+	private final List<ProfileAttributeHandler> profileAttributeHandlers;
 
 	IdentityState() {
 		this(new IdentityStorageManager(ServiceProvider.getInstance().getDataStoreService()));
@@ -49,6 +52,8 @@ class IdentityState {
 	@VisibleForTesting
 	IdentityState(final IdentityStorageManager identityStorageManager) {
 		this.identityStorageManager = identityStorageManager;
+		this.profileAttributeStore = identityStorageManager.getProfileAttributeStore();
+		this.profileAttributeHandlers = ProfileAttributeHandlers.all(profileAttributeStore);
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -137,7 +142,7 @@ class IdentityState {
 
 		hasBooted = true;
 		Log.debug(LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
-		callback.createXDMSharedState(identityProperties.toXDMData(), null);
+		publishProfileAttributesSharedState(callback, null);
 
 		return hasBooted;
 	}
@@ -209,7 +214,7 @@ class IdentityState {
 
 		// Save to persistence
 		identityStorageManager.savePropertiesToPersistence(identityProperties);
-		callback.createXDMSharedState(identityProperties.toXDMData(), event);
+		callback.createXDMSharedState(buildXDMSharedState(), event);
 	}
 
 	/**
@@ -335,5 +340,137 @@ class IdentityState {
 			.build();
 
 		MobileCore.dispatchEvent(consentEvent);
+	}
+
+	/**
+	 * Collector layer for profile-attribute update requests. Runs every {@link ProfileAttributeHandler}
+	 * whose key is present in the event (each owns its own dedup + persistence) and dispatches a
+	 * single collated {@code profile.updateAttributes} Edge event with whatever changed. When
+	 * anything changed, the profile-attributes shared state is also (re)published from persistence
+	 * so it stays in sync with storage.
+	 *
+	 * @param event the profile attributes update {@link Event}
+	 * @param callback {@link SharedStateCallback} used to publish the profile-attributes shared state
+	 */
+	void updateProfileAttributes(final Event event, final SharedStateCallback callback) {
+		final Map<String, Object> eventData = event.getEventData();
+		if (MapUtils.isNullOrEmpty(eventData)) {
+			Log.warning(
+				LOG_TAG,
+				LOG_SOURCE,
+				"Event data is null or empty for '" + event.getName() + "'; skipping update."
+			);
+			return;
+		}
+
+		final Map<String, Object> mergedAttributes = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			if (!eventData.containsKey(handler.getAttributeKey())) {
+				continue;
+			}
+			final Map<String, Object> attributes = handler.collectFromEvent(event);
+			if (attributes != null) {
+				mergedAttributes.putAll(attributes);
+			}
+		}
+
+		if (mergedAttributes.isEmpty()) {
+			Log.warning(LOG_TAG, LOG_SOURCE, "No profile attributes collected from event data; skipping update.");
+			return;
+		}
+
+		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
+		publishProfileAttributesSharedState(callback, event);
+		dispatchProfileAttributesEdgeEvent(mergedAttributes);
+	}
+
+	/**
+	 * Clears all stored profile attributes and updates the shared state to match (now empty). Invoked
+	 * on reset so that the next update re-syncs the attributes against the newly generated ECID.
+	 *
+	 * @param callback {@link SharedStateCallback} used to publish the updated (empty) shared state
+	 * @param event the reset {@link Event} the shared state is versioned at
+	 */
+	void clearProfileAttributes(final SharedStateCallback callback, final Event event) {
+		profileAttributeStore.clearAll();
+		publishProfileAttributesSharedState(callback, event);
+	}
+
+	/**
+	 * Dispatches a single generic {@code profile.updateAttributes} {@link EventType#EDGE} /
+	 * {@link EventSource#REQUEST_CONTENT} event whose {@code data} is the collated contribution of
+	 * all {@link ProfileAttributeHandler}s (currently only the timezone handler). Callers must only
+	 * invoke this with a non-empty {@code data} map (see {@link #updateProfileAttributes}). The
+	 * payload shape is
+	 * {@code {"xdm": {"eventType": "profile.updateAttributes"}, "data": { ...collated attributes... }}};
+	 * the Edge extension enriches it with {@code _id}, {@code timestamp}, implementationDetails,
+	 * and identityMap.
+	 *
+	 * @param data the collated profile attributes payload; must not be null or empty
+	 */
+	private void dispatchProfileAttributesEdgeEvent(final Map<String, Object> data) {
+		final Map<String, Object> xdm = new HashMap<>();
+		xdm.put(
+			IdentityConstants.ProfileAttributes.EVENT_TYPE,
+			IdentityConstants.ProfileAttributes.XDM_EVENT_TYPE_UPDATE_ATTRIBUTES
+		);
+
+		final Map<String, Object> eventData = new HashMap<>();
+		eventData.put(IdentityConstants.ProfileAttributes.XDM, xdm);
+		eventData.put(IdentityConstants.ProfileAttributes.DATA, data);
+
+		final Event edgeEvent = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_PROFILE_ATTRIBUTES,
+			EventType.EDGE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(eventData)
+			.build();
+
+		MobileCore.dispatchEvent(edgeEvent);
+	}
+
+	/**
+	 * Publishes the full XDM shared state, merging the identity map with any stored profile
+	 * attributes under the {@code profileAttributes} key. Called on bootup, after any profile
+	 * attribute change, and after reset.
+	 *
+	 * @param callback {@link SharedStateCallback} used to create the XDM shared state
+	 * @param event the {@link Event} the shared state is versioned at; {@code null} for the next version
+	 */
+	private void publishProfileAttributesSharedState(final SharedStateCallback callback, final Event event) {
+		callback.createXDMSharedState(buildXDMSharedState(), event);
+	}
+
+	/**
+	 * Builds the full XDM shared state map, combining the identity map with any stored profile
+	 * attributes nested under {@link IdentityConstants.XDMKeys#PROFILE_ATTRIBUTES}. The
+	 * {@code profileAttributes} key is omitted when no attributes are stored.
+	 *
+	 * @return the merged XDM state map
+	 */
+	Map<String, Object> buildXDMSharedState() {
+		final Map<String, Object> xdmState = new HashMap<>(identityProperties.toXDMData(false));
+		final Map<String, Object> attributes = collectStoredProfileAttributes();
+		if (!attributes.isEmpty()) {
+			xdmState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, attributes);
+		}
+		return xdmState;
+	}
+
+	/**
+	 * Collates every {@link ProfileAttributeHandler}'s persisted contribution into a single map.
+	 *
+	 * @return the collated stored attributes; empty when nothing is persisted
+	 */
+	private Map<String, Object> collectStoredProfileAttributes() {
+		final Map<String, Object> mergedData = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			final Map<String, Object> attributes = handler.collectFromStorage();
+			if (attributes != null) {
+				mergedData.putAll(attributes);
+			}
+		}
+		return mergedData;
 	}
 }

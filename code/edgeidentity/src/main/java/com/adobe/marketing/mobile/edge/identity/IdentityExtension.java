@@ -91,6 +91,7 @@ class IdentityExtension extends Extension {
 	 * <ul>
 	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
 	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_RESET}</li>
+	 *     <li> EventType {@link EventType#PROFILE_ATTRIBUTE} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
@@ -107,6 +108,14 @@ class IdentityExtension extends Extension {
 			.registerEventListener(EventType.GENERIC_IDENTITY, EventSource.REQUEST_CONTENT, this::handleRequestContent);
 
 		getApi().registerEventListener(EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET, this::handleRequestReset);
+
+		// PROFILE_ATTRIBUTE event listener
+		getApi()
+			.registerEventListener(
+				EventType.PROFILE_ATTRIBUTE,
+				EventSource.REQUEST_CONTENT,
+				this::handleProfileAttributes
+			);
 
 		// EDGE_IDENTITY event listeners
 		getApi()
@@ -337,6 +346,9 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
+		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
+		// against the new ECID
+		state.clearProfileAttributes(sharedStateHandle, event);
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -395,11 +407,22 @@ class IdentityExtension extends Extension {
 	}
 
 	/**
+	 * Handles {@link EventType#PROFILE_ATTRIBUTE} request content events dispatched by
+	 * {@code MobileCore.updateProfileAttributes}. Delegates to the {@link IdentityState} collector
+	 * layer, which decides per attribute what (if anything) to sync.
+	 *
+	 * @param event the {@link Event} containing profile attribute data
+	 */
+	void handleProfileAttributes(@NonNull final Event event) {
+		state.updateProfileAttributes(event, sharedStateHandle);
+	}
+
+	/**
 	 * Fetches the latest Identity properties and shares the XDMSharedState.
 	 *
 	 * @param event the {@link Event} that triggered the XDM shared state change
 	 */
 	private void shareIdentityXDMSharedState(final Event event) {
-		sharedStateHandle.createXDMSharedState(state.getIdentityProperties().toXDMData(), event);
+		sharedStateHandle.createXDMSharedState(state.buildXDMSharedState(), event);
 	}
 }

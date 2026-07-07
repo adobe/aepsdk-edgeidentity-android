@@ -30,11 +30,25 @@ class IdentityStorageManager {
 	private static final String LOG_SOURCE = "IdentityStorageManager";
 	private final NamedCollection edgeIdentityStore;
 	private final NamedCollection directIdentityStore;
+	private final ProfileAttributeStore profileAttributeStore;
 
 	IdentityStorageManager(final DataStoring dataStoreService) {
 		this.edgeIdentityStore = dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DATASTORE_NAME);
 		this.directIdentityStore =
 			dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME);
+		this.profileAttributeStore =
+			new ProfileAttributeStore(
+				dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME)
+			);
+	}
+
+	/**
+	 * Returns the shared {@link ProfileAttributeStore} backing every {@link ProfileAttributeHandler}.
+	 *
+	 * @return the profile-attributes store
+	 */
+	ProfileAttributeStore getProfileAttributeStore() {
+		return profileAttributeStore;
 	}
 
 	/**
