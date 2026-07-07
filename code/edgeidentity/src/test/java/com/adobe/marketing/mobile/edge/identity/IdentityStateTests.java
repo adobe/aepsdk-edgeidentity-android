@@ -816,6 +816,71 @@ public class IdentityStateTests {
 	// ======================================================================================================================
 
 	@Test
+	public void testUpdateProfileAttributes_whenEventDataNull_skipsSaveAndDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event event = new Event.Builder(
+			"Update Profile Attributes",
+			EventType.PROFILE_ATTRIBUTE,
+			EventSource.REQUEST_CONTENT
+		)
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			verify(mockProfileAttributeStore, never()).setString(any(), any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+		}
+	}
+
+	@Test
+	public void testUpdateProfileAttributes_whenEventDataEmpty_skipsSaveAndDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event event = new Event.Builder(
+			"Update Profile Attributes",
+			EventType.PROFILE_ATTRIBUTE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(new HashMap<>())
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			verify(mockProfileAttributeStore, never()).setString(any(), any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+		}
+	}
+
+	@Test
+	public void testUpdateProfileAttributes_whenEventDataHasNoMatchingHandlerKey_skipsSaveAndDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event event = new Event.Builder(
+			"Update Profile Attributes",
+			EventType.PROFILE_ATTRIBUTE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("someUnrelatedKey", "someValue");
+					}
+				}
+			)
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(event, mockSharedStateCallback);
+
+			verify(mockProfileAttributeStore, never()).setString(any(), any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+		}
+	}
+
+	@Test
 	public void testUpdateTimeZone_whenChanged_savesThenDispatchesEdgeEvent() {
 		final IdentityState state = new IdentityState(mockIdentityStorageManager);
 		// First read (dedup) sees no stored value; after the handler persists, subsequent reads return

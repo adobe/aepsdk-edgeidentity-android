@@ -399,20 +399,16 @@ class IdentityState {
 	/**
 	 * Dispatches a single generic {@code profile.updateAttributes} {@link EventType#EDGE} /
 	 * {@link EventSource#REQUEST_CONTENT} event whose {@code data} is the collated contribution of
-	 * all {@link ProfileAttributeHandler}s (currently only the timezone handler). No event is
-	 * dispatched when {@code data} is empty. The payload shape is
+	 * all {@link ProfileAttributeHandler}s (currently only the timezone handler). Callers must only
+	 * invoke this with a non-empty {@code data} map (see {@link #updateProfileAttributes}). The
+	 * payload shape is
 	 * {@code {"xdm": {"eventType": "profile.updateAttributes"}, "data": { ...collated attributes... }}};
 	 * the Edge extension enriches it with {@code _id}, {@code timestamp}, implementationDetails,
 	 * and identityMap.
 	 *
-	 * @param data the collated profile attributes payload
+	 * @param data the collated profile attributes payload; must not be null or empty
 	 */
 	private void dispatchProfileAttributesEdgeEvent(final Map<String, Object> data) {
-		if (MapUtils.isNullOrEmpty(data)) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "No profile attributes to sync, skipping Edge event dispatch.");
-			return;
-		}
-
 		final Map<String, Object> xdm = new HashMap<>();
 		xdm.put(
 			IdentityConstants.ProfileAttributes.EVENT_TYPE,
