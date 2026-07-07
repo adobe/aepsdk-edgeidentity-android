@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.services.Log;
@@ -195,10 +193,10 @@ public final class IdentityItem {
 
 			return new IdentityItem(id, authenticatedState, primary);
 		} catch (final DataReaderException e) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Failed to create IdentityItem from data.");
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Failed to create IdentityItem from data.");
 		} catch (final IllegalArgumentException e) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Failed to create IdentityItem from data as 'id' is null. %s",
 				e.getLocalizedMessage()

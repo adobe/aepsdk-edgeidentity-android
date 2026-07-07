@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
@@ -94,12 +92,20 @@ public class IdentityMap {
 	 */
 	public void removeItem(@NonNull final IdentityItem item, @NonNull final String namespace) {
 		if (item == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Remove item ignored as must contain a non-null IdentityItem.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Remove item ignored as must contain a non-null IdentityItem."
+			);
 			return;
 		}
 
 		if (StringUtils.isNullOrEmpty(namespace)) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Remove item ignored as must contain a non-null/non-empty namespace.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Remove item ignored as must contain a non-null/non-empty namespace."
+			);
 			return;
 		}
 
@@ -158,12 +164,20 @@ public class IdentityMap {
 	 */
 	void addItem(final IdentityItem item, final String namespace, final boolean isFirstItem) {
 		if (item == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Add item ignored as must contain a non-null IdentityItem.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Add item ignored as must contain a non-null IdentityItem."
+			);
 			return;
 		}
 
 		if (StringUtils.isNullOrEmpty(namespace)) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Add item ignored as must contain a non-null/non-empty namespace.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Add item ignored as must contain a non-null/non-empty namespace."
+			);
 			return;
 		}
 
@@ -315,7 +329,7 @@ public class IdentityMap {
 	private void addItemToMap(final IdentityItem newItem, final String namespace, final boolean isFirstItem) {
 		if (StringUtils.isNullOrEmpty(newItem.getId())) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Unable to add IdentityItem to IdentityMap with null or empty identifier value: %s",
 				newItem

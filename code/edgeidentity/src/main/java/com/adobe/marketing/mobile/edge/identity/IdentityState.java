@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
@@ -84,67 +82,84 @@ class IdentityState {
 
 		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			// Wait for all extensions to be registered as forthcoming logic depends on Identity Direct state.
-			// This is inferred via EventHub's shared state and is based on the assumption that EventHub
-			// sets its state only when all the extensions are registered initially.
-			final SharedStateResult eventHubStateResult = callback.getSharedState(
-				IdentityConstants.SharedState.Hub.NAME,
-				null
-			);
-			if (eventHubStateResult == null || eventHubStateResult.getStatus() != SharedStateStatus.SET) {
+			if (!loadEcidForBootup(callback)) {
 				return false;
 			}
-
-			// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
-			final ECID directIdentityEcid = identityStorageManager.loadEcidFromDirectIdentityPersistence();
-
-			if (directIdentityEcid != null) {
-				identityProperties.setECID(directIdentityEcid);
-				Log.debug(
-					LOG_TAG,
-					LOG_SOURCE,
-					"On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'"
-				);
-			}
-			// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
-			else if (isIdentityDirectRegistered(eventHubStateResult.getValue())) {
-				// If the direct Identity extension is registered, attempt to get its shared state
-				final SharedStateResult sharedStateResult = callback.getSharedState(
-					IdentityConstants.SharedState.IdentityDirect.NAME,
-					null
-				);
-
-				// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
-				if (sharedStateResult == null || sharedStateResult.getStatus() != SharedStateStatus.SET) {
-					Log.debug(
-						LOG_TAG,
-						LOG_SOURCE,
-						"On bootup direct Identity extension is registered, waiting for its state change."
-					);
-					return false;
-				}
-
-				final Map<String, Object> identityDirectSharedState = sharedStateResult.getValue();
-				handleECIDFromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
-			}
-			// Generate a new ECID as the direct Identity extension is not registered with the SDK and there was no direct Identity persisted ECID
-			else {
-				identityProperties.setECID(new ECID());
-				Log.debug(
-					LOG_TAG,
-					LOG_SOURCE,
-					"Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'"
-				);
-			}
-
-			identityStorageManager.savePropertiesToPersistence(identityProperties);
 		}
 
 		hasBooted = true;
-		Log.debug(LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
+		Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
 		publishProfileAttributesSharedState(callback, null);
 
 		return hasBooted;
+	}
+
+	/**
+	 * Loads or generates the ECID during bootup when no ECID is currently set. Attempts to migrate an
+	 * existing ECID from the direct Identity extension (from its persisted store, or from its shared state
+	 * if the extension is registered), otherwise generates a new ECID. The resolved
+	 * {@code identityProperties} are saved to persistence.
+	 *
+	 * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
+	 * @return true once an ECID has been resolved and persisted; false if bootup should be deferred until a
+	 *         required shared state becomes available
+	 */
+	private boolean loadEcidForBootup(final SharedStateCallback callback) {
+		// Wait for all extensions to be registered as forthcoming logic depends on Identity Direct state.
+		// This is inferred via EventHub's shared state and is based on the assumption that EventHub
+		// sets its state only when all the extensions are registered initially.
+		final SharedStateResult eventHubStateResult = callback.getSharedState(
+			IdentityConstants.SharedState.Hub.NAME,
+			null
+		);
+		if (eventHubStateResult == null || eventHubStateResult.getStatus() != SharedStateStatus.SET) {
+			return false;
+		}
+
+		// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
+		final ECID directIdentityEcid = identityStorageManager.loadEcidFromDirectIdentityPersistence();
+
+		if (directIdentityEcid != null) {
+			identityProperties.setECID(directIdentityEcid);
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'"
+			);
+		}
+		// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
+		else if (isIdentityDirectRegistered(eventHubStateResult.getValue())) {
+			// If the direct Identity extension is registered, attempt to get its shared state
+			final SharedStateResult sharedStateResult = callback.getSharedState(
+				IdentityConstants.SharedState.IdentityDirect.NAME,
+				null
+			);
+
+			// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
+			if (sharedStateResult == null || sharedStateResult.getStatus() != SharedStateStatus.SET) {
+				Log.debug(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"On bootup direct Identity extension is registered, waiting for its state change."
+				);
+				return false;
+			}
+
+			final Map<String, Object> identityDirectSharedState = sharedStateResult.getValue();
+			handleECIDFromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
+		}
+		// Generate a new ECID as the direct Identity extension is not registered with the SDK and there was no direct Identity persisted ECID
+		else {
+			identityProperties.setECID(new ECID());
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'"
+			);
+		}
+
+		identityStorageManager.savePropertiesToPersistence(identityProperties);
+		return true;
 	}
 
 	/**
@@ -240,7 +255,7 @@ class IdentityState {
 		identityProperties.setECIDSecondary(legacyEcid);
 		identityStorageManager.savePropertiesToPersistence(identityProperties);
 		Log.debug(
-			LOG_TAG,
+			IdentityConstants.LOG_TAG,
 			LOG_SOURCE,
 			"Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap"
 		);
@@ -258,14 +273,14 @@ class IdentityState {
 		if (legacyEcid != null) {
 			identityProperties.setECID(legacyEcid); // migrate legacy ECID
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Identity direct ECID '" + legacyEcid + "' " + "was migrated to Edge Identity, updating the IdentityMap"
 			);
 		} else { // opt-out scenario or an unexpected state for Identity direct, generate new ECID
 			identityProperties.setECID(new ECID());
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Identity direct ECID is null, generating new ECID '" +
 				identityProperties.getECID() +
@@ -356,7 +371,7 @@ class IdentityState {
 		final Map<String, Object> eventData = event.getEventData();
 		if (MapUtils.isNullOrEmpty(eventData)) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Event data is null or empty for '" + event.getName() + "'; skipping update."
 			);
@@ -375,7 +390,11 @@ class IdentityState {
 		}
 
 		if (mergedAttributes.isEmpty()) {
-			Log.warning(LOG_TAG, LOG_SOURCE, "No profile attributes collected from event data; skipping update.");
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"No profile attributes collected from event data; skipping update."
+			);
 			return;
 		}
 

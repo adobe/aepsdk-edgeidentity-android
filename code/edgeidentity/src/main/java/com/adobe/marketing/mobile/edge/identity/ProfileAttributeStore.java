@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.services.NamedCollection;
 
@@ -43,7 +41,7 @@ class ProfileAttributeStore {
 	String getString(final String key) {
 		if (collection == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Profile attributes named collection is null. Unable to read key '" + key + "'."
 			);
@@ -61,7 +59,7 @@ class ProfileAttributeStore {
 	void setString(final String key, final String value) {
 		if (collection == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Profile attributes named collection is null. Unable to write key '" + key + "'."
 			);
@@ -82,7 +80,7 @@ class ProfileAttributeStore {
 	void remove(final String key) {
 		if (collection == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Profile attributes named collection is null. Unable to remove key '" + key + "'."
 			);
@@ -98,7 +96,7 @@ class ProfileAttributeStore {
 	void clearAll() {
 		if (collection == null) {
 			Log.warning(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Profile attributes named collection is null. Unable to clear profile attributes."
 			);
