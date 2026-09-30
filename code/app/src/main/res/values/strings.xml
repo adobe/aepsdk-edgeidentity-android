@@ -65,4 +65,9 @@
     <string name="menu_profile_attributes">Profile Attributes</string>
     <string name="btn_sync_timezone">Sync Timezone</string>
     <string name="hint_timezone">e.g. America/New_York</string>
+    <string name="btn_sync_push_token">Sync Push Token Only (Bypass Consent)</string>
+    <string name="btn_sync_push_token_timezone">Sync Push Token + New York Timezone (Bypass Consent)</string>
+    <string name="btn_sync_push_token_japan_timezone">Sync Push Token + Japan Timezone (Bypass Consent)</string>
+    <string name="btn_sync_japan_timezone_bypass">Sync Japan Timezone Only (Bypass Consent)</string>
+    <string name="btn_sync_new_york_timezone_bypass">Sync New York Timezone Only (Bypass Consent)</string>
 </resources>
