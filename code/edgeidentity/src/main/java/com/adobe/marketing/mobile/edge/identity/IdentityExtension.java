@@ -114,6 +114,8 @@ class IdentityExtension extends Extension {
 				EventSource.REQUEST_CONTENT,
 				this::handleProfileAttributes
 			);
+		getApi()
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleDeviceAttributes);
 
 		// EDGE_IDENTITY event listeners
 		getApi()
@@ -413,6 +415,24 @@ class IdentityExtension extends Extension {
 	 */
 	void handleProfileAttributes(@NonNull final Event event) {
 		state.updateProfileAttributes(event, sharedStateHandle);
+	}
+
+	/**
+	 * Handles internal device-attribute updates and dispatches an operational-data event.
+	 *
+	 * @param event the event containing device attribute data
+	 */
+	void handleDeviceAttributes(@NonNull final Event event) {
+		final SharedStateResult configResult = sharedStateHandle.getSharedState(
+			IdentityConstants.SharedState.Configuration.NAME,
+			event
+		);
+		final Map<String, Object> config = configResult != null ? configResult.getValue() : null;
+		final Object dedupConfig = config != null
+			? config.get(IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY)
+			: null;
+		final boolean dedup = !(dedupConfig instanceof Boolean) || (Boolean) dedupConfig;
+		state.updateDeviceAttributes(event, dedup);
 	}
 
 	/**

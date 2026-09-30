@@ -23,7 +23,15 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        exclusiveContent {
+            forRepository {
+                mavenLocal()
+            }
+            filter {
+                includeModule("com.adobe.marketing.mobile", "core")
+                includeModule("com.adobe.marketing.mobile", "edge")
+            }
+        }
         maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }
         maven { url = uri("https://jitpack.io") }
     }

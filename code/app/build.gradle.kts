@@ -18,6 +18,7 @@ plugins {
 }
 
 val mavenCoreVersion: String by project
+val mavenEdgeVersion: String by project
 
 configure<com.diffplug.gradle.spotless.SpotlessExtension> {
     kotlin {
@@ -75,7 +76,7 @@ dependencies {
         exclude(group = "com.adobe.marketing.mobile", module = "edge")
     }
     implementation("com.adobe.marketing.mobile:assurance:3.0.7")
-    implementation("com.adobe.marketing.mobile:edge:3.0.2") {
+    implementation("com.adobe.marketing.mobile:edge:$mavenEdgeVersion") {
         exclude(group = "com.adobe.marketing.mobile", module = "edgeidentity")
     }
     implementation("androidx.core:core-ktx:1.3.2")

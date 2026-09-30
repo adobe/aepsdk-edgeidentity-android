@@ -83,6 +83,8 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.PROFILE_ATTRIBUTE), eq(EventSource.REQUEST_CONTENT), any());
 		verify(mockExtensionApi)
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_CONTENT), any());
+		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_IDENTITY), any());
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.UPDATE_IDENTITY), any());
@@ -91,6 +93,52 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
+	}
+
+	@Test
+	public void test_handleDeviceAttributes_dedupDefaultsToTrue() {
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.build();
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.handleDeviceAttributes(event);
+
+		verify(mockIdentityState).updateDeviceAttributes(event, true);
+	}
+
+	@Test
+	public void test_handleDeviceAttributes_readsDedupSettingFromConfiguration() {
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.build();
+		when(
+			mockExtensionApi.getSharedState(
+				IdentityConstants.SharedState.Configuration.NAME,
+				event,
+				false,
+				SharedStateResolution.LAST_SET
+			)
+		)
+			.thenReturn(
+				new SharedStateResult(
+					SharedStateStatus.SET,
+					Collections.singletonMap(IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY, false)
+				)
+			);
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.handleDeviceAttributes(event);
+
+		verify(mockIdentityState).updateDeviceAttributes(event, false);
 	}
 
 	// ========================================================================================

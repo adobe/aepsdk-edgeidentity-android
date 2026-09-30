@@ -80,6 +80,14 @@ public class TimeZoneAttributeHandlerTests {
 	}
 
 	@Test
+	public void testCollectFromEvent_whenInvalidTimeZone_returnsNull() {
+		final Map<String, Object> result = handler.collectFromEvent(fakeTimeZoneEvent("Not/A_TimeZone"));
+
+		verify(mockStore, never()).setString(eq(KEY), any());
+		assertNull(result);
+	}
+
+	@Test
 	public void testCollectFromEvent_whenKeyAbsent_returnsNull() {
 		final Event event = new Event.Builder(
 			"Update Profile Attributes",

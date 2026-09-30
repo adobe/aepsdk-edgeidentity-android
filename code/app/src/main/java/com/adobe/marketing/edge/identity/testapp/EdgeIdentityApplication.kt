@@ -12,27 +12,66 @@
 package com.adobe.marketing.edge.identity.testapp
 
 import android.app.Application
-import com.adobe.marketing.mobile.Assurance
-import com.adobe.marketing.mobile.Edge
+import android.net.Uri
+import android.util.Log
+import com.adobe.marketing.mobile.AdobeCallbackWithError
+import com.adobe.marketing.mobile.Event
+import com.adobe.marketing.mobile.EventSource
+import com.adobe.marketing.mobile.EventType
 import com.adobe.marketing.mobile.LoggingMode
 import com.adobe.marketing.mobile.MobileCore
-import com.adobe.marketing.mobile.edge.consent.Consent
-import com.adobe.marketing.mobile.edge.identity.Identity
 
 class EdgeIdentityApplication : Application() {
-    // TODO: Set up the preferred Environment File ID from your mobile property configured in Data Collection UI
-    private var ENVIRONMENT_FILE_ID: String = ""
+    companion object {
+        private const val LOG_TAG = "EdgeIdentityApplication"
+        private const val CONFIGURATION_RETRIEVE_DATA = "config.getData"
+        private const val LAUNCH_APP_ID =
+            "staging/1b50a869c4a2/72557653d422/launch-51bcfc552b32"
+    }
 
     override fun onCreate() {
         super.onCreate()
 
-        // register AEP SDK extensions
-        MobileCore.setApplication(this)
         MobileCore.setLogLevel(LoggingMode.VERBOSE)
-        MobileCore.registerExtensions(
-            listOf(Edge.EXTENSION, Identity.EXTENSION, Consent.EXTENSION, Assurance.EXTENSION)
-        ) {
-            MobileCore.configureWithAppID(ENVIRONMENT_FILE_ID)
+        // Load configuration and rules through this Launch environment; no root bundled assets are used.
+        MobileCore.initialize(this, LAUNCH_APP_ID) {
+            logActiveConfiguration()
         }
+    }
+
+    private fun logActiveConfiguration() {
+        val event = Event.Builder(
+            "Get Active Configuration",
+            EventType.CONFIGURATION,
+            EventSource.REQUEST_CONTENT
+        ).setEventData(mapOf(CONFIGURATION_RETRIEVE_DATA to true)).build()
+
+        MobileCore.dispatchEventWithResponseCallback(
+            event,
+            5000,
+            object : AdobeCallbackWithError<Event> {
+                override fun call(response: Event) {
+                    val configuration = response.eventData.orEmpty()
+                    val rulesUrl = configuration["rules.url"] as? String
+                    val launchEnvironmentId = rulesUrl
+                        ?.let { Uri.parse(it).pathSegments.getOrNull(2) }
+                        ?: "not set"
+                    val buildEnvironment = configuration["build.environment"] ?: "not set"
+                    val edgeEnvironment = configuration["edge.environment"] ?: "not set"
+                    val edgeConfigId = configuration["edge.configId"] ?: "not set"
+
+                    Log.i(
+                        LOG_TAG,
+                        "Active configuration shared state: build.environment=$buildEnvironment, " +
+                            "Launch environmentId=$launchEnvironmentId, " +
+                            "edge.environment=$edgeEnvironment, edge.configId=$edgeConfigId"
+                    )
+                }
+
+                override fun fail(error: com.adobe.marketing.mobile.AdobeError) {
+                    Log.e(LOG_TAG, "Failed to retrieve active configuration shared state: $error")
+                }
+            }
+        )
     }
 }
