@@ -232,6 +232,46 @@ public class Identity {
 	}
 
 	/**
+	 * Updates device attributes that should be delivered to the Edge Network independently of collect consent.
+	 * Each non-empty attribute is de-duplicated by default; only changed values are sent to the operational-data
+	 * event consumed by Launch rules. Set {@code edgeidentity.deviceAttributes.dedup} to {@code false} in
+	 * Configuration to dispatch every update. Passing an empty object or only empty values is a no-op.
+	 *
+	 * @param attributes device attributes to update
+	 */
+	public static void updateDeviceAttributesBypassConsent(@NonNull final DeviceAttributes attributes) {
+		if (attributes == null) {
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to update device attributes, attributes are null."
+			);
+			return;
+		}
+
+		final Map<String, Object> eventData = new HashMap<>();
+		if (!StringUtils.isNullOrEmpty(attributes.getTimeZone())) {
+			eventData.put(IdentityConstants.DeviceAttributes.TIME_ZONE, attributes.getTimeZone());
+		}
+		if (!StringUtils.isNullOrEmpty(attributes.getPushToken())) {
+			eventData.put(IdentityConstants.DeviceAttributes.PUSH_IDENTIFIER, attributes.getPushToken());
+		}
+		if (eventData.isEmpty()) {
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attributes provided; ignoring update.");
+			return;
+		}
+
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(eventData)
+			.build();
+		MobileCore.dispatchEvent(event);
+	}
+
+	/**
 	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
 	 * This does not clear the identifier from the User Profile Graph.
 	 *

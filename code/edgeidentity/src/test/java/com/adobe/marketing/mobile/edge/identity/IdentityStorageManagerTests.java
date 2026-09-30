@@ -12,6 +12,7 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -50,6 +51,9 @@ public class IdentityStorageManagerTests {
 	@Mock
 	private NamedCollection mockProfileAttributesNamedCollection;
 
+	@Mock
+	private NamedCollection mockDeviceAttributesNamedCollection;
+
 	@Before
 	public void before() throws Exception {
 		MockitoAnnotations.openMocks(this);
@@ -64,6 +68,8 @@ public class IdentityStorageManagerTests {
 			.thenReturn(mockDirectIdentityNamedCollection);
 		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME))
 			.thenReturn(mockProfileAttributesNamedCollection);
+		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DEVICE_ATTRIBUTES_DATASTORE_NAME))
+			.thenReturn(mockDeviceAttributesNamedCollection);
 	}
 
 	@Test
@@ -77,6 +83,15 @@ public class IdentityStorageManagerTests {
 
 		// verify
 		assertNull(identityProperties);
+	}
+
+	@Test
+	public void testDeviceAttributeStore_usesDedicatedNamedCollection() {
+		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
+
+		assertNotNull(identityStorageManager.getDeviceAttributeStore());
+		verify(mockDataStoreService)
+			.getNamedCollection(IdentityConstants.DataStoreKey.DEVICE_ATTRIBUTES_DATASTORE_NAME);
 	}
 
 	@Test
