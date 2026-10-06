@@ -251,22 +251,38 @@ public class Identity {
 
 		final Map<String, Object> eventData = new HashMap<>();
 		if (!StringUtils.isNullOrEmpty(attributes.getTimeZone())) {
-			eventData.put(IdentityConstants.DeviceAttributes.TIME_ZONE, attributes.getTimeZone());
+			eventData.put(IdentityConstants.DeviceAttributes.TIMEZONE, attributes.getTimeZone());
 		}
 		if (!StringUtils.isNullOrEmpty(attributes.getPushToken())) {
-			eventData.put(IdentityConstants.DeviceAttributes.PUSH_IDENTIFIER, attributes.getPushToken());
+			eventData.put(
+				IdentityConstants.DeviceAttributes.TOKENS,
+				Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, attributes.getPushToken())
+			);
 		}
-		if (eventData.isEmpty()) {
+		updateDeviceAttributesBypassConsent(eventData);
+	}
+
+	/**
+	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
+	 * independently of collect consent. Attribute keys and nested values are forwarded unchanged.
+	 * Launch rules determine which configured paths are forwarded to Edge. By default, each key is
+	 * sent only when its value differs from the last synchronized value. Set
+	 * {@code edgeidentity.deviceAttributes.dedup} to {@code false} to dispatch every update. An empty
+	 * map is ignored. Unless supplied by the caller, an {@code app} context is added when available.
+	 *
+	 * @param attributes map of attribute names to JSON-compatible values
+	 */
+	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
+		if (attributes == null || attributes.isEmpty()) {
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attributes provided; ignoring update.");
 			return;
 		}
-
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
 			EventType.EDGE_IDENTITY,
 			EventSource.REQUEST_CONTENT
 		)
-			.setEventData(eventData)
+			.setEventData(new HashMap<>(attributes))
 			.build();
 		MobileCore.dispatchEvent(event);
 	}

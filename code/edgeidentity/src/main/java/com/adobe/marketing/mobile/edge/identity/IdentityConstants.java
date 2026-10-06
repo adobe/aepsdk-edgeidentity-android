@@ -159,6 +159,7 @@ final class IdentityConstants {
 		static final String TIMEZONE = "timezone";
 		static final String PUSH_IDENTIFIER = "pushidentifier";
 		static final String PUSH_NOTIFICATION = "pushNotification";
+		static final String TOKENS = "tokens";
 		static final String APP = "app";
 		static final String APP_ID = "id";
 		static final String APP_PLATFORM = "platform";
@@ -166,6 +167,7 @@ final class IdentityConstants {
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
 		static final String OPERATIONAL_DATA_SOURCE = "com.adobe.eventSource.requestContent";
 		static final String DEDUP_CONFIG_KEY = "edgeidentity.deviceAttributes.dedup";
+		static final String SYNCED_VALUES = "syncedDeviceAttributeValues";
 
 		private DeviceAttributes() {}
 	}

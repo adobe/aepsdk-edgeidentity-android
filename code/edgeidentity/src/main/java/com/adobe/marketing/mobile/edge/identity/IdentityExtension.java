@@ -349,6 +349,7 @@ class IdentityExtension extends Extension {
 		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
 		// against the new ECID
 		state.clearProfileAttributes(sharedStateHandle, event);
+		state.clearDeviceAttributes();
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -423,6 +424,14 @@ class IdentityExtension extends Extension {
 	 * @param event the event containing device attribute data
 	 */
 	void handleDeviceAttributes(@NonNull final Event event) {
+		if (!IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())) {
+			Log.trace(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Ignoring device-attribute listener event with unexpected name '" + event.getName() + "'."
+			);
+			return;
+		}
 		final SharedStateResult configResult = sharedStateHandle.getSharedState(
 			IdentityConstants.SharedState.Configuration.NAME,
 			event

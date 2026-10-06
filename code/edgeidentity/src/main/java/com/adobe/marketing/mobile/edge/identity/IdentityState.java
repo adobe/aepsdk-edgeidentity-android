@@ -36,10 +36,10 @@ class IdentityState {
 
 	private final IdentityStorageManager identityStorageManager;
 	private final ProfileAttributeStore profileAttributeStore;
+	private final DeviceAttributeDeduplicator deviceAttributeDeduplicator;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
 	private final List<AttributeHandler> profileAttributeHandlers;
-	private final List<AttributeHandler> deviceAttributeHandlers;
 
 	IdentityState() {
 		this(new IdentityStorageManager(ServiceProvider.getInstance().getDataStoreService()));
@@ -53,12 +53,8 @@ class IdentityState {
 		this.identityStorageManager = identityStorageManager;
 		this.profileAttributeStore = identityStorageManager.getProfileAttributeStore();
 		this.profileAttributeHandlers = ProfileAttributeHandlers.all(profileAttributeStore);
-		final ProfileAttributeStore deviceAttributeStore = identityStorageManager.getDeviceAttributeStore();
-		this.deviceAttributeHandlers =
-			List.of(
-				new TimeZoneAttributeHandler(deviceAttributeStore),
-				new PushTokenAttributeHandler(deviceAttributeStore)
-			);
+		this.deviceAttributeDeduplicator =
+			new DeviceAttributeDeduplicator(identityStorageManager.getDeviceAttributeStore());
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -429,34 +425,13 @@ class IdentityState {
 			return;
 		}
 
-		final Map<String, Object> payload = new HashMap<>();
-		for (final AttributeHandler handler : deviceAttributeHandlers) {
-			if (!eventData.containsKey(handler.getAttributeKey())) {
-				continue;
-			}
-			final Map<String, Object> attributes = handler.collectFromEvent(event, dedup);
-			if (attributes != null) {
-				payload.putAll(attributes);
-			}
-		}
-
+		final Map<String, Object> payload = deviceAttributeDeduplicator.filter(eventData, dedup);
 		if (payload.isEmpty()) {
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attribute changes to dispatch.");
 			return;
 		}
 
-		final Map<String, Object> operationalData = new HashMap<>();
-		if (payload.containsKey(IdentityConstants.DeviceAttributes.TIME_ZONE)) {
-			operationalData.put(
-				IdentityConstants.DeviceAttributes.TIMEZONE,
-				payload.get(IdentityConstants.DeviceAttributes.TIME_ZONE)
-			);
-		}
-		if (payload.containsKey(IdentityConstants.DeviceAttributes.PUSH_IDENTIFIER)) {
-			operationalData.put(
-				IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION,
-				payload.get(IdentityConstants.DeviceAttributes.PUSH_IDENTIFIER)
-			);
+		if (!payload.containsKey(IdentityConstants.DeviceAttributes.APP)) {
 			final android.app.Application application = MobileCore.getApplication();
 			if (application != null) {
 				final Map<String, Object> app = new HashMap<>();
@@ -465,22 +440,26 @@ class IdentityState {
 					IdentityConstants.DeviceAttributes.APP_PLATFORM,
 					IdentityConstants.DeviceAttributes.ANDROID_PLATFORM
 				);
-				operationalData.put(IdentityConstants.DeviceAttributes.APP, app);
+				payload.put(IdentityConstants.DeviceAttributes.APP, app);
 			}
 		}
 
-		if (operationalData.isEmpty()) {
-			return;
-		}
 		final Event operationalEvent = new Event.Builder(
 			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
 			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
 			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_SOURCE
 		)
-			.setEventData(operationalData)
+			.setEventData(payload)
 			.chainToParentEvent(event)
 			.build();
 		MobileCore.dispatchEvent(operationalEvent);
+	}
+
+	/**
+	 * Clears the remembered device attribute values so they are sent again after an identity reset.
+	 */
+	void clearDeviceAttributes() {
+		deviceAttributeDeduplicator.clear();
 	}
 
 	/**
