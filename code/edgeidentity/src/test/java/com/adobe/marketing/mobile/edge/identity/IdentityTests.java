@@ -630,6 +630,82 @@ public class IdentityTests {
 		}
 	}
 
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_dispatchesInternalDeviceEvent() {
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final DeviceAttributes attributes = new DeviceAttributes.Builder()
+			.setTimeZone("America/New_York")
+			.setPushToken("push-token")
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+		}
+
+		final Event event = eventCaptor.getValue();
+		assertEquals(IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES, event.getName());
+		assertEquals(EventType.EDGE_IDENTITY, event.getType());
+		assertEquals(EventSource.REQUEST_CONTENT, event.getSource());
+		assertEquals("America/New_York", event.getEventData().get(IdentityConstants.DeviceAttributes.TIMEZONE));
+		assertEquals(
+			Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, "push-token"),
+			event.getEventData().get(IdentityConstants.DeviceAttributes.TOKENS)
+		);
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_mapIsDispatchedUnchanged() {
+		final Map<String, Object> attributes = new HashMap<>();
+		attributes.put("timezone", "America/Los_Angeles");
+		attributes.put(
+			"tokens",
+			Map.of(
+				"pushNotification",
+				List.of("push-token"),
+				"liveActivityStart",
+				List.of(Map.of("attributeType", "GameScore", "value", "start-token"))
+			)
+		);
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+		}
+
+		assertEquals(attributes, eventCaptor.getValue().getEventData());
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_emptyAttributesDoesNotDispatch() {
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(new DeviceAttributes.Builder().build());
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_emptyMapDoesNotDispatch() {
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(Map.of());
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_nullAttributesDoesNotDispatch() {
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent((DeviceAttributes) null);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
 	// ========================================================================================
 	// removeIdentity API
 	// ========================================================================================

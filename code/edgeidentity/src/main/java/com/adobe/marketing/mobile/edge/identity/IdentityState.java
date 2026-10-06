@@ -36,9 +36,10 @@ class IdentityState {
 
 	private final IdentityStorageManager identityStorageManager;
 	private final ProfileAttributeStore profileAttributeStore;
+	private final DeviceAttributeDeduplicator deviceAttributeDeduplicator;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
-	private final List<ProfileAttributeHandler> profileAttributeHandlers;
+	private final List<AttributeHandler> profileAttributeHandlers;
 
 	IdentityState() {
 		this(new IdentityStorageManager(ServiceProvider.getInstance().getDataStoreService()));
@@ -52,6 +53,8 @@ class IdentityState {
 		this.identityStorageManager = identityStorageManager;
 		this.profileAttributeStore = identityStorageManager.getProfileAttributeStore();
 		this.profileAttributeHandlers = ProfileAttributeHandlers.all(profileAttributeStore);
+		this.deviceAttributeDeduplicator =
+			new DeviceAttributeDeduplicator(identityStorageManager.getDeviceAttributeStore());
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -358,7 +361,7 @@ class IdentityState {
 	}
 
 	/**
-	 * Collector layer for profile-attribute update requests. Runs every {@link ProfileAttributeHandler}
+	 * Collector layer for profile-attribute update requests. Runs every {@link AttributeHandler}
 	 * whose key is present in the event (each owns its own dedup + persistence) and dispatches a
 	 * single collated {@code profile.updateAttributes} Edge event with whatever changed. When
 	 * anything changed, the profile-attributes shared state is also (re)published from persistence
@@ -379,7 +382,7 @@ class IdentityState {
 		}
 
 		final Map<String, Object> mergedAttributes = new HashMap<>();
-		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+		for (final AttributeHandler handler : profileAttributeHandlers) {
 			if (!eventData.containsKey(handler.getAttributeKey())) {
 				continue;
 			}
@@ -404,6 +407,62 @@ class IdentityState {
 	}
 
 	/**
+	 * Collects changed device attributes and emits an operational-data event for Launch rules to
+	 * forward to Edge independently of collect consent. Device attributes deliberately do not
+	 * enter the consent-gated XDM shared state.
+	 *
+	 * @param event the internal device-attribute update event
+	 * @param dedup true to skip attributes identical to their last stored values
+	 */
+	void updateDeviceAttributes(final Event event, final boolean dedup) {
+		final Map<String, Object> eventData = event.getEventData();
+		if (MapUtils.isNullOrEmpty(eventData)) {
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Event data is null or empty for '" + event.getName() + "'; skipping device attribute update."
+			);
+			return;
+		}
+
+		final Map<String, Object> payload = deviceAttributeDeduplicator.filter(eventData, dedup);
+		if (payload.isEmpty()) {
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attribute changes to dispatch.");
+			return;
+		}
+
+		if (!payload.containsKey(IdentityConstants.DeviceAttributes.APP)) {
+			final android.app.Application application = MobileCore.getApplication();
+			if (application != null) {
+				final Map<String, Object> app = new HashMap<>();
+				app.put(IdentityConstants.DeviceAttributes.APP_ID, application.getPackageName());
+				app.put(
+					IdentityConstants.DeviceAttributes.APP_PLATFORM,
+					IdentityConstants.DeviceAttributes.ANDROID_PLATFORM
+				);
+				payload.put(IdentityConstants.DeviceAttributes.APP, app);
+			}
+		}
+
+		final Event operationalEvent = new Event.Builder(
+			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
+			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
+			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_SOURCE
+		)
+			.setEventData(payload)
+			.chainToParentEvent(event)
+			.build();
+		MobileCore.dispatchEvent(operationalEvent);
+	}
+
+	/**
+	 * Clears the remembered device attribute values so they are sent again after an identity reset.
+	 */
+	void clearDeviceAttributes() {
+		deviceAttributeDeduplicator.clear();
+	}
+
+	/**
 	 * Clears all stored profile attributes and updates the shared state to match (now empty). Invoked
 	 * on reset so that the next update re-syncs the attributes against the newly generated ECID.
 	 *
@@ -418,7 +477,7 @@ class IdentityState {
 	/**
 	 * Dispatches a single generic {@code profile.updateAttributes} {@link EventType#EDGE} /
 	 * {@link EventSource#REQUEST_CONTENT} event whose {@code data} is the collated contribution of
-	 * all {@link ProfileAttributeHandler}s (currently only the timezone handler). Callers must only
+	 * all profile {@link AttributeHandler}s (currently only the timezone handler). Callers must only
 	 * invoke this with a non-empty {@code data} map (see {@link #updateProfileAttributes}). The
 	 * payload shape is
 	 * {@code {"xdm": {"eventType": "profile.updateAttributes"}, "data": { ...collated attributes... }}};
@@ -478,13 +537,13 @@ class IdentityState {
 	}
 
 	/**
-	 * Collates every {@link ProfileAttributeHandler}'s persisted contribution into a single map.
+	 * Collates every profile {@link AttributeHandler}'s persisted contribution into a single map.
 	 *
 	 * @return the collated stored attributes; empty when nothing is persisted
 	 */
 	private Map<String, Object> collectStoredProfileAttributes() {
 		final Map<String, Object> mergedData = new HashMap<>();
-		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+		for (final AttributeHandler handler : profileAttributeHandlers) {
 			final Map<String, Object> attributes = handler.collectFromStorage();
 			if (attributes != null) {
 				mergedData.putAll(attributes);

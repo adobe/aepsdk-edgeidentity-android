@@ -29,6 +29,7 @@ class IdentityStorageManager {
 	private final NamedCollection edgeIdentityStore;
 	private final NamedCollection directIdentityStore;
 	private final ProfileAttributeStore profileAttributeStore;
+	private final ProfileAttributeStore deviceAttributeStore;
 
 	IdentityStorageManager(final DataStoring dataStoreService) {
 		this.edgeIdentityStore = dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DATASTORE_NAME);
@@ -38,15 +39,28 @@ class IdentityStorageManager {
 			new ProfileAttributeStore(
 				dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME)
 			);
+		this.deviceAttributeStore =
+			new ProfileAttributeStore(
+				dataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DEVICE_ATTRIBUTES_DATASTORE_NAME)
+			);
 	}
 
 	/**
-	 * Returns the shared {@link ProfileAttributeStore} backing every {@link ProfileAttributeHandler}.
+	 * Returns the store backing the consent-gated profile-attribute handlers.
 	 *
 	 * @return the profile-attributes store
 	 */
 	ProfileAttributeStore getProfileAttributeStore() {
 		return profileAttributeStore;
+	}
+
+	/**
+	 * Returns the isolated store backing consent-independent device attribute deduplication.
+	 *
+	 * @return the device-attributes store
+	 */
+	ProfileAttributeStore getDeviceAttributeStore() {
+		return deviceAttributeStore;
 	}
 
 	/**

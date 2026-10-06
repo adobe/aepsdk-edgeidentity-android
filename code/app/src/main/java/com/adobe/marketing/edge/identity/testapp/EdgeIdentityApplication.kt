@@ -20,8 +20,8 @@ import com.adobe.marketing.mobile.edge.consent.Consent
 import com.adobe.marketing.mobile.edge.identity.Identity
 
 class EdgeIdentityApplication : Application() {
-    // TODO: Set up the preferred Environment File ID from your mobile property configured in Data Collection UI
-    private var ENVIRONMENT_FILE_ID: String = ""
+    // Datastream ID (edge.configId) from the "Luma Mobile App - vinamra" datastream, not a Launch/Tags Environment File ID
+    private var EDGE_CONFIG_ID: String = "8f56dfea-5290-4cf7-8ea2-9e5f0fb5d051"
 
     override fun onCreate() {
         super.onCreate()
@@ -32,7 +32,12 @@ class EdgeIdentityApplication : Application() {
         MobileCore.registerExtensions(
             listOf(Edge.EXTENSION, Identity.EXTENSION, Consent.EXTENSION, Assurance.EXTENSION)
         ) {
-            MobileCore.configureWithAppID(ENVIRONMENT_FILE_ID)
+            MobileCore.updateConfiguration(
+                mapOf(
+                    "edge.configId" to EDGE_CONFIG_ID,
+                    "consent.default" to mapOf("consents" to mapOf("collect" to mapOf("val" to "y")))
+                )
+            )
         }
     }
 }

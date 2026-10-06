@@ -37,6 +37,8 @@ final class IdentityConstants {
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
 		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
 		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
+		static final String UPDATE_DEVICE_ATTRIBUTES = "Update Device Attributes";
+		static final String DEVICE_ATTRIBUTES_TO_RULES_ENGINE = "Device attributes for rules engine";
 
 		private EventNames() {}
 	}
@@ -118,6 +120,7 @@ final class IdentityConstants {
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
+		static final String DEVICE_ATTRIBUTES_DATASTORE_NAME = "deviceAttributesDataStore";
 
 		private DataStoreKey() {}
 	}
@@ -141,13 +144,32 @@ final class IdentityConstants {
 		// Keys for the outgoing generic EDGE request event payload. The event carries the collated
 		// data from every profile-attribute helper under a single "profile.updateAttributes" type.
 		// Per-attribute event-data keys, payload keys, and persistence keys are owned by the
-		// individual ProfileAttributeHandler implementations.
+		// individual AttributeHandler implementations.
 		static final String XDM = "xdm";
 		static final String DATA = "data";
 		static final String EVENT_TYPE = "eventType";
 		static final String XDM_EVENT_TYPE_UPDATE_ATTRIBUTES = "profile.updateAttributes";
 
 		private ProfileAttributes() {}
+	}
+
+	static final class DeviceAttributes {
+
+		static final String TIME_ZONE = "timeZone";
+		static final String TIMEZONE = "timezone";
+		static final String PUSH_IDENTIFIER = "pushidentifier";
+		static final String PUSH_NOTIFICATION = "pushNotification";
+		static final String TOKENS = "tokens";
+		static final String APP = "app";
+		static final String APP_ID = "id";
+		static final String APP_PLATFORM = "platform";
+		static final String ANDROID_PLATFORM = "gcm";
+		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
+		static final String OPERATIONAL_DATA_SOURCE = "com.adobe.eventSource.requestContent";
+		static final String DEDUP_CONFIG_KEY = "edgeidentity.deviceAttributes.dedup";
+		static final String SYNCED_VALUES = "syncedDeviceAttributeValues";
+
+		private DeviceAttributes() {}
 	}
 
 	private IdentityConstants() {}

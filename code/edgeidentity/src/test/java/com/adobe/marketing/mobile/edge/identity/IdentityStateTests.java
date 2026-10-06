@@ -25,6 +25,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.adobe.marketing.mobile.Event;
@@ -38,6 +39,7 @@ import com.adobe.marketing.mobile.services.NamedCollection;
 import com.adobe.marketing.mobile.util.JSONAsserts;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,6 +67,9 @@ public class IdentityStateTests {
 	private ProfileAttributeStore mockProfileAttributeStore;
 
 	@Mock
+	private ProfileAttributeStore mockDeviceAttributeStore;
+
+	@Mock
 	private SharedStateCallback mockSharedStateCallback;
 
 	// Must mirror TimeZoneAttributeHandler's getAttributeKey() — used for event input, persistence, and payload.
@@ -82,6 +87,7 @@ public class IdentityStateTests {
 		// Every IdentityState built with the mock storage manager wires its profile-attribute
 		// handlers to this shared mock store.
 		when(mockIdentityStorageManager.getProfileAttributeStore()).thenReturn(mockProfileAttributeStore);
+		when(mockIdentityStorageManager.getDeviceAttributeStore()).thenReturn(mockDeviceAttributeStore);
 	}
 
 	@Test
@@ -950,6 +956,152 @@ public class IdentityStateTests {
 	}
 
 	@Test
+	public void testUpdateDeviceAttributes_whenChanged_dispatchesOperationalDataWithoutSharedState() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null);
+		final Event event = fakeUpdateDeviceAttributesEvent("America/New_York", "push-token");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateDeviceAttributes(event, true);
+
+			verify(mockDeviceAttributeStore)
+				.setString(
+					IdentityConstants.DeviceAttributes.SYNCED_VALUES,
+					"{\"timezone\":\"\\\"America/New_York\\\"\",\"tokens\":\"{\\\"pushNotification\\\":\\\"push-token\\\"}\"}"
+				);
+			verify(mockProfileAttributeStore, never()).setString(any(), any());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+
+			final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+			final Event operationalEvent = eventCaptor.getValue();
+			assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE, operationalEvent.getType());
+			assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_SOURCE, operationalEvent.getSource());
+			assertEquals(event.getUniqueIdentifier(), operationalEvent.getParentID());
+			JSONAsserts.assertEquals(
+				"{ \"timezone\": \"America/New_York\", \"tokens\": { \"pushNotification\": \"push-token\" } }",
+				operationalEvent.getEventData()
+			);
+		}
+	}
+
+	@Test
+	public void testProfileAndDeviceTimezoneUpdates_areNotDeduplicatedAcrossPaths() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockProfileAttributeStore.getString(TIMEZONE_KEY)).thenReturn(null);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null);
+		final Event profileEvent = fakeUpdateTimeZoneEvent("America/New_York");
+		final Event deviceEvent = fakeUpdateDeviceAttributesEvent("America/New_York", null);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateProfileAttributes(profileEvent, mockSharedStateCallback);
+			state.updateDeviceAttributes(deviceEvent, true);
+
+			verify(mockProfileAttributeStore).setString(TIMEZONE_KEY, "America/New_York");
+			verify(mockDeviceAttributeStore)
+				.setString(
+					IdentityConstants.DeviceAttributes.SYNCED_VALUES,
+					"{\"timezone\":\"\\\"America/New_York\\\"\"}"
+				);
+			final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(2));
+			assertEquals(EventType.EDGE, eventCaptor.getAllValues().get(0).getType());
+			assertEquals(
+				IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
+				eventCaptor.getAllValues().get(1).getType()
+			);
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributes_whenDedupDisabled_dispatchesUnchangedAttribute() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES))
+			.thenReturn("{\"timezone\":\"\\\"America/New_York\\\"\"}");
+		final Event event = fakeUpdateDeviceAttributesEvent("America/New_York", null);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateDeviceAttributes(event, false);
+
+			verify(mockDeviceAttributeStore)
+				.setString(
+					IdentityConstants.DeviceAttributes.SYNCED_VALUES,
+					"{\"timezone\":\"\\\"America/New_York\\\"\"}"
+				);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), times(1));
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributes_whenDedupEnabledAndUnchanged_skipsDispatch() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES))
+			.thenReturn("{\"timezone\":\"\\\"America/New_York\\\"\"}");
+		final Event event = fakeUpdateDeviceAttributesEvent("America/New_York", null);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateDeviceAttributes(event, true);
+
+			verify(mockDeviceAttributeStore, never()).setString(any(), any());
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributes_forwardsArbitraryNestedAttributesUnchanged() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null);
+		final Map<String, Object> attributes = new HashMap<>();
+		attributes.put(
+			"tokens",
+			Map.of(
+				"pushNotification",
+				List.of("push-token"),
+				"liveActivityStart",
+				List.of(Map.of("attributeType", "GameScore", "value", "start-token"))
+			)
+		);
+		attributes.put("timezone", "America/Los_Angeles");
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(attributes)
+			.build();
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			state.updateDeviceAttributes(event, true);
+
+			final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+			assertEquals(attributes, eventCaptor.getValue().getEventData());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributes_addsAppContextWhenCallerOmitsIt() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		when(mockDeviceAttributeStore.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null);
+		final Application application = Mockito.mock(Application.class);
+		when(application.getPackageName()).thenReturn("com.example.test");
+		final Event event = fakeUpdateDeviceAttributesEvent("America/New_York", null);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			mockedStaticMobileCore.when(MobileCore::getApplication).thenReturn(application);
+
+			state.updateDeviceAttributes(event, true);
+
+			final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+			JSONAsserts.assertEquals(
+				"{ \"timezone\": \"America/New_York\", \"app\": { \"id\": \"com.example.test\", \"platform\": \"gcm\" } }",
+				eventCaptor.getValue().getEventData()
+			);
+		}
+	}
+
+	@Test
 	public void testClearProfileAttributes_clearsStorageAndPublishesEmptySharedState() {
 		final IdentityState state = new IdentityState(mockIdentityStorageManager);
 		final Event resetEvent = new Event.Builder("Reset", EventType.EDGE_IDENTITY, EventSource.REQUEST_RESET).build();
@@ -997,6 +1149,26 @@ public class IdentityStateTests {
 					}
 				}
 			)
+			.build();
+	}
+
+	private Event fakeUpdateDeviceAttributesEvent(final String timeZone, final String pushToken) {
+		final Map<String, Object> eventData = new HashMap<>();
+		if (timeZone != null) {
+			eventData.put(IdentityConstants.DeviceAttributes.TIMEZONE, timeZone);
+		}
+		if (pushToken != null) {
+			eventData.put(
+				IdentityConstants.DeviceAttributes.TOKENS,
+				Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, pushToken)
+			);
+		}
+		return new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(eventData)
 			.build();
 	}
 
