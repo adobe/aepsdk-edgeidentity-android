@@ -997,6 +997,7 @@ public class IdentityExtensionTests {
 		verify(mockIdentityState).resetIdentifiers();
 		// reset also clears synced profile attributes (and updates their shared state) for the new ECID
 		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
+		verify(mockIdentityState).clearDeviceAttributes();
 
 		// verify pending state is created and resolved
 		verify(mockExtensionApi).createPendingXDMSharedState(eq(resetEvent));
