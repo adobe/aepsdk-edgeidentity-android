@@ -34,11 +34,19 @@ final class IdentityConstants {
 		static final String IDENTITY_RESPONSE_URL_VARIABLES = "Edge Identity Response URL Variables";
 		static final String UPDATE_IDENTITIES = "Edge Identity Update Identities";
 		static final String REMOVE_IDENTITIES = "Edge Identity Remove Identities";
+		static final String REMOVE_ALL_IDENTITIES = "Edge Identity Remove All Identities";
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
 		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
 		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
 
 		private EventNames() {}
+	}
+
+	static final class EventSources {
+
+		static final String REMOVE_ALL_IDENTITIES = "com.adobe.eventSource.removeAllIdentities";
+
+		private EventSources() {}
 	}
 
 	static final class EventDataKeys {

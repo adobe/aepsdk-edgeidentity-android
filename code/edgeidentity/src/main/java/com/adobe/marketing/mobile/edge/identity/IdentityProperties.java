@@ -226,6 +226,18 @@ class IdentityProperties {
 	}
 
 	/**
+	 * Removes all customer identifiers from the current identifiers.
+	 * <p>
+	 * Identifiers with reserved namespaces are retained:
+	 * - ECID
+	 * - IDFA
+	 * - GAID
+	 */
+	boolean removeAllCustomerIdentifiers() {
+		return identityMap.clearItemsExceptNamespaces(reservedNamespaces);
+	}
+
+	/**
 	 * Converts this {@code IdentityProperties} into an event data representation in XDM format
 	 * Use this method to cast the {@link IdentityMap} as {@code Map<String, Object>} to be passed as EventData for an SDK Event.
 	 * This method returns an empty map if the {@code IdentityMap} contains no data

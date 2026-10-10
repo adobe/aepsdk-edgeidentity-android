@@ -88,6 +88,12 @@ public class IdentityExtensionTests {
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.UPDATE_IDENTITY), any());
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REMOVE_IDENTITY), any());
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES),
+				any()
+			);
 		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
@@ -843,6 +849,76 @@ public class IdentityExtensionTests {
 
 		// verify pending state is created and resolved
 		verify(mockExtensionApi).createPendingXDMSharedState(eq(notARemoveIdentityEvent));
+		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
+	}
+
+	// ========================================================================================
+	// handleRemoveAllIdentities
+	// ========================================================================================
+	@Test
+	public void test_handleRemoveAllIdentities_removesCustomerIdentifiers_updatesSharedState() {
+		// setup
+		Map<String, Object> identityXDM = createXDMIdentityMap(
+			new TestItem("UserId", "secretID"),
+			new TestItem("PushId", "token")
+		);
+		final IdentityProperties properties = new IdentityProperties(identityXDM);
+		when(mockIdentityState.getIdentityProperties()).thenReturn(properties);
+		doAnswer(
+			new Answer() {
+				@Override
+				public Object answer(InvocationOnMock invocation) throws Throwable {
+					properties.removeAllCustomerIdentifiers();
+					return null;
+				}
+			}
+		)
+			.when(mockIdentityState)
+			.removeAllCustomerIdentifiers();
+
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+
+		// test
+		final Event removeAllIdentitiesEvent = new Event.Builder(
+			IdentityConstants.EventNames.REMOVE_ALL_IDENTITIES,
+			EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES
+		)
+			.build();
+		extension.handleRemoveAllIdentities(removeAllIdentitiesEvent);
+
+		// verify identifiers removed
+		verify(mockIdentityState).removeAllCustomerIdentifiers();
+		assertEquals(Collections.emptyMap(), properties.toXDMData(false));
+
+		// verify pending state is created and resolved with the updated identities
+		verify(mockExtensionApi).createPendingXDMSharedState(eq(removeAllIdentitiesEvent));
+		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
+	}
+
+	@Test
+	public void test_handleRemoveAllIdentities_whenNothingToRemove_stillResolvesSharedState() {
+		// setup
+		final IdentityProperties properties = new IdentityProperties();
+		properties.setECID(new ECID("internalECID"));
+		when(mockIdentityState.getIdentityProperties()).thenReturn(properties);
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+
+		// test
+		final Event removeAllIdentitiesEvent = new Event.Builder(
+			IdentityConstants.EventNames.REMOVE_ALL_IDENTITIES,
+			EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES
+		)
+			.build();
+		extension.handleRemoveAllIdentities(removeAllIdentitiesEvent);
+
+		// verify state is asked to remove, and pending state is resolved with unchanged identities
+		verify(mockIdentityState).removeAllCustomerIdentifiers();
+		verify(mockExtensionApi).createPendingXDMSharedState(eq(removeAllIdentitiesEvent));
 		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
 	}
 
