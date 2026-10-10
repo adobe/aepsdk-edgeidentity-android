@@ -524,6 +524,48 @@ public class IdentityStateTests {
 	}
 
 	// ======================================================================================================================
+	// Tests for method : removeAllCustomerIdentifiers()
+	// ======================================================================================================================
+
+	@Test
+	public void testRemoveAllCustomerIdentifiers_removesAndPersists() throws Exception {
+		// setup
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		state.getIdentityProperties().setECID(new ECID("internalECID"));
+		state
+			.getIdentityProperties()
+			.updateCustomerIdentifiers(
+				IdentityMap.fromXDMMap(createXDMIdentityMap(new IdentityTestUtil.TestItem("UserId", "secretID")))
+			);
+
+		// test
+		state.removeAllCustomerIdentifiers();
+
+		// verify persistence
+		final ArgumentCaptor<IdentityProperties> identityPropertiesArgumentCaptor = ArgumentCaptor.forClass(
+			IdentityProperties.class
+		);
+		verify(mockIdentityStorageManager).savePropertiesToPersistence(identityPropertiesArgumentCaptor.capture());
+		final Map<String, Object> expectedIdentityXDM = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("ECID", "internalECID")
+		);
+		assertEquals(expectedIdentityXDM, identityPropertiesArgumentCaptor.getValue().toXDMData(false));
+	}
+
+	@Test
+	public void testRemoveAllCustomerIdentifiers_whenNothingToRemove_doesNotPersist() throws Exception {
+		// setup
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		state.getIdentityProperties().setECID(new ECID("internalECID"));
+
+		// test
+		state.removeAllCustomerIdentifiers();
+
+		// verify
+		verify(mockIdentityStorageManager, never()).savePropertiesToPersistence(any());
+	}
+
+	// ======================================================================================================================
 	// Tests for method : removeCustomerIdentifiers(final IdentityMap map)
 	// ======================================================================================================================
 

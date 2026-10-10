@@ -249,6 +249,35 @@ public class IdentityMap {
 	}
 
 	/**
+	 * Removes all {@link IdentityItem}s on this {@link IdentityMap} except thoselinked to the given namespaces (case insensitive).
+	 *
+	 * @param namespacesToKeep the namespaces whose items are retained
+	 * @return true if at least one namespace was removed
+	 */
+	boolean clearItemsExceptNamespaces(final List<String> namespacesToKeep) {
+		final List<String> namespacesToRemove = new ArrayList<>();
+
+		for (final String eachNamespace : identityItems.keySet()) {
+			boolean keep = false;
+			for (final String namespaceToKeep : namespacesToKeep) {
+				if (eachNamespace.equalsIgnoreCase(namespaceToKeep)) {
+					keep = true;
+					break;
+				}
+			}
+			if (!keep) {
+				namespacesToRemove.add(eachNamespace);
+			}
+		}
+
+		for (final String eachNamespace : namespacesToRemove) {
+			identityItems.remove(eachNamespace);
+		}
+
+		return !namespacesToRemove.isEmpty();
+	}
+
+	/**
 	 * Use this method to cast the {@link IdentityMap} as {@code Map<String,Object>} to be passed as EventData for an SDK Event.
 	 *
 	 * @param allowEmpty If true and if this {@code IdentityMap} contains no data, then returns a map with empty xdmFormatted Identity Map.

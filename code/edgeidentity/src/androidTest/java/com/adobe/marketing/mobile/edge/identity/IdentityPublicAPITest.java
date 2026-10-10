@@ -602,6 +602,81 @@ public class IdentityPublicAPITest {
 	}
 
 	@Test
+	public void testRemoveAllIdentities() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
+		// setup
+		IdentityMap map = new IdentityMap();
+		map.addItem(new IdentityItem("primary@email.com"), "Email");
+		map.addItem(new IdentityItem("secondary@email.com"), "Email");
+		map.addItem(new IdentityItem("1234567890"), "Phone");
+		Identity.updateIdentities(map);
+
+		// test
+		Identity.removeAllIdentities();
+		waitForThreads(2000);
+
+		// verify xdm shared state: only ECID remains
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		// 3 for ECID
+		JSONAsserts.assertExactMatch("{}", xdmSharedState, new ElementCount(3, Subtree));
+
+		// verify persisted data: only ECID remains
+		final String persistedJson = TestPersistenceHelper.readPersistedData(
+			IdentityConstants.DataStoreKey.DATASTORE_NAME,
+			IdentityConstants.DataStoreKey.IDENTITY_PROPERTIES
+		);
+		// 3 for ECID
+		JSONAsserts.assertExactMatch("{}", persistedJson, new ElementCount(3, Subtree));
+	}
+
+	@Test
+	public void testRemoveAllIdentities_whenNoCustomerIdentities_keepsECID() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
+		// test
+		Identity.removeAllIdentities();
+		waitForThreads(2000);
+
+		// verify xdm shared state: ECID is unchanged
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		// 3 for ECID
+		JSONAsserts.assertExactMatch("{}", xdmSharedState, new ElementCount(3, Subtree));
+	}
+
+	@Test
+	public void testRemoveAllIdentities_thenUpdateIdentities_addsNewIdentities() throws Exception {
+		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
+
+		// setup
+		Identity.updateIdentities(createIdentityMap("Email", "old@email.com"));
+
+		// test
+		Identity.removeAllIdentities();
+		Identity.updateIdentities(createIdentityMap("Email", "new@email.com"));
+		waitForThreads(2000);
+
+		// verify xdm shared state: ECID + only the new Email
+		Map<String, Object> xdmSharedState = getXDMSharedStateFor(IdentityConstants.EXTENSION_NAME, 1000);
+		String expected =
+			"{" +
+			"  \"identityMap\": {" +
+			"    \"Email\": [" +
+			"      {" +
+			"        \"id\": \"new@email.com\"" +
+			"      }" +
+			"    ]" +
+			"  }" +
+			"}";
+
+		JSONAsserts.assertTypeMatch(
+			expected,
+			xdmSharedState,
+			new ElementCount(6, Subtree) // 3 for ECID + 3 for Email
+		);
+	}
+
+	@Test
 	public void testRemoveIdentity_nonExistentNamespace() throws Exception {
 		registerExtensions(Arrays.asList(MonitorExtension.EXTENSION, Identity.EXTENSION), null);
 

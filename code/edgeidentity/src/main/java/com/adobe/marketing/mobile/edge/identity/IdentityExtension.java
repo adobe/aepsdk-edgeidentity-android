@@ -125,6 +125,13 @@ class IdentityExtension extends Extension {
 		getApi()
 			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REMOVE_IDENTITY, this::handleRemoveIdentity);
 
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES,
+				this::handleRemoveAllIdentities
+			);
+
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
 	}
@@ -313,6 +320,20 @@ class IdentityExtension extends Extension {
 		}
 
 		state.removeCustomerIdentifiers(map);
+		resolver.resolve(state.getIdentityProperties().toXDMData());
+	}
+
+	/**
+	 * Handles remove all identities requests to remove all customer identifiers.
+	 * Identifiers in reserved namespaces (ECID, GAID, IDFA) are retained.
+	 *
+	 * @param event the remove all identities request {@link Event}
+	 */
+	void handleRemoveAllIdentities(@NonNull final Event event) {
+		// Add pending shared state to avoid race condition between updating andreading identity map
+		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
+
+		state.removeAllCustomerIdentifiers();
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 	}
 

@@ -13,12 +13,15 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import static com.adobe.marketing.mobile.util.NodeConfig.Scope.Subtree;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.adobe.marketing.mobile.util.CollectionEqualCount;
 import com.adobe.marketing.mobile.util.JSONAsserts;
 import com.adobe.marketing.mobile.util.JSONUtils;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -254,6 +257,76 @@ public class IdentityMapTests {
 
 		// test
 		emptyMap.clearItemsForNamespace("location");
+		assertTrue(emptyMap.asXDMMap(false).isEmpty());
+	}
+
+	@Test
+	public void test_clearItemsExceptNamespaces_removesAllOtherNamespaces() {
+		// setup
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+
+		// test
+		boolean isRemoved = sampleUserMap.clearItemsExceptNamespaces(Arrays.asList("location"));
+
+		// verify
+		assertTrue(isRemoved);
+		Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+		assertNull(castedMap.get("login"));
+		assertEquals(2, castedMap.get("location").size());
+	}
+
+	@Test
+	public void test_clearItemsExceptNamespaces_isCaseInsensitive() {
+		// setup
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+
+		// test
+		sampleUserMap.clearItemsExceptNamespaces(Arrays.asList("LOCATION"));
+
+		// verify
+		Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+		assertNull(castedMap.get("login"));
+		assertEquals(2, castedMap.get("location").size());
+	}
+
+	@Test
+	public void test_clearItemsExceptNamespaces_multipleNamespacesToKeep() {
+		// setup
+		IdentityMap sampleUserMap = buildSampleIdentityMap(); // 2 items with namespace "location", 3 items with namespace "login"
+
+		// test
+		boolean isRemoved = sampleUserMap.clearItemsExceptNamespaces(Arrays.asList("location", "login"));
+
+		// verify nothing was removed
+		assertFalse(isRemoved);
+		Map<String, List<IdentityItem>> castedMap = getCastedIdentityMap(sampleUserMap);
+		assertEquals(2, castedMap.get("location").size());
+		assertEquals(3, castedMap.get("login").size());
+	}
+
+	@Test
+	public void test_clearItemsExceptNamespaces_emptyKeepList_removesEverything() {
+		// setup
+		IdentityMap sampleUserMap = buildSampleIdentityMap();
+
+		// test
+		boolean isRemoved = sampleUserMap.clearItemsExceptNamespaces(Collections.<String>emptyList());
+
+		// verify
+		assertTrue(isRemoved);
+		assertTrue(sampleUserMap.asXDMMap(false).isEmpty());
+	}
+
+	@Test
+	public void test_clearItemsExceptNamespaces_onEmptyMap() {
+		// setup
+		IdentityMap emptyMap = new IdentityMap();
+
+		// test
+		boolean isRemoved = emptyMap.clearItemsExceptNamespaces(Arrays.asList("location"));
+
+		// verify
+		assertFalse(isRemoved);
 		assertTrue(emptyMap.asXDMMap(false).isEmpty());
 	}
 
