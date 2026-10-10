@@ -15,6 +15,7 @@ import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.TestECID
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.TestItem;
 import static com.adobe.marketing.mobile.edge.identity.IdentityTestUtil.createXDMIdentityMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -747,5 +748,90 @@ public class IdentityPropertiesTests {
 		);
 
 		assertEquals(expectedIdentityXDM, props.toXDMData(false));
+	}
+
+	// ======================================================================================================================
+	// Tests for removeAllCustomerIdentifiers()
+	// ======================================================================================================================
+
+	@Test
+	public void test_removeAllCustomerIdentifiers_removesAllCustomerIdentifiers() {
+		// Setup
+		IdentityProperties props = new IdentityProperties();
+		props.setECID(new ECID("internalECID"));
+		final Map<String, Object> customerIdentifierUpdate = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("UserId", "secretID"),
+			new IdentityTestUtil.TestItem("PushId", "token")
+		);
+		props.updateCustomerIdentifiers(IdentityMap.fromXDMMap(customerIdentifierUpdate));
+
+		// test
+		final boolean isRemoved = props.removeAllCustomerIdentifiers();
+
+		// Verify
+		assertTrue(isRemoved);
+		final Map<String, Object> expectedProperties = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("ECID", "internalECID")
+		);
+		assertEquals(expectedProperties, props.toXDMData(false));
+	}
+
+	@Test
+	public void test_removeAllCustomerIdentifiers_doesNotRemoveReservedNamespaces() {
+		// Setup
+		IdentityProperties props = new IdentityProperties();
+		final ECID initialECID = new ECID();
+		props.setECID(initialECID);
+		props.setAdId("initialADID");
+		final Map<String, Object> customerIdentifierUpdate = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("UserId", "secretID")
+		);
+		props.updateCustomerIdentifiers(IdentityMap.fromXDMMap(customerIdentifierUpdate));
+
+		// test
+		props.removeAllCustomerIdentifiers();
+
+		// Verify
+		IdentityProperties expectedProperties = new IdentityProperties();
+		expectedProperties.setECID(initialECID);
+		expectedProperties.setAdId("initialADID");
+		assertEquals(expectedProperties.toXDMData(false), props.toXDMData(false));
+	}
+
+	@Test
+	public void test_removeAllCustomerIdentifiers_retainsSecondaryECID() {
+		// Setup
+		IdentityProperties props = new IdentityProperties();
+		final ECID primaryECID = new ECID();
+		final ECID secondaryECID = new ECID();
+		props.setECID(primaryECID);
+		props.setECIDSecondary(secondaryECID);
+		final Map<String, Object> customerIdentifierUpdate = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("UserId", "secretID")
+		);
+		props.updateCustomerIdentifiers(IdentityMap.fromXDMMap(customerIdentifierUpdate));
+
+		// test
+		props.removeAllCustomerIdentifiers();
+
+		// Verify
+		assertEquals(primaryECID, props.getECID());
+		assertEquals(secondaryECID, props.getECIDSecondary());
+	}
+
+	@Test
+	public void test_removeAllCustomerIdentifiers_whenOnlyReservedIdentifiers_returnsFalseAndNoChange() {
+		// Setup
+		IdentityProperties props = new IdentityProperties();
+		props.setECID(new ECID("internalECID"));
+		props.setAdId("initialADID");
+		final Map<String, Object> before = props.toXDMData(false);
+
+		// test
+		final boolean isRemoved = props.removeAllCustomerIdentifiers();
+
+		// Verify
+		assertFalse(isRemoved);
+		assertEquals(before, props.toXDMData(false));
 	}
 }

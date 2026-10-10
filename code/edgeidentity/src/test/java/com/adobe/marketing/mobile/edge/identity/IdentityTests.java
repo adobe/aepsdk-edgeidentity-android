@@ -678,6 +678,32 @@ public class IdentityTests {
 	}
 
 	// ========================================================================================
+	// removeAllIdentities API
+	// ========================================================================================
+
+	@Test
+	public void testRemoveAllIdentities() {
+		// setup
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			// test
+			Identity.removeAllIdentities();
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()));
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+
+		// verify
+		final Event dispatchedEvent = eventCaptor.getValue();
+		assertEquals(IdentityConstants.EventNames.REMOVE_ALL_IDENTITIES, dispatchedEvent.getName());
+		assertEquals(EventType.EDGE_IDENTITY, dispatchedEvent.getType());
+		assertEquals(IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES, dispatchedEvent.getSource());
+		assertNull(dispatchedEvent.getEventData());
+	}
+
+	// ========================================================================================
 	// getIdentities API
 	// ========================================================================================
 	@Test

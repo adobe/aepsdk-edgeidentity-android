@@ -263,6 +263,26 @@ public class Identity {
 	}
 
 	/**
+	 * Removes all customer identifiers from the stored client-side {@link
+	IdentityMap}.
+	 * The Identity extension will stop sending these identifiers.
+	 * <p>
+	 * The ECID is retained, as are the advertising identifiers (GAID and IDFA),
+	 which are managed through
+	 * {@code MobileCore.setAdvertisingIdentifier}.
+	 * This does not clear the identifiers from the User Profile Graph.
+	 */
+	public static void removeAllIdentities() {
+		final Event removeAllIdentitiesEvent = new Event.Builder(
+			IdentityConstants.EventNames.REMOVE_ALL_IDENTITIES,
+			EventType.EDGE_IDENTITY,
+			IdentityConstants.EventSources.REMOVE_ALL_IDENTITIES
+		)
+			.build();
+		MobileCore.dispatchEvent(removeAllIdentitiesEvent);
+	}
+
+	/**
 	 * Returns all identifiers, including customer identifiers which were previously added.
 	 *
 	 * @param callback {@link AdobeCallback} invoked with the current {@link IdentityMap}
