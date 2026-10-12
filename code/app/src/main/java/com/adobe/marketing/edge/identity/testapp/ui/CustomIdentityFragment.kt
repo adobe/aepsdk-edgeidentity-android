@@ -114,6 +114,10 @@ class CustomIdentityFragment : Fragment() {
             }
         }
 
+        root.findViewById<Button>(R.id.btn_remove_all_identities).setOnClickListener {
+            Identity.removeAllIdentities()
+        }
+
         // Advertising identifier features
 
         // Button for Set Ad ID behavior

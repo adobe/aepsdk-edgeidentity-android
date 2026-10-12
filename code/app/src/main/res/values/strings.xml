@@ -37,6 +37,7 @@
     <string name="authentication_logged_out">loggedOut</string>
     <string name="btn_update_identities">Update Identity</string>
     <string name="btn_remove_identities">Remove Identity</string>
+    <string name="btn_remove_all_identities">Remove All Identities</string>
     <string name="title_update_custom_identifiers">Update Custom Identifiers</string>
     <string name="test_multiple_identities">Test with Multiple Extensions</string>
     <string name="btn_send_event">Send Event</string>
