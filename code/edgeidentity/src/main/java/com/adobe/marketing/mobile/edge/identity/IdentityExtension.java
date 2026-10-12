@@ -330,7 +330,7 @@ class IdentityExtension extends Extension {
 	 * @param event the remove all identities request {@link Event}
 	 */
 	void handleRemoveAllIdentities(@NonNull final Event event) {
-		// Add pending shared state to avoid race condition between updating andreading identity map
+		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 
 		state.removeAllCustomerIdentifiers();

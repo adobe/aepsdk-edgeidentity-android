@@ -249,7 +249,7 @@ public class IdentityMap {
 	}
 
 	/**
-	 * Removes all {@link IdentityItem}s on this {@link IdentityMap} except thoselinked to the given namespaces (case insensitive).
+	 * Removes all {@link IdentityItem}s on this {@link IdentityMap} except those linked to the given namespaces (case insensitive).
 	 *
 	 * @param namespacesToKeep the namespaces whose items are retained
 	 * @return true if at least one namespace was removed
