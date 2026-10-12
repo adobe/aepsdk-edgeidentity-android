@@ -263,12 +263,10 @@ public class Identity {
 	}
 
 	/**
-	 * Removes all customer identifiers from the stored client-side {@link
-	IdentityMap}.
+	 * Removes all customer identifiers from the stored client-side {@link IdentityMap}.
 	 * The Identity extension will stop sending these identifiers.
 	 * <p>
-	 * The ECID is retained, as are the advertising identifiers (GAID and IDFA),
-	 which are managed through
+	 * The ECID is retained, as are the advertising identifiers (GAID and IDFA), which are managed through
 	 * {@code MobileCore.setAdvertisingIdentifier}.
 	 * This does not clear the identifiers from the User Profile Graph.
 	 */
