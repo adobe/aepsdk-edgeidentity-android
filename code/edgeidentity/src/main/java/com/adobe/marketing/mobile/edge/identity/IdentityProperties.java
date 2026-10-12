@@ -234,7 +234,24 @@ class IdentityProperties {
 	 * - GAID
 	 */
 	boolean removeAllCustomerIdentifiers() {
-		return identityMap.clearItemsExceptNamespaces(reservedNamespaces);
+		boolean isRemoved = false;
+
+		for (final String namespace : identityMap.getNamespaces()) {
+			boolean isReserved = false;
+
+			for (final String reservedNamespace : reservedNamespaces) {
+				if (reservedNamespace.equalsIgnoreCase(namespace)) {
+					isReserved = true;
+					break;
+				}
+			}
+
+			if (!isReserved) {
+				isRemoved |= identityMap.clearItemsForNamespace(namespace);
+			}
+		}
+
+		return isRemoved;
 	}
 
 	/**

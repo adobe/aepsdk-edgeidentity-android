@@ -834,4 +834,26 @@ public class IdentityPropertiesTests {
 		assertFalse(isRemoved);
 		assertEquals(before, props.toXDMData(false));
 	}
+
+	@Test
+	public void test_removeAllCustomerIdentifiers_removesNamespacesThatOnlyResembleReservedNames() {
+		// Setup
+		IdentityProperties props = new IdentityProperties();
+		props.setECID(new ECID("internalECID"));
+		final Map<String, Object> customerIdentifierUpdate = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("ECIDCustom", "id1"),
+			new IdentityTestUtil.TestItem("GAID2", "id2")
+		);
+		props.updateCustomerIdentifiers(IdentityMap.fromXDMMap(customerIdentifierUpdate));
+
+		// test
+		final boolean isRemoved = props.removeAllCustomerIdentifiers();
+
+		// Verify
+		assertTrue(isRemoved);
+		final Map<String, Object> expectedProperties = createXDMIdentityMap(
+			new IdentityTestUtil.TestItem("ECID", "internalECID")
+		);
+		assertEquals(expectedProperties, props.toXDMData(false));
+	}
 }
