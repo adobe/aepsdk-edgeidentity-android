@@ -237,21 +237,29 @@ class IdentityProperties {
 		boolean isRemoved = false;
 
 		for (final String namespace : identityMap.getNamespaces()) {
-			boolean isReserved = false;
-
-			for (final String reservedNamespace : reservedNamespaces) {
-				if (reservedNamespace.equalsIgnoreCase(namespace)) {
-					isReserved = true;
-					break;
-				}
-			}
-
-			if (!isReserved) {
+			if (!isReservedNamespace(namespace)) {
 				isRemoved |= identityMap.clearItemsForNamespace(namespace);
 			}
 		}
 
 		return isRemoved;
+	}
+
+	/**
+	 * Checks if the given namespace is a reserved namespace.
+	 * The list of reserved namespaces can be found at {@link #reservedNamespaces}.
+	 *
+	 * @param namespace the namespace to check
+	 * @return true if the given namespace is a reserved namespace, false otherwise
+	 */
+	private boolean isReservedNamespace(final String namespace) {
+		for (final String reservedNamespace : reservedNamespaces) {
+			if (reservedNamespace.equalsIgnoreCase(namespace)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
