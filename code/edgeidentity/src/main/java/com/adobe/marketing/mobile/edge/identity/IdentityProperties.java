@@ -226,6 +226,43 @@ class IdentityProperties {
 	}
 
 	/**
+	 * Removes all customer identifiers from the current identifiers.
+	 * <p>
+	 * Identifiers with reserved namespaces are retained:
+	 * - ECID
+	 * - IDFA
+	 * - GAID
+	 */
+	boolean removeAllCustomerIdentifiers() {
+		boolean isRemoved = false;
+
+		for (final String namespace : identityMap.getNamespaces()) {
+			if (!isReservedNamespace(namespace)) {
+				isRemoved |= identityMap.clearItemsForNamespace(namespace);
+			}
+		}
+
+		return isRemoved;
+	}
+
+	/**
+	 * Checks if the given namespace is a reserved namespace.
+	 * The list of reserved namespaces can be found at {@link #reservedNamespaces}.
+	 *
+	 * @param namespace the namespace to check
+	 * @return true if the given namespace is a reserved namespace, false otherwise
+	 */
+	private boolean isReservedNamespace(final String namespace) {
+		for (final String reservedNamespace : reservedNamespaces) {
+			if (reservedNamespace.equalsIgnoreCase(namespace)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Converts this {@code IdentityProperties} into an event data representation in XDM format
 	 * Use this method to cast the {@link IdentityMap} as {@code Map<String, Object>} to be passed as EventData for an SDK Event.
 	 * This method returns an empty map if the {@code IdentityMap} contains no data

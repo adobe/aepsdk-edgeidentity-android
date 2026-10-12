@@ -193,6 +193,16 @@ class IdentityState {
 	}
 
 	/**
+	 * Removes all customer identifiers from the current identifiers present in {@link #identityProperties}
+	 * and saves to persistence only if something was removed. Reserved namespaces (ECID, GAID, IDFA) are retained.
+	 */
+	void removeAllCustomerIdentifiers() {
+		if (identityProperties.removeAllCustomerIdentifiers()) {
+			identityStorageManager.savePropertiesToPersistence(identityProperties);
+		}
+	}
+
+	/**
 	 * This is the main entrypoint for handling ad ID changes. When an ad ID change is detected, it will:
 	 * <ul>
 	 *     <li>Update persistent storage with the new ad ID</li>
