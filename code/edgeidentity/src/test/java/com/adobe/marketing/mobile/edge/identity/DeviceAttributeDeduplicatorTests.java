@@ -12,47 +12,34 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertNull;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class DeviceAttributeDeduplicatorTests {
 
 	@Test
-	public void testFilter_deduplicatesNestedMapsIndependentOfKeyOrder() {
-		final ProfileAttributeStore store = Mockito.mock(ProfileAttributeStore.class);
-		final String syncedValues = "{\"attribute\":\"{\\\"a\\\":1,\\\"b\\\":2}\"}";
-		when(store.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null, syncedValues);
-		final DeviceAttributeDeduplicator deduplicator = new DeviceAttributeDeduplicator(store);
-
+	public void testCanonicalization_isIndependentOfMapKeyOrder() {
 		final Map<String, Object> firstNestedValue = new LinkedHashMap<>();
 		firstNestedValue.put("b", 2);
 		firstNestedValue.put("a", 1);
-		final Map<String, Object> firstAttributes = Map.of("attribute", firstNestedValue);
-
-		assertEquals(firstAttributes, deduplicator.filter(firstAttributes, true));
-		assertTrue(deduplicator.filter(Map.of("attribute", Map.of("a", 1, "b", 2)), true).isEmpty());
-		verify(store, times(1)).setString(IdentityConstants.DeviceAttributes.SYNCED_VALUES, syncedValues);
+		assertEquals("{\"a\":1,\"b\":2}", DeviceAttributeDeduplicator.canonicalize(firstNestedValue));
+		assertEquals(
+			DeviceAttributeDeduplicator.canonicalize(firstNestedValue),
+			DeviceAttributeDeduplicator.canonicalize(Map.of("a", 1, "b", 2))
+		);
 	}
 
 	@Test
-	public void testFilter_dropsNonJsonAttributesAndNullKeys() {
-		final ProfileAttributeStore store = Mockito.mock(ProfileAttributeStore.class);
-		when(store.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES)).thenReturn(null);
-		final DeviceAttributeDeduplicator deduplicator = new DeviceAttributeDeduplicator(store);
+	public void testCanonicalization_rejectsUnsupportedValuesAndPreservesNull() {
 		final Map<String, Object> attributes = new HashMap<>();
 		attributes.put(null, "invalid-key");
-		attributes.put("invalid", new Object());
-		attributes.put("valid", true);
-
-		assertEquals(Map.of("valid", true), deduplicator.filter(attributes, false));
-		verify(store).setString(IdentityConstants.DeviceAttributes.SYNCED_VALUES, "{\"valid\":\"true\"}");
+		assertNull(DeviceAttributeDeduplicator.canonicalize(attributes));
+		assertNull(DeviceAttributeDeduplicator.canonicalize(new Object()));
+		assertNull(DeviceAttributeDeduplicator.canonicalize(Double.NaN));
+		assertEquals("null", DeviceAttributeDeduplicator.canonicalize(null));
 	}
 }

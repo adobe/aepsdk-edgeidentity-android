@@ -656,6 +656,24 @@ public class IdentityTests {
 	}
 
 	@Test
+	public void testUpdateDeviceAttributesBypassConsent_emptyPushTokenIsIncluded() {
+		final DeviceAttributes attributes = new DeviceAttributes.Builder().setTimeZone("").setPushToken("").build();
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+		}
+
+		final Event event = eventCaptor.getValue();
+		assertEquals("", event.getEventData().get(IdentityConstants.DeviceAttributes.TIMEZONE));
+		assertEquals(
+			Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, ""),
+			event.getEventData().get(IdentityConstants.DeviceAttributes.TOKENS)
+		);
+	}
+
+	@Test
 	public void testUpdateDeviceAttributesBypassConsent_mapIsDispatchedUnchanged() {
 		final Map<String, Object> attributes = new HashMap<>();
 		attributes.put("timezone", "America/Los_Angeles");
@@ -677,6 +695,15 @@ public class IdentityTests {
 		}
 
 		assertEquals(attributes, eventCaptor.getValue().getEventData());
+	}
+
+	@Test
+	public void testDeviceAttributesMap_dispatchesWithoutResponseCallback() {
+		try (MockedStatic<MobileCore> core = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(Map.of("timezone", "Asia/Tokyo"));
+			core.verify(() -> MobileCore.dispatchEvent(any(Event.class)));
+			core.verifyNoMoreInteractions();
+		}
 	}
 
 	@Test

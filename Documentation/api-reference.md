@@ -16,6 +16,31 @@ Refer to the [Getting Started Guide](getting-started.md)
 | [resetIdentities](#resetIdentities)                   |
 | [setAdvertisingIdentifier](#setAdvertisingIdentifier) |
 | [updateIdentities](#updateIdentities)                 |
+| [updateDeviceAttributesBypassConsent](#updatedeviceattributesbypassconsent) |
+
+------
+
+### updateDeviceAttributesBypassConsent
+
+Requests rule-authorized operational device attribute synchronization. The map overload supports JSON-compatible values, including explicit `null` and empty arrays. This API is fire-and-forget; it has no public callback.
+
+```java
+public static void updateDeviceAttributesBypassConsent(DeviceAttributes attributes)
+public static void updateDeviceAttributesBypassConsent(Map<String, Object> attributes)
+```
+
+```java
+Identity.updateDeviceAttributesBypassConsent(
+    Collections.singletonMap("timezone", "Asia/Tokyo"));
+```
+
+The data is sent to the Core rules engine. Each matching `forward-operational-data` rule returns only its enabled paths. Authorized operational values use the Edge bypass request under collect consent `yes`, `no`, or `pending`; ordinary Edge events remain governed by consent. With consent `yes`, Identity compares push tokens with Messaging's latest shared-state value and timezone with its persisted owner value before sending. With consent `no` or `pending`, it compares against the persisted device-attribute store. Identity queues requests in event order and waits for each Edge request's terminal result before processing the next one. Confirmed values are persisted and deduplicated across app restarts; set `edgeidentity.deviceAttributes.dedup` to `false` to disable dedup, but requests still run one at a time. If a request fails, its values are not stored and a queued duplicate can send them again. If no rule matches, or rules are not loaded yet, nothing is sent.
+
+After Edge reports success, the complete confirmed attribute state is persisted and published under `profileAttributes` in the Identity shared state (Messaging uses this to update its push token store). Failed requests are not persisted or published and may be sent again; there is no public callback.
+
+An empty map or a typed object with no values is a no-op. The typed convenience object preserves explicitly supplied empty timezone and push-token values, allowing them to be forwarded to Edge to clear those values. It does not express null clears; use the map overload for them.
+
+See [the device attribute flow and local setup](device-attribute-transactions.md) for rule configuration and shared-state behavior.
 
 ------
 

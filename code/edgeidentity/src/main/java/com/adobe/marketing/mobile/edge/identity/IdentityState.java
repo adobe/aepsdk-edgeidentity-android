@@ -36,7 +36,6 @@ class IdentityState {
 
 	private final IdentityStorageManager identityStorageManager;
 	private final ProfileAttributeStore profileAttributeStore;
-	private final DeviceAttributeDeduplicator deviceAttributeDeduplicator;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
 	private final List<AttributeHandler> profileAttributeHandlers;
@@ -53,8 +52,6 @@ class IdentityState {
 		this.identityStorageManager = identityStorageManager;
 		this.profileAttributeStore = identityStorageManager.getProfileAttributeStore();
 		this.profileAttributeHandlers = ProfileAttributeHandlers.all(profileAttributeStore);
-		this.deviceAttributeDeduplicator =
-			new DeviceAttributeDeduplicator(identityStorageManager.getDeviceAttributeStore());
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -65,6 +62,10 @@ class IdentityState {
 	 */
 	@NonNull IdentityProperties getIdentityProperties() {
 		return identityProperties;
+	}
+
+	ProfileAttributeStore getProfileAttributeStore() {
+		return profileAttributeStore;
 	}
 
 	/**
@@ -92,7 +93,8 @@ class IdentityState {
 
 		hasBooted = true;
 		Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
-		publishProfileAttributesSharedState(callback, null);
+		callback.createXDMSharedState(buildXDMSharedState(), null);
+		callback.publishProfileAttributes(null);
 
 		return hasBooted;
 	}
@@ -401,77 +403,9 @@ class IdentityState {
 			return;
 		}
 
-		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
-		publishProfileAttributesSharedState(callback, event);
+		// Persistence just changed: keep the profileAttributes standard shared state in sync, then dispatch the changes.
+		callback.publishProfileAttributes(event);
 		dispatchProfileAttributesEdgeEvent(mergedAttributes);
-	}
-
-	/**
-	 * Collects changed device attributes and emits an operational-data event for Launch rules to
-	 * forward to Edge independently of collect consent. Device attributes deliberately do not
-	 * enter the consent-gated XDM shared state.
-	 *
-	 * @param event the internal device-attribute update event
-	 * @param dedup true to skip attributes identical to their last stored values
-	 */
-	void updateDeviceAttributes(final Event event, final boolean dedup) {
-		final Map<String, Object> eventData = event.getEventData();
-		if (MapUtils.isNullOrEmpty(eventData)) {
-			Log.warning(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Event data is null or empty for '" + event.getName() + "'; skipping device attribute update."
-			);
-			return;
-		}
-
-		final Map<String, Object> payload = deviceAttributeDeduplicator.filter(eventData, dedup);
-		if (payload.isEmpty()) {
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attribute changes to dispatch.");
-			return;
-		}
-
-		if (!payload.containsKey(IdentityConstants.DeviceAttributes.APP)) {
-			final android.app.Application application = MobileCore.getApplication();
-			if (application != null) {
-				final Map<String, Object> app = new HashMap<>();
-				app.put(IdentityConstants.DeviceAttributes.APP_ID, application.getPackageName());
-				app.put(
-					IdentityConstants.DeviceAttributes.APP_PLATFORM,
-					IdentityConstants.DeviceAttributes.ANDROID_PLATFORM
-				);
-				payload.put(IdentityConstants.DeviceAttributes.APP, app);
-			}
-		}
-
-		final Event operationalEvent = new Event.Builder(
-			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
-			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
-			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_SOURCE
-		)
-			.setEventData(payload)
-			.chainToParentEvent(event)
-			.build();
-		MobileCore.dispatchEvent(operationalEvent);
-	}
-
-	/**
-	 * Clears the remembered device attribute values so they are sent again after an identity reset.
-	 */
-	void clearDeviceAttributes() {
-		deviceAttributeDeduplicator.clear();
-	}
-
-	/**
-	 * Clears all stored profile attributes and updates the shared state to match (now empty). Invoked
-	 * on reset so that the next update re-syncs the attributes against the newly generated ECID.
-	 *
-	 * @param callback {@link SharedStateCallback} used to publish the updated (empty) shared state
-	 * @param event the reset {@link Event} the shared state is versioned at
-	 */
-	void clearProfileAttributes(final SharedStateCallback callback, final Event event) {
-		profileAttributeStore.clearAll();
-		publishProfileAttributesSharedState(callback, event);
 	}
 
 	/**
@@ -509,46 +443,11 @@ class IdentityState {
 	}
 
 	/**
-	 * Publishes the full XDM shared state, merging the identity map with any stored profile
-	 * attributes under the {@code profileAttributes} key. Called on bootup, after any profile
-	 * attribute change, and after reset.
-	 *
-	 * @param callback {@link SharedStateCallback} used to create the XDM shared state
-	 * @param event the {@link Event} the shared state is versioned at; {@code null} for the next version
-	 */
-	private void publishProfileAttributesSharedState(final SharedStateCallback callback, final Event event) {
-		callback.createXDMSharedState(buildXDMSharedState(), event);
-	}
-
-	/**
-	 * Builds the full XDM shared state map, combining the identity map with any stored profile
-	 * attributes nested under {@link IdentityConstants.XDMKeys#PROFILE_ATTRIBUTES}. The
-	 * {@code profileAttributes} key is omitted when no attributes are stored.
+	 * Builds the identity-only XDM shared state, excluding locally coordinated profile values.
 	 *
 	 * @return the merged XDM state map
 	 */
 	Map<String, Object> buildXDMSharedState() {
-		final Map<String, Object> xdmState = new HashMap<>(identityProperties.toXDMData(false));
-		final Map<String, Object> attributes = collectStoredProfileAttributes();
-		if (!attributes.isEmpty()) {
-			xdmState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, attributes);
-		}
-		return xdmState;
-	}
-
-	/**
-	 * Collates every profile {@link AttributeHandler}'s persisted contribution into a single map.
-	 *
-	 * @return the collated stored attributes; empty when nothing is persisted
-	 */
-	private Map<String, Object> collectStoredProfileAttributes() {
-		final Map<String, Object> mergedData = new HashMap<>();
-		for (final AttributeHandler handler : profileAttributeHandlers) {
-			final Map<String, Object> attributes = handler.collectFromStorage();
-			if (attributes != null) {
-				mergedData.putAll(attributes);
-			}
-		}
-		return mergedData;
+		return new HashMap<>(identityProperties.toXDMData(false));
 	}
 }

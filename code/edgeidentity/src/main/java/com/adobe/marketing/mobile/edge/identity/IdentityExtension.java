@@ -46,9 +46,15 @@ class IdentityExtension extends Extension {
 		public void createXDMSharedState(final Map<String, Object> state, final Event event) {
 			getApi().createXDMSharedState(state, event);
 		}
+
+		@Override
+		public void publishProfileAttributes(final Event event) {
+			deviceAttributeSync.publishProfileAttributes(event);
+		}
 	};
 
 	private final IdentityState state;
+	private final DeviceAttributeSync deviceAttributeSync;
 
 	/**
 	 * Constructor.
@@ -64,6 +70,7 @@ class IdentityExtension extends Extension {
 	IdentityExtension(final ExtensionApi extensionApi, final IdentityState state) {
 		super(extensionApi);
 		this.state = state;
+		this.deviceAttributeSync = new DeviceAttributeSync(extensionApi, state.getProfileAttributeStore());
 	}
 
 	@NonNull @Override
@@ -129,10 +136,42 @@ class IdentityExtension extends Extension {
 
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				DeviceAttributeSync.RULE_RESPONSE,
+				deviceAttributeSync::onRuleResponse
+			);
+		getApi()
+			.registerEventListener(
+				DeviceAttributeSync.BYPASS,
+				EventSource.RESPONSE_CONTENT,
+				deviceAttributeSync::onEdgeResult
+			);
+		deviceAttributeSync.publishProfileAttributes(null);
+	}
+
+	private static boolean isResetEvent(final Event event) {
+		return (
+			EventType.GENERIC_IDENTITY.equals(event.getType()) && EventSource.REQUEST_RESET.equals(event.getSource())
+		);
+	}
+
+	/** Device attribute events skip bootup gating so they are processed in order without waiting. */
+	private static boolean isDeviceAttributeEvent(final Event event) {
+		return (
+			DeviceAttributeSync.RULE_RESPONSE.equals(event.getSource()) ||
+			DeviceAttributeSync.BYPASS.equals(event.getType()) ||
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())
+		);
 	}
 
 	@Override
 	public boolean readyForEvent(@NonNull final Event event) {
+		if (isResetEvent(event) || isDeviceAttributeEvent(event)) {
+			state.bootupIfReady(sharedStateHandle);
+			return true;
+		}
 		if (!state.bootupIfReady(sharedStateHandle)) return false;
 
 		// Get url variables request depends on Configuration shared state
@@ -346,10 +385,9 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
+		// Clear profile attributes and republish their standard shared state so the next update re-syncs
 		// against the new ECID
-		state.clearProfileAttributes(sharedStateHandle, event);
-		state.clearDeviceAttributes();
+		deviceAttributeSync.reset(event);
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -432,16 +470,7 @@ class IdentityExtension extends Extension {
 			);
 			return;
 		}
-		final SharedStateResult configResult = sharedStateHandle.getSharedState(
-			IdentityConstants.SharedState.Configuration.NAME,
-			event
-		);
-		final Map<String, Object> config = configResult != null ? configResult.getValue() : null;
-		final Object dedupConfig = config != null
-			? config.get(IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY)
-			: null;
-		final boolean dedup = !(dedupConfig instanceof Boolean) || (Boolean) dedupConfig;
-		state.updateDeviceAttributes(event, dedup);
+		deviceAttributeSync.requestRules(event);
 	}
 
 	/**

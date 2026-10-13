@@ -12,95 +12,19 @@
 package com.adobe.marketing.mobile.edge.identity;
 
 import androidx.annotation.VisibleForTesting;
-import com.adobe.marketing.mobile.services.Log;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Filters unchanged, JSON-compatible device attributes and persists their canonical values.
+ * Canonical JSON representation used to compare device attribute values for deduplication.
  */
 final class DeviceAttributeDeduplicator {
 
-	private static final String LOG_SOURCE = "DeviceAttributeDeduplicator";
-
-	private final ProfileAttributeStore store;
-
-	DeviceAttributeDeduplicator(final ProfileAttributeStore store) {
-		this.store = store;
-	}
-
-	Map<String, Object> filter(final Map<String, Object> attributes, final boolean dedup) {
-		final Map<String, String> syncedValues = readSyncedValues();
-		final Map<String, Object> changedValues = new TreeMap<>();
-		boolean hasChanges = false;
-
-		for (final Map.Entry<String, Object> attribute : attributes.entrySet()) {
-			final String key = attribute.getKey();
-			if (key == null) {
-				Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Dropping device attribute with a null key.");
-				continue;
-			}
-			final String canonicalValue = canonicalize(attribute.getValue());
-			if (canonicalValue == null) {
-				Log.warning(
-					IdentityConstants.LOG_TAG,
-					LOG_SOURCE,
-					"Dropping '" + key + "': value is not JSON-representable."
-				);
-				continue;
-			}
-			if (dedup && canonicalValue.equals(syncedValues.get(key))) {
-				Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "'" + key + "' unchanged since last sync, skipping.");
-				continue;
-			}
-			syncedValues.put(key, canonicalValue);
-			changedValues.put(key, attribute.getValue());
-			hasChanges = true;
-		}
-
-		if (hasChanges) {
-			store.setString(IdentityConstants.DeviceAttributes.SYNCED_VALUES, new JSONObject(syncedValues).toString());
-		}
-		return changedValues;
-	}
-
-	void clear() {
-		store.remove(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-	}
-
-	private Map<String, String> readSyncedValues() {
-		final String serializedValues = store.getString(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-		if (serializedValues == null) {
-			return new TreeMap<>();
-		}
-
-		try {
-			final JSONObject storedValues = new JSONObject(serializedValues);
-			final Map<String, String> result = new TreeMap<>();
-			final Iterator<String> keys = storedValues.keys();
-			while (keys.hasNext()) {
-				final String key = keys.next();
-				final Object value = storedValues.opt(key);
-				if (value instanceof String) {
-					result.put(key, (String) value);
-				}
-			}
-			return result;
-		} catch (final JSONException exception) {
-			Log.warning(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Unable to read persisted device attribute values; treating them as unsynced."
-			);
-			return new TreeMap<>();
-		}
-	}
+	private DeviceAttributeDeduplicator() {}
 
 	@VisibleForTesting
 	static String canonicalize(final Object value) {

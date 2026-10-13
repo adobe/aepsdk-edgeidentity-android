@@ -233,9 +233,10 @@ public class Identity {
 
 	/**
 	 * Updates device attributes that should be delivered to the Edge Network independently of collect consent.
-	 * Each non-empty attribute is de-duplicated by default; only changed values are sent to the operational-data
-	 * event consumed by Launch rules. Set {@code edgeidentity.deviceAttributes.dedup} to {@code false} in
-	 * Configuration to dispatch every update. Passing an empty object or only empty values is a no-op.
+	 * Launch rules decide which values are sent; values already successfully synced are skipped.
+	 * Set {@code edgeidentity.deviceAttributes.dedup} to {@code false} in
+	 * Configuration to dispatch every update. Explicitly empty timezone and push-token values are passed
+	 * through to the rules engine and Edge so callers can clear the stored values.
 	 *
 	 * @param attributes device attributes to update
 	 */
@@ -250,10 +251,10 @@ public class Identity {
 		}
 
 		final Map<String, Object> eventData = new HashMap<>();
-		if (!StringUtils.isNullOrEmpty(attributes.getTimeZone())) {
+		if (attributes.getTimeZone() != null) {
 			eventData.put(IdentityConstants.DeviceAttributes.TIMEZONE, attributes.getTimeZone());
 		}
-		if (!StringUtils.isNullOrEmpty(attributes.getPushToken())) {
+		if (attributes.getPushToken() != null) {
 			eventData.put(
 				IdentityConstants.DeviceAttributes.TOKENS,
 				Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, attributes.getPushToken())
@@ -265,18 +266,15 @@ public class Identity {
 	/**
 	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
 	 * independently of collect consent. Attribute keys and nested values are forwarded unchanged.
-	 * Launch rules determine which configured paths are forwarded to Edge. By default, each key is
-	 * sent only when its value differs from the last synchronized value. Set
+	 * Launch rules decide which values are sent. By default, a value is sent only when it differs
+	 * from the last successfully synced value. Consequences wait for the preceding Edge request to finish. Set
 	 * {@code edgeidentity.deviceAttributes.dedup} to {@code false} to dispatch every update. An empty
 	 * map is ignored. Unless supplied by the caller, an {@code app} context is added when available.
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values
 	 */
 	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
-		if (attributes == null || attributes.isEmpty()) {
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "No device attributes provided; ignoring update.");
-			return;
-		}
+		if (attributes == null || attributes.isEmpty()) return;
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
 			EventType.EDGE_IDENTITY,

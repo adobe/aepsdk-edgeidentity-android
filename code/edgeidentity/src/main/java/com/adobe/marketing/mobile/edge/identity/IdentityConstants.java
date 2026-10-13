@@ -70,6 +70,25 @@ final class IdentityConstants {
 			private Configuration() {}
 		}
 
+		static final class Consent {
+
+			static final String NAME = "com.adobe.edge.consent";
+			static final String CONSENTS = "consents";
+			static final String COLLECT = "collect";
+			static final String VALUE = "val";
+			static final String YES = "y";
+
+			private Consent() {}
+		}
+
+		static final class Messaging {
+
+			static final String NAME = "com.adobe.messaging";
+			static final String PUSH_IDENTIFIER = "pushidentifier";
+
+			private Messaging() {}
+		}
+
 		static final class IdentityDirect {
 
 			static final String NAME = "com.adobe.module.identity";
@@ -93,7 +112,6 @@ final class IdentityConstants {
 	static final class XDMKeys {
 
 		static final String IDENTITY_MAP = "identityMap";
-		static final String PROFILE_ATTRIBUTES = "profileAttributes";
 		static final String ID = "id";
 		static final String AUTHENTICATED_STATE = "authenticatedState";
 		static final String PRIMARY = "primary";
@@ -120,7 +138,6 @@ final class IdentityConstants {
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
-		static final String DEVICE_ATTRIBUTES_DATASTORE_NAME = "deviceAttributesDataStore";
 
 		private DataStoreKey() {}
 	}
@@ -141,6 +158,9 @@ final class IdentityConstants {
 	 */
 	static final class ProfileAttributes {
 
+		// Key of the profile attributes in the Edge Identity standard (non-XDM) shared state.
+		static final String SHARED_STATE_KEY = "profileAttributes";
+
 		// Keys for the outgoing generic EDGE request event payload. The event carries the collated
 		// data from every profile-attribute helper under a single "profile.updateAttributes" type.
 		// Per-attribute event-data keys, payload keys, and persistence keys are owned by the
@@ -157,17 +177,11 @@ final class IdentityConstants {
 
 		static final String TIME_ZONE = "timeZone";
 		static final String TIMEZONE = "timezone";
-		static final String PUSH_IDENTIFIER = "pushidentifier";
 		static final String PUSH_NOTIFICATION = "pushNotification";
 		static final String TOKENS = "tokens";
 		static final String APP = "app";
-		static final String APP_ID = "id";
-		static final String APP_PLATFORM = "platform";
-		static final String ANDROID_PLATFORM = "gcm";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
-		static final String OPERATIONAL_DATA_SOURCE = "com.adobe.eventSource.requestContent";
 		static final String DEDUP_CONFIG_KEY = "edgeidentity.deviceAttributes.dedup";
-		static final String SYNCED_VALUES = "syncedDeviceAttributeValues";
 
 		private DeviceAttributes() {}
 	}
