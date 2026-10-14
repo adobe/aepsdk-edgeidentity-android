@@ -139,14 +139,14 @@ class IdentityExtension extends Extension {
 		getApi()
 			.registerEventListener(
 				EventType.EDGE_IDENTITY,
-				DeviceAttributeSync.RULE_RESPONSE,
-				deviceAttributeSync::onRuleResponse
+				DeviceAttributeSync.RULE_RESPONSE_SOURCE,
+				deviceAttributeSync::handleDeviceAttributeRuleResponse
 			);
 		getApi()
 			.registerEventListener(
-				DeviceAttributeSync.BYPASS,
+				DeviceAttributeSync.BYPASS_TYPE,
 				EventSource.RESPONSE_CONTENT,
-				deviceAttributeSync::onEdgeResult
+				deviceAttributeSync::handleDeviceAttributeResult
 			);
 		deviceAttributeSync.publishProfileAttributes(null);
 	}
@@ -160,8 +160,8 @@ class IdentityExtension extends Extension {
 	/** Device attribute events skip bootup gating so they are processed in order without waiting. */
 	private static boolean isDeviceAttributeEvent(final Event event) {
 		return (
-			DeviceAttributeSync.RULE_RESPONSE.equals(event.getSource()) ||
-			DeviceAttributeSync.BYPASS.equals(event.getType()) ||
+			DeviceAttributeSync.RULE_RESPONSE_SOURCE.equals(event.getSource()) ||
+			DeviceAttributeSync.BYPASS_TYPE.equals(event.getType()) ||
 			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())
 		);
 	}
@@ -470,7 +470,7 @@ class IdentityExtension extends Extension {
 			);
 			return;
 		}
-		deviceAttributeSync.requestRules(event);
+		deviceAttributeSync.handleDeviceAttributes(event);
 	}
 
 	/**

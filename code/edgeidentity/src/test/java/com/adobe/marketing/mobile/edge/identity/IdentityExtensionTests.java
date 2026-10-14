@@ -95,17 +95,21 @@ public class IdentityExtensionTests {
 
 		final ArgumentCaptor<ExtensionEventListener> rules = ArgumentCaptor.forClass(ExtensionEventListener.class);
 		verify(mockExtensionApi)
-			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(DeviceAttributeSync.RULE_RESPONSE), rules.capture());
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(DeviceAttributeSync.RULE_RESPONSE_SOURCE),
+				rules.capture()
+			);
 		rules
 			.getValue()
 			.hear(
-				new Event.Builder("Forward", EventType.EDGE_IDENTITY, DeviceAttributeSync.RULE_RESPONSE)
+				new Event.Builder("Forward", EventType.EDGE_IDENTITY, DeviceAttributeSync.RULE_RESPONSE_SOURCE)
 					.setEventData(Map.of("timezone", "Asia/Tokyo"))
 					.chainToParentEvent(operational)
 					.build()
 			);
 		final Event edge = dispatched.get(1);
-		assertEquals(DeviceAttributeSync.BYPASS, edge.getType());
+		assertEquals(DeviceAttributeSync.BYPASS_TYPE, edge.getType());
 		assertEquals(EventSource.REQUEST_CONTENT, edge.getSource());
 		assertEquals("Asia/Tokyo", edge.getEventData().get("timezone"));
 
@@ -114,7 +118,7 @@ public class IdentityExtensionTests {
 		);
 		verify(mockExtensionApi)
 			.registerEventListener(
-				eq(DeviceAttributeSync.BYPASS),
+				eq(DeviceAttributeSync.BYPASS_TYPE),
 				eq(EventSource.RESPONSE_CONTENT),
 				edgeResults.capture()
 			);
@@ -123,7 +127,7 @@ public class IdentityExtensionTests {
 			.hear(
 				new Event.Builder(
 					"Device Attributes Response",
-					DeviceAttributeSync.BYPASS,
+					DeviceAttributeSync.BYPASS_TYPE,
 					EventSource.RESPONSE_CONTENT
 				)
 					.setEventData(Map.of("status", "success"))
@@ -142,7 +146,11 @@ public class IdentityExtensionTests {
 	@Test
 	public void ruleResponsesAreReadyBeforeBootup() {
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		final Event response = new Event.Builder("Forward", EventType.EDGE_IDENTITY, DeviceAttributeSync.RULE_RESPONSE)
+		final Event response = new Event.Builder(
+			"Forward",
+			EventType.EDGE_IDENTITY,
+			DeviceAttributeSync.RULE_RESPONSE_SOURCE
+		)
 			.build();
 		assertTrue(extension.readyForEvent(response));
 	}
@@ -173,9 +181,9 @@ public class IdentityExtensionTests {
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REMOVE_IDENTITY), any());
 		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
 		verify(mockExtensionApi)
-			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(DeviceAttributeSync.RULE_RESPONSE), any());
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(DeviceAttributeSync.RULE_RESPONSE_SOURCE), any());
 		verify(mockExtensionApi)
-			.registerEventListener(eq(DeviceAttributeSync.BYPASS), eq(EventSource.RESPONSE_CONTENT), any());
+			.registerEventListener(eq(DeviceAttributeSync.BYPASS_TYPE), eq(EventSource.RESPONSE_CONTENT), any());
 		verify(mockExtensionApi).createSharedState(anyMap(), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
