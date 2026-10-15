@@ -39,6 +39,7 @@ final class IdentityConstants {
 		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
 		static final String UPDATE_DEVICE_ATTRIBUTES = "Update Device Attributes";
 		static final String DEVICE_ATTRIBUTES_TO_RULES_ENGINE = "Device attributes for rules engine";
+		static final String DEVICE_ATTRIBUTES_CONFIRMED = "Device attributes confirmed";
 
 		private EventNames() {}
 	}
@@ -138,6 +139,7 @@ final class IdentityConstants {
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
+		static final String DEVICE_ATTRIBUTES_DATASTORE_NAME = "deviceAttributesDataStore";
 
 		private DataStoreKey() {}
 	}
@@ -180,6 +182,7 @@ final class IdentityConstants {
 		static final String PUSH_NOTIFICATION = "pushNotification";
 		static final String TOKENS = "tokens";
 		static final String APP = "app";
+		static final String SYNCED_VALUES = "confirmedAttributes";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
 		static final String DEDUP_CONFIG_KEY = "edgeidentity.optimizeOperationalProfileDataSync";
 

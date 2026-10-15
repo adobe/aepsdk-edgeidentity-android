@@ -22,9 +22,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Thin, null-safe wrapper around the profile-attribute {@link NamedCollection}. Attribute
- * handlers and device-attribute synchronization share this store while keeping persistence
- * details out of {@link IdentityStorageManager}.
+ * Thin, null-safe wrapper around an attribute {@link NamedCollection}. Profile handlers and
+ * device-attribute synchronization use separate collections with the same persistence helpers.
  *
  * <p>All operations no-op (and log a warning) when the underlying collection is unavailable.
  */
@@ -149,7 +148,7 @@ class ProfileAttributeStore {
 	}
 
 	/**
-	 * Clears every key in the profile-attributes collection. Invoked on reset to force a fresh
+	 * Clears every key in the attribute collection. Invoked on reset to force a fresh
 	 * sync against the new ECID.
 	 */
 	void clearAll() {

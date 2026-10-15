@@ -269,7 +269,10 @@ public class Identity {
 	 * Launch rules decide which values are sent. By default, a value is sent only when it differs
 	 * from the last successfully synced value. Consequences wait for the preceding Edge request to finish. Set
 	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} to dispatch every update. An empty
-	 * map is ignored. Unless supplied by the caller, an {@code app} context is added when available.
+	 * map is ignored. Null and non-JSON attribute leaves are dropped; valid siblings and empty strings
+	 * or containers are preserved. Every dispatched update uses SDK-generated {@code app} context;
+	 * caller-provided app routing is ignored. Optimistic owner values are compared only when collect
+	 * consent is explicitly {@code "y"}; confirmed bypass values are compared at every consent state.
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values
 	 */
