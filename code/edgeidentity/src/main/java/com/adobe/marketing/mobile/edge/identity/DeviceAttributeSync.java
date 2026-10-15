@@ -26,6 +26,7 @@ import com.adobe.marketing.mobile.util.DataReader;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -54,6 +55,7 @@ final class DeviceAttributeSync {
 	private final ProfileAttributeStore profileAttributeStore;
 	private final Deque<Event> deviceAttributeQueue = new ArrayDeque<>();
 	private Event deviceAttributesForEdge;
+	private Map<String, Object> pendingDeviceAttributes;
 	private final DeviceAttributeDeduplicator deviceAttributeDeduplicator;
 
 	DeviceAttributeSync(final ExtensionApi api, final ProfileAttributeStore profileAttributeStore) {
@@ -163,11 +165,39 @@ final class DeviceAttributeSync {
 		}
 		payload.put(APP, Map.of("id", appId, "platform", "fcm"));
 		final Event edgeEvent = new Event.Builder("Edge bypass request", BYPASS_TYPE, EventSource.REQUEST_CONTENT)
-			.setEventData(payload)
+			.setEventData(edgePayload(payload))
 			.chainToParentEvent(event)
 			.build();
 		deviceAttributesForEdge = edgeEvent;
+		pendingDeviceAttributes = payload;
 		api.dispatch(edgeEvent);
+	}
+
+	/**
+	 * Edge requires {@code tokens.pushNotification} as {@code {"value": token}}. The SDK keeps the
+	 * token as a string internally, so only the outgoing request is wrapped.
+	 */
+	static Map<String, Object> edgePayload(final Map<String, Object> payload) {
+		final Map<String, Object> tokens = DataReader.optTypedMap(
+			Object.class,
+			payload,
+			IdentityConstants.DeviceAttributes.TOKENS,
+			null
+		);
+		if (tokens == null || !(tokens.get(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION) instanceof String)) {
+			return payload;
+		}
+		final Map<String, Object> edgeTokens = new HashMap<>(tokens);
+		edgeTokens.put(
+			IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION,
+			Collections.singletonMap(
+				IdentityConstants.DeviceAttributes.TOKEN_VALUE,
+				tokens.get(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION)
+			)
+		);
+		final Map<String, Object> edgePayload = new HashMap<>(payload);
+		edgePayload.put(IdentityConstants.DeviceAttributes.TOKENS, edgeTokens);
+		return edgePayload;
 	}
 
 	/** Stores successful values before processing the next queued consequence. */
@@ -186,7 +216,7 @@ final class DeviceAttributeSync {
 			return;
 		}
 		if ("success".equals(status)) {
-			final Map<String, Object> attributes = deviceAttributesForEdge.getEventData();
+			final Map<String, Object> attributes = pendingDeviceAttributes;
 			deviceAttributeDeduplicator.commit(attributes);
 			final String timezone = DataReader.optString(attributes, IdentityConstants.DeviceAttributes.TIMEZONE, null);
 			if (timezone != null) profileAttributeStore.setString("timeZone", timezone);
@@ -219,6 +249,7 @@ final class DeviceAttributeSync {
 			);
 		}
 		deviceAttributesForEdge = null;
+		pendingDeviceAttributes = null;
 		sendNextDeviceAttributeRequest();
 	}
 
@@ -252,6 +283,7 @@ final class DeviceAttributeSync {
 	void reset(final Event event) {
 		deviceAttributeQueue.clear();
 		deviceAttributesForEdge = null;
+		pendingDeviceAttributes = null;
 		deviceAttributeDeduplicator.clear();
 		profileAttributeStore.clearAll();
 		publishProfileAttributes(event);

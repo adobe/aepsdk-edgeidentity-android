@@ -181,6 +181,7 @@ final class IdentityConstants {
 		static final String TIMEZONE = "timezone";
 		static final String PUSH_NOTIFICATION = "pushNotification";
 		static final String TOKENS = "tokens";
+		static final String TOKEN_VALUE = "value";
 		static final String APP = "app";
 		static final String SYNCED_VALUES = "confirmedAttributes";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";

@@ -186,7 +186,7 @@ public class DeviceAttributeSyncTests {
 		assertEquals(
 			Map.of(
 				"tokens",
-				Map.of("pushNotification", "token-1"),
+				Map.of("pushNotification", Map.of("value", "token-1")),
 				"app",
 				Map.of("id", "com.example", "platform", "fcm")
 			),
@@ -316,7 +316,7 @@ public class DeviceAttributeSyncTests {
 		assertEquals(
 			Map.of(
 				"tokens",
-				Map.of("pushNotification", "token-new"),
+				Map.of("pushNotification", Map.of("value", "token-new")),
 				"app",
 				Map.of("id", "com.example", "platform", "fcm")
 			),
@@ -855,7 +855,51 @@ public class DeviceAttributeSyncTests {
 			);
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(2, dispatched.size());
-		assertEquals(Map.of("pushNotification", "token-1"), dispatched.get(1).getEventData().get("tokens"));
+		assertEquals(
+			Map.of("pushNotification", Map.of("value", "token-1")),
+			dispatched.get(1).getEventData().get("tokens")
+		);
+	}
+
+	@Test
+	public void ruleResponse_pushTokenIsWrappedForEdgeButConfirmedAsString() {
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("timezone", "Asia/Kolkata", "tokens", Map.of("pushNotification", "token-1")))
+		);
+		final Map<String, Object> sent = dispatched.get(0).getEventData();
+		assertEquals(Map.of("pushNotification", Map.of("value", "token-1")), sent.get("tokens"));
+		assertEquals("Asia/Kolkata", sent.get("timezone"));
+
+		edgeResult(dispatched.get(0), "success");
+		assertEquals(
+			Map.of("timezone", "Asia/Kolkata", "tokens", Map.of("pushNotification", "token-1")),
+			lastProfileAttributes()
+		);
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), confirmations.get(0).getEventData());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		assertEquals(1, dispatched.size());
+	}
+
+	@Test
+	public void edgePayload_leavesNonStringPushTokensAndOtherTokensUnchanged() {
+		final Map<String, Object> objectToken = Map.of("tokens", Map.of("pushNotification", Map.of("value", "t1")));
+		assertEquals(objectToken, DeviceAttributeSync.edgePayload(objectToken));
+		final Map<String, Object> live = Map.of(
+			"tokens",
+			Map.of("pushNotification", "t1", "liveActivityUpdate", List.of(Map.of("token", "u1")))
+		);
+		assertEquals(
+			Map.of(
+				"tokens",
+				Map.of("pushNotification", Map.of("value", "t1"), "liveActivityUpdate", List.of(Map.of("token", "u1")))
+			),
+			DeviceAttributeSync.edgePayload(live)
+		);
+		assertEquals(
+			live.get("tokens"),
+			Map.of("pushNotification", "t1", "liveActivityUpdate", List.of(Map.of("token", "u1")))
+		);
 	}
 
 	@Test
