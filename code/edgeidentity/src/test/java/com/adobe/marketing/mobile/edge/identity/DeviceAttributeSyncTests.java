@@ -101,7 +101,7 @@ public class DeviceAttributeSyncTests {
 			.thenReturn(
 				new SharedStateResult(
 					SharedStateStatus.SET,
-					Map.of(IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY, enabled)
+					Map.of("edgeidentity.optimizeOperationalProfileDataSync", enabled)
 				)
 			);
 	}
@@ -454,6 +454,15 @@ public class DeviceAttributeSyncTests {
 		sync = new DeviceAttributeSync(api, new ProfileAttributeStore(collection));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		assertTrue(dispatched.isEmpty());
+	}
+
+	@Test
+	public void dedupEnabledByConfiguration_skipsConfirmedDuplicates() {
+		dedupConfig(true);
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		edgeResult(dispatched.get(0), "success");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		assertEquals(1, dispatched.size());
 	}
 
 	@Test

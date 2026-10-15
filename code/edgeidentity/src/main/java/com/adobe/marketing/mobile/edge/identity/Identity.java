@@ -234,7 +234,7 @@ public class Identity {
 	/**
 	 * Updates device attributes that should be delivered to the Edge Network independently of collect consent.
 	 * Launch rules decide which values are sent; values already successfully synced are skipped.
-	 * Set {@code edgeidentity.deviceAttributes.dedup} to {@code false} in
+	 * Set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in
 	 * Configuration to dispatch every update. Explicitly empty timezone and push-token values are passed
 	 * through to the rules engine and Edge so callers can clear the stored values.
 	 *
@@ -268,7 +268,7 @@ public class Identity {
 	 * independently of collect consent. Attribute keys and nested values are forwarded unchanged.
 	 * Launch rules decide which values are sent. By default, a value is sent only when it differs
 	 * from the last successfully synced value. Consequences wait for the preceding Edge request to finish. Set
-	 * {@code edgeidentity.deviceAttributes.dedup} to {@code false} to dispatch every update. An empty
+	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} to dispatch every update. An empty
 	 * map is ignored. Unless supplied by the caller, an {@code app} context is added when available.
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values
