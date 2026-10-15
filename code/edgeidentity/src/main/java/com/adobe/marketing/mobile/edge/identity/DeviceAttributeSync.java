@@ -11,6 +11,7 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
+import android.app.Application;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.ExtensionApi;
@@ -72,16 +73,12 @@ final class DeviceAttributeSync {
 			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty or invalid device attribute request.");
 			return;
 		}
-		final Map<String, Object> payload = new LinkedHashMap<>(data);
-		if (!payload.containsKey(APP) && MobileCore.getApplication() != null) {
-			payload.put(APP, Map.of("id", MobileCore.getApplication().getPackageName(), "platform", "fcm"));
-		}
 		final Event operationalEvent = new Event.Builder(
 			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
 			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
 			EventSource.REQUEST_CONTENT
 		)
-			.setEventData(payload)
+			.setEventData(data)
 			.chainToParentEvent(event)
 			.build();
 		api.dispatch(operationalEvent);
@@ -117,8 +114,18 @@ final class DeviceAttributeSync {
 			return;
 		}
 
+		final Application application = MobileCore.getApplication();
+		final String appId = application != null ? application.getPackageName() : null;
+		if (appId == null || appId.isEmpty()) {
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Cannot send device attributes without an app package identifier."
+			);
+			return;
+		}
 		final Map<String, Object> payload = tree(toSend);
-		if (data.get(APP) != null) payload.put(APP, data.get(APP));
+		payload.put(APP, Map.of("id", appId, "platform", "fcm"));
 		final Event edgeEvent = new Event.Builder("Edge bypass request", BYPASS_TYPE, EventSource.REQUEST_CONTENT)
 			.setEventData(payload)
 			.chainToParentEvent(event)

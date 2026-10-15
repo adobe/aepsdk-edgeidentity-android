@@ -15,10 +15,12 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import android.app.Application;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionApi;
+import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
 import com.adobe.marketing.mobile.services.NamedCollection;
@@ -26,8 +28,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 public class DeviceAttributeSyncTests {
 
@@ -37,9 +41,15 @@ public class DeviceAttributeSyncTests {
 	private List<Event> dispatched;
 	private List<Map<String, Object>> published;
 	private DeviceAttributeSync sync;
+	private MockedStatic<MobileCore> mobileCore;
+	private Application application;
 
 	@Before
 	public void setup() {
+		application = mock(Application.class);
+		when(application.getPackageName()).thenReturn("com.example");
+		mobileCore = mockStatic(MobileCore.class);
+		mobileCore.when(MobileCore::getApplication).thenReturn(application);
 		api = mock(ExtensionApi.class);
 		stored = new HashMap<>();
 		collection = mock(NamedCollection.class);
@@ -59,6 +69,11 @@ public class DeviceAttributeSyncTests {
 		doAnswer(call -> dispatched.add(call.getArgument(0))).when(api).dispatch(any());
 		doAnswer(call -> published.add(call.getArgument(0))).when(api).createSharedState(anyMap(), any());
 		sync = new DeviceAttributeSync(api, new ProfileAttributeStore(collection));
+	}
+
+	@After
+	public void teardown() {
+		mobileCore.close();
 	}
 
 	private static Event request(final Map<String, Object> data) {
@@ -128,6 +143,48 @@ public class DeviceAttributeSyncTests {
 		assertEquals(request.getUniqueIdentifier(), operational.getParentID());
 		assertNull(operational.getResponseID());
 		assertEquals("Asia/Tokyo", operational.getEventData().get("timezone"));
+		assertFalse(operational.getEventData().containsKey("app"));
+	}
+
+	@Test
+	public void ruleResponse_pushOnlyAddsSdkAppAfterFilteringAndOverridesCallerApp() {
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(
+				Map.of(
+					"tokens",
+					Map.of("pushNotification", "token-1"),
+					"app",
+					Map.of("id", "caller.app", "platform", "apns")
+				)
+			)
+		);
+		assertEquals(
+			Map.of(
+				"tokens",
+				Map.of("pushNotification", "token-1"),
+				"app",
+				Map.of("id", "com.example", "platform", "fcm")
+			),
+			dispatched.get(0).getEventData()
+		);
+	}
+
+	@Test
+	public void ruleResponse_missingApplicationDoesNotSendOrPersist() {
+		mobileCore.when(MobileCore::getApplication).thenReturn(null);
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		assertTrue(dispatched.isEmpty());
+		assertTrue(stored.isEmpty());
+		assertTrue(published.isEmpty());
+	}
+
+	@Test
+	public void ruleResponse_emptyPackageDoesNotSendOrPersist() {
+		when(application.getPackageName()).thenReturn("");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		assertTrue(dispatched.isEmpty());
+		assertTrue(stored.isEmpty());
+		assertTrue(published.isEmpty());
 	}
 
 	@Test
@@ -160,6 +217,7 @@ public class DeviceAttributeSyncTests {
 	@Test
 	public void edgeSuccess_publishesPushTokenForMessaging() {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		assertEquals(Map.of("id", "com.example", "platform", "fcm"), dispatched.get(0).getEventData().get("app"));
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
 		assertNotNull(stored.get("deviceAttributes"));
@@ -231,7 +289,15 @@ public class DeviceAttributeSyncTests {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-new"))));
 
 		assertEquals(1, dispatched.size());
-		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-new")), dispatched.get(0).getEventData());
+		assertEquals(
+			Map.of(
+				"tokens",
+				Map.of("pushNotification", "token-new"),
+				"app",
+				Map.of("id", "com.example", "platform", "fcm")
+			),
+			dispatched.get(0).getEventData()
+		);
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-new")), lastProfileAttributes());
 	}
@@ -355,9 +421,17 @@ public class DeviceAttributeSyncTests {
 		assertTrue(published.isEmpty());
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(2, dispatched.size());
-		assertEquals(Map.of("timezone", "Asia/Tokyo"), dispatched.get(0).getEventData());
 		assertEquals(
-			Map.of("tokens", Map.of("pushNotification", Map.of("token", "t1"))),
+			Map.of("timezone", "Asia/Tokyo", "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(0).getEventData()
+		);
+		assertEquals(
+			Map.of(
+				"tokens",
+				Map.of("pushNotification", Map.of("token", "t1")),
+				"app",
+				Map.of("id", "com.example", "platform", "fcm")
+			),
 			dispatched.get(1).getEventData()
 		);
 	}
@@ -404,7 +478,10 @@ public class DeviceAttributeSyncTests {
 		succeedAll();
 
 		assertEquals(2, dispatched.size());
-		assertEquals(Map.of("tokens", tokens), dispatched.get(1).getEventData());
+		assertEquals(
+			Map.of("tokens", tokens, "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(1).getEventData()
+		);
 	}
 
 	@Test
@@ -414,7 +491,10 @@ public class DeviceAttributeSyncTests {
 		edgeResult(dispatched.get(0), "success");
 
 		assertEquals(2, dispatched.size());
-		assertEquals(Map.of("custom", Map.of("b", 3)), dispatched.get(1).getEventData());
+		assertEquals(
+			Map.of("custom", Map.of("b", 3), "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(1).getEventData()
+		);
 	}
 
 	@Test

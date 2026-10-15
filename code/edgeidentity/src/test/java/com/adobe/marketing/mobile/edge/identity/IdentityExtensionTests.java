@@ -30,11 +30,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import android.app.Application;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionApi;
 import com.adobe.marketing.mobile.ExtensionEventListener;
+import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResolution;
 import com.adobe.marketing.mobile.SharedStateResolver;
 import com.adobe.marketing.mobile.SharedStateResult;
@@ -44,10 +46,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -55,6 +60,7 @@ import org.mockito.stubbing.Answer;
 public class IdentityExtensionTests {
 
 	private IdentityExtension extension;
+	private MockedStatic<MobileCore> mobileCore;
 
 	@Mock
 	ExtensionApi mockExtensionApi;
@@ -68,6 +74,15 @@ public class IdentityExtensionTests {
 	@Before
 	public void setup() {
 		MockitoAnnotations.openMocks(this);
+		final Application application = Mockito.mock(Application.class);
+		when(application.getPackageName()).thenReturn("com.example");
+		mobileCore = Mockito.mockStatic(MobileCore.class);
+		mobileCore.when(MobileCore::getApplication).thenReturn(application);
+	}
+
+	@After
+	public void teardown() {
+		mobileCore.close();
 	}
 
 	@Test
