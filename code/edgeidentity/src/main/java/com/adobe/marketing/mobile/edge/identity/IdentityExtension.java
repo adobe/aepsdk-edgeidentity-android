@@ -46,9 +46,15 @@ class IdentityExtension extends Extension {
 		public void createXDMSharedState(final Map<String, Object> state, final Event event) {
 			getApi().createXDMSharedState(state, event);
 		}
+
+		@Override
+		public void publishProfileAttributes(final Event event) {
+			deviceAttributeSync.publishProfileAttributes(event);
+		}
 	};
 
 	private final IdentityState state;
+	private final DeviceAttributeSync deviceAttributeSync;
 
 	/**
 	 * Constructor.
@@ -64,6 +70,7 @@ class IdentityExtension extends Extension {
 	IdentityExtension(final ExtensionApi extensionApi, final IdentityState state) {
 		super(extensionApi);
 		this.state = state;
+		this.deviceAttributeSync = new DeviceAttributeSync(extensionApi, state.getProfileAttributeStore());
 	}
 
 	@NonNull @Override
@@ -114,6 +121,8 @@ class IdentityExtension extends Extension {
 				EventSource.REQUEST_CONTENT,
 				this::handleProfileAttributes
 			);
+		getApi()
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleDeviceAttributes);
 
 		// EDGE_IDENTITY event listeners
 		getApi()
@@ -127,10 +136,42 @@ class IdentityExtension extends Extension {
 
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				DeviceAttributeSync.RULE_RESPONSE_SOURCE,
+				deviceAttributeSync::handleDeviceAttributeRuleResponse
+			);
+		getApi()
+			.registerEventListener(
+				DeviceAttributeSync.BYPASS_TYPE,
+				EventSource.RESPONSE_CONTENT,
+				deviceAttributeSync::handleDeviceAttributeResult
+			);
+		deviceAttributeSync.publishProfileAttributes(null);
+	}
+
+	private static boolean isResetEvent(final Event event) {
+		return (
+			EventType.GENERIC_IDENTITY.equals(event.getType()) && EventSource.REQUEST_RESET.equals(event.getSource())
+		);
+	}
+
+	/** Device attribute events skip bootup gating so they are processed in order without waiting. */
+	private static boolean isDeviceAttributeEvent(final Event event) {
+		return (
+			DeviceAttributeSync.RULE_RESPONSE_SOURCE.equals(event.getSource()) ||
+			DeviceAttributeSync.BYPASS_TYPE.equals(event.getType()) ||
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())
+		);
 	}
 
 	@Override
 	public boolean readyForEvent(@NonNull final Event event) {
+		if (isResetEvent(event) || isDeviceAttributeEvent(event)) {
+			state.bootupIfReady(sharedStateHandle);
+			return true;
+		}
 		if (!state.bootupIfReady(sharedStateHandle)) return false;
 
 		// Get url variables request depends on Configuration shared state
@@ -344,9 +385,9 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
+		// Clear profile attributes and republish their standard shared state so the next update re-syncs
 		// against the new ECID
-		state.clearProfileAttributes(sharedStateHandle, event);
+		deviceAttributeSync.reset(event);
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -413,6 +454,23 @@ class IdentityExtension extends Extension {
 	 */
 	void handleProfileAttributes(@NonNull final Event event) {
 		state.updateProfileAttributes(event, sharedStateHandle);
+	}
+
+	/**
+	 * Handles internal device-attribute updates and dispatches an operational-data event.
+	 *
+	 * @param event the event containing device attribute data
+	 */
+	void handleDeviceAttributes(@NonNull final Event event) {
+		if (!IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())) {
+			Log.trace(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Ignoring device-attribute listener event with unexpected name '" + event.getName() + "'."
+			);
+			return;
+		}
+		deviceAttributeSync.handleDeviceAttributes(event);
 	}
 
 	/**

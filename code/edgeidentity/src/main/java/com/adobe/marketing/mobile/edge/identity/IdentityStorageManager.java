@@ -41,7 +41,7 @@ class IdentityStorageManager {
 	}
 
 	/**
-	 * Returns the shared {@link ProfileAttributeStore} backing every {@link ProfileAttributeHandler}.
+	 * Returns the store backing the consent-gated profile-attribute handlers.
 	 *
 	 * @return the profile-attributes store
 	 */

@@ -14,7 +14,7 @@ package com.adobe.marketing.mobile.edge.identity;
 import java.util.List;
 
 /**
- * Central registry of every {@link ProfileAttributeHandler} the Edge Identity extension knows
+ * Central registry of every {@link AttributeHandler} the Edge Identity extension knows
  * about. Adding a new attribute is a one-line addition here plus one new handler file; the
  * collector layer in {@link IdentityState} is attribute-agnostic and needs no changes.
  */
@@ -26,9 +26,9 @@ final class ProfileAttributeHandlers {
 	 * Returns the full list of registered handlers, each bound to {@code store} for persistence.
 	 *
 	 * @param store the shared profile-attributes store every handler reads/writes through
-	 * @return an immutable list of registered {@link ProfileAttributeHandler}s
+	 * @return an immutable list of registered {@link AttributeHandler}s
 	 */
-	static List<ProfileAttributeHandler> all(final ProfileAttributeStore store) {
+	static List<AttributeHandler> all(final ProfileAttributeStore store) {
 		return List.of(new TimeZoneAttributeHandler(store));
 	}
 }

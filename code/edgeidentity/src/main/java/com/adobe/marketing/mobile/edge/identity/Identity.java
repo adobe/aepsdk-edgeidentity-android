@@ -232,6 +232,63 @@ public class Identity {
 	}
 
 	/**
+	 * Updates device attributes that should be delivered to the Edge Network independently of collect consent.
+	 * Launch rules decide which values are sent; values already successfully synced are skipped.
+	 * Set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in
+	 * Configuration to dispatch every update. Explicitly empty timezone and push-token values are passed
+	 * through to the rules engine and Edge so callers can clear the stored values.
+	 *
+	 * @param attributes device attributes to update
+	 */
+	public static void updateDeviceAttributesBypassConsent(@NonNull final DeviceAttributes attributes) {
+		if (attributes == null) {
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to update device attributes, attributes are null."
+			);
+			return;
+		}
+
+		final Map<String, Object> eventData = new HashMap<>();
+		if (attributes.getTimeZone() != null) {
+			eventData.put(IdentityConstants.DeviceAttributes.TIMEZONE, attributes.getTimeZone());
+		}
+		if (attributes.getPushToken() != null) {
+			eventData.put(
+				IdentityConstants.DeviceAttributes.TOKENS,
+				Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, attributes.getPushToken())
+			);
+		}
+		updateDeviceAttributesBypassConsent(eventData);
+	}
+
+	/**
+	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
+	 * independently of collect consent. Attribute keys and nested values are forwarded unchanged.
+	 * Launch rules decide which values are sent. By default, a value is sent only when it differs
+	 * from the last successfully synced value. Consequences wait for the preceding Edge request to finish. Set
+	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} to dispatch every update. An empty
+	 * map is ignored. Null and non-JSON attribute leaves are dropped; valid siblings and empty strings
+	 * or containers are preserved. Every dispatched update uses SDK-generated {@code app} context;
+	 * caller-provided app routing is ignored. Optimistic owner values are compared only when collect
+	 * consent is explicitly {@code "y"}; confirmed bypass values are compared at every consent state.
+	 *
+	 * @param attributes map of attribute names to JSON-compatible values
+	 */
+	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
+		if (attributes == null || attributes.isEmpty()) return;
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(new HashMap<>(attributes))
+			.build();
+		MobileCore.dispatchEvent(event);
+	}
+
+	/**
 	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
 	 * This does not clear the identifier from the User Profile Graph.
 	 *
