@@ -16,18 +16,15 @@ import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
 
 /**
- * {@link AttributeHandler} for the device timezone. Reads the IANA identifier from the
+ * {@link ProfileAttributeHandler} for the device timezone. Reads the IANA identifier from the
  * incoming event under {@code "timeZone"}, persists it, and contributes to the outgoing payload
  * under the same {@code "timeZone"} key (XDM field name).
  */
-final class TimeZoneAttributeHandler implements AttributeHandler {
+final class TimeZoneAttributeHandler implements ProfileAttributeHandler {
 
 	private static final String LOG_SOURCE = "TimeZoneAttributeHandler";
-	private static final Set<String> AVAILABLE_TIME_ZONES = Set.of(TimeZone.getAvailableIDs());
 
 	private final ProfileAttributeStore store;
 
@@ -41,20 +38,12 @@ final class TimeZoneAttributeHandler implements AttributeHandler {
 	}
 
 	@Override
-	public Map<String, Object> collectFromEvent(final Event event, final boolean dedup) {
+	public Map<String, Object> collectFromEvent(final Event event) {
 		final String newTimeZone = DataReader.optString(event.getEventData(), getAttributeKey(), null);
 		if (StringUtils.isNullOrEmpty(newTimeZone)) {
 			return null;
 		}
-		if (!AVAILABLE_TIME_ZONES.contains(newTimeZone)) {
-			Log.warning(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Timezone '" + newTimeZone + "' is not a valid time zone, skipping sync."
-			);
-			return null;
-		}
-		if (dedup && newTimeZone.equals(store.getString(getAttributeKey()))) {
+		if (newTimeZone.equals(store.getString(getAttributeKey()))) {
 			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,

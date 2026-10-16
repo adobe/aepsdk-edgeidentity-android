@@ -128,9 +128,13 @@ public class IdentityStateTests {
 		assertNotNull(identityState.getIdentityProperties().getECID());
 		verify(mockIdentityStorageManager).savePropertiesToPersistence(identityState.getIdentityProperties());
 
-		// Profile values are published separately from transport identities.
+		// Bootup publishes a single XDM shared state combining identityMap + profileAttributes
 		final Map<String, Object> expectedXDMState = new HashMap<>(
 			identityState.getIdentityProperties().toXDMData(false)
+		);
+		expectedXDMState.put(
+			IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES,
+			Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata")
 		);
 		verify(mockSharedStateCallback).createXDMSharedState(expectedXDMState, null);
 		verify(mockSharedStateCallback).publishProfileAttributes(null);
@@ -828,6 +832,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -848,6 +853,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -874,6 +880,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -907,9 +914,14 @@ public class IdentityStateTests {
 				"}";
 			JSONAsserts.assertEquals(expected, edgeEvent.getEventData());
 
-			// Profile values are published only in the standard shared state, never in the XDM state.
+			// XDM shared state is (re)published with profileAttributes wrapping the new value
+			final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+			verify(mockSharedStateCallback).createXDMSharedState(sharedStateCaptor.capture(), any());
+			JSONAsserts.assertEquals(
+				"{ \"profileAttributes\": { \"timeZone\": \"America/New_York\" } }",
+				sharedStateCaptor.getValue()
+			);
 			verify(mockSharedStateCallback).publishProfileAttributes(event);
-			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
 		}
 	}
 
@@ -924,6 +936,7 @@ public class IdentityStateTests {
 
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
+			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
 			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
@@ -939,7 +952,22 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
+	}
+
+	@Test
+	public void testClearProfileAttributes_clearsStorageAndPublishesEmptySharedState() {
+		final IdentityState state = new IdentityState(mockIdentityStorageManager);
+		final Event resetEvent = new Event.Builder("Reset", EventType.EDGE_IDENTITY, EventSource.REQUEST_RESET).build();
+
+		state.clearProfileAttributes(mockSharedStateCallback, resetEvent);
+
+		verify(mockProfileAttributeStore, times(1)).clearAll();
+
+		final ArgumentCaptor<Map> sharedStateCaptor = ArgumentCaptor.forClass(Map.class);
+		verify(mockSharedStateCallback).createXDMSharedState(sharedStateCaptor.capture(), any());
+		assertTrue(sharedStateCaptor.getValue().isEmpty());
 	}
 
 	// Test helpers
@@ -976,26 +1004,6 @@ public class IdentityStateTests {
 					}
 				}
 			)
-			.build();
-	}
-
-	private Event fakeUpdateDeviceAttributesEvent(final String timeZone, final String pushToken) {
-		final Map<String, Object> eventData = new HashMap<>();
-		if (timeZone != null) {
-			eventData.put(IdentityConstants.DeviceAttributes.TIMEZONE, timeZone);
-		}
-		if (pushToken != null) {
-			eventData.put(
-				IdentityConstants.DeviceAttributes.TOKENS,
-				Map.of(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, pushToken)
-			);
-		}
-		return new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
-			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
-		)
-			.setEventData(eventData)
 			.build();
 	}
 

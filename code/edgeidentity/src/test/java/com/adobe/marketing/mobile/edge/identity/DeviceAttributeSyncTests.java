@@ -39,7 +39,7 @@ public class DeviceAttributeSyncTests {
 	private Map<String, String> stored;
 	private NamedCollection collection;
 	private List<Event> dispatched;
-	private List<Event> confirmations;
+	private List<Event> results;
 	private Map<String, String> deviceStored;
 	private NamedCollection deviceCollection;
 	private List<Map<String, Object>> published;
@@ -68,7 +68,7 @@ public class DeviceAttributeSyncTests {
 			.when(collection)
 			.removeAll();
 		dispatched = new ArrayList<>();
-		confirmations = new ArrayList<>();
+		results = new ArrayList<>();
 		deviceStored = new HashMap<>();
 		deviceCollection = mock(NamedCollection.class);
 		when(deviceCollection.getString(anyString(), any()))
@@ -80,7 +80,7 @@ public class DeviceAttributeSyncTests {
 		published = new ArrayList<>();
 		doAnswer(call -> {
 				final Event event = call.getArgument(0);
-				return EventType.MESSAGING.equals(event.getType()) ? confirmations.add(event) : dispatched.add(event);
+				return isResultEvent(event) ? results.add(event) : dispatched.add(event);
 			})
 			.when(api)
 			.dispatch(any());
@@ -99,6 +99,70 @@ public class DeviceAttributeSyncTests {
 	@After
 	public void teardown() {
 		mobileCore.close();
+	}
+
+	private static boolean isResultEvent(final Event event) {
+		return (
+			EventType.EDGE_IDENTITY.equals(event.getType()) && EventSource.RESPONSE_CONTENT.equals(event.getSource())
+		);
+	}
+
+	private void seedSynced(final String json) {
+		deviceStored.put(IdentityConstants.DeviceAttributes.SYNCED_VALUES, json);
+		sync = newSync();
+	}
+
+	private void consentRegistered() {
+		when(api.getSharedState(eq(IdentityConstants.SharedState.Hub.NAME), any(), anyBoolean(), any()))
+			.thenReturn(
+				new SharedStateResult(
+					SharedStateStatus.SET,
+					Map.of("extensions", Map.of(IdentityConstants.SharedState.Consent.NAME, Map.of("version", "3.0.0")))
+				)
+			);
+	}
+
+	private void collectConsent(final String value) {
+		consentRegistered();
+		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
+			.thenReturn(
+				new SharedStateResult(
+					SharedStateStatus.SET,
+					Map.of("consents", Map.of("collect", Map.of("val", value)))
+				)
+			);
+	}
+
+	private void messagingPushToken(final String token) {
+		when(api.getSharedState(eq(IdentityConstants.SharedState.Messaging.NAME), any(), anyBoolean(), any()))
+			.thenReturn(
+				new SharedStateResult(
+					SharedStateStatus.SET,
+					Map.of(IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER, token)
+				)
+			);
+	}
+
+	@SuppressWarnings("unchecked")
+	/** Mirrors IdentityExtension reset: IdentityState clears the profile store before the sync resets. */
+	private void resetLikeExtension() {
+		stored.clear();
+		sync.reset(null);
+	}
+
+	private Map<String, Object> syncedValues() {
+		return new ProfileAttributeStore(deviceCollection).getMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
+	}
+
+	private void edgeResponse(final Map<String, Object> data, final Event parent) {
+		final Event.Builder builder = new Event.Builder(
+			"Device Attributes Response",
+			DeviceAttributeSync.BYPASS_TYPE,
+			EventSource.RESPONSE_CONTENT
+		)
+			.setEventData(data);
+		if (parent != null) builder.chainToParentEvent(parent);
+		sync.handleDeviceAttributeResult(builder.build());
 	}
 
 	private static Event request(final Map<String, Object> data) {
@@ -132,16 +196,7 @@ public class DeviceAttributeSyncTests {
 	}
 
 	private void edgeResult(final Event edgeRequest, final String status) {
-		sync.handleDeviceAttributeResult(
-			new Event.Builder(
-				"Device Attributes Response",
-				DeviceAttributeSync.BYPASS_TYPE,
-				EventSource.RESPONSE_CONTENT
-			)
-				.setEventData(Map.of("status", status))
-				.chainToParentEvent(edgeRequest)
-				.build()
-		);
+		edgeResponse(Map.of("status", status), edgeRequest);
 	}
 
 	private void succeedAll() {
@@ -245,8 +300,7 @@ public class DeviceAttributeSyncTests {
 		assertEquals(Map.of("id", "com.example", "platform", "fcm"), dispatched.get(0).getEventData().get("app"));
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
-		assertNotNull(deviceStored.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES));
-		assertNull(stored.get("deviceAttributes"));
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), syncedValues());
 	}
 
 	@Test
@@ -276,39 +330,51 @@ public class DeviceAttributeSyncTests {
 	}
 
 	@Test
-	public void consentYes_doesNotSendOrPersistDeviceAttributes() {
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "y"))))
-			);
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Messaging.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(
-					SharedStateStatus.SET,
-					Map.of(IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER, "token-1")
-				)
-			);
+	public void consentYes_ownerMatchIsNotSentAndIsCopiedToStore() {
+		collectConsent("y");
+		messagingPushToken("token-1");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 
 		assertTrue(dispatched.isEmpty());
+		assertTrue(results.isEmpty());
 		assertTrue(stored.isEmpty());
-		assertTrue(published.isEmpty());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), syncedValues());
+	}
+
+	@Test
+	public void ownerMatchCopiedToStore_isDedupedWhenConsentIsLaterDenied() {
+		stored.put("timeZone", "Asia/Tokyo");
+		collectConsent("y");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		assertTrue(dispatched.isEmpty());
+
+		collectConsent("n");
+		sync = newSync();
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		assertTrue(dispatched.isEmpty());
+	}
+
+	@Test
+	public void consentYes_ownerMatchCopiesOnlyMatchingLeaf() {
+		collectConsent("y");
+		messagingPushToken("token-1");
+
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", "token-1")))
+		);
+
+		assertEquals(
+			Map.of("timezone", "Asia/Tokyo", "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(0).getEventData()
+		);
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), syncedValues());
 	}
 
 	@Test
 	public void consentYes_changedPushTokenIsSentAfterComparisonWithMessagingState() {
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "y"))))
-			);
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Messaging.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(
-					SharedStateStatus.SET,
-					Map.of(IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER, "token-old")
-				)
-			);
+		collectConsent("y");
+		messagingPushToken("token-old");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-new"))));
 
@@ -329,10 +395,7 @@ public class DeviceAttributeSyncTests {
 	@Test
 	public void consentYes_timezoneUsesPersistedOwnerValueForDedup() {
 		stored.put("timeZone", "Asia/Tokyo");
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "y"))))
-			);
+		collectConsent("y");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 
@@ -340,34 +403,38 @@ public class DeviceAttributeSyncTests {
 	}
 
 	@Test
-	public void consentExtensionNotRegistered_doesNotTrustOptimisticOwner() {
+	public void consentExtensionNotRegistered_treatsConsentAsYes() {
 		when(api.getSharedState(eq(IdentityConstants.SharedState.Hub.NAME), any(), anyBoolean(), any()))
 			.thenReturn(
 				new SharedStateResult(
 					SharedStateStatus.SET,
-					Map.of("extensions", Map.of(IdentityConstants.SharedState.Consent.NAME, Map.of()))
+					Map.of("extensions", Map.of("com.adobe.edge", Map.of("version", "3.0.0")))
 				)
 			);
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Messaging.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(
-					SharedStateStatus.SET,
-					Map.of(IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER, "token-1")
-				)
-			);
+		messagingPushToken("token-1");
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+
+		assertTrue(dispatched.isEmpty());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), syncedValues());
+		verify(api, never())
+			.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any());
+	}
+
+	@Test
+	public void hubSharedStateUnavailable_doesNotTreatConsentAsYes() {
+		messagingPushToken("token-1");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 
 		assertEquals(1, dispatched.size());
-		assertTrue(stored.isEmpty());
+		assertTrue(deviceStored.isEmpty());
 	}
 
 	@Test
 	public void consentNo_sendsDeviceAttributesThroughBypass() {
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "n"))))
-			);
+		collectConsent("n");
+		stored.put("timeZone", "Asia/Tokyo");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 
@@ -377,12 +444,8 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void consentNo_unchangedValueIsDedupedAgainstPersistedDeviceStore() {
-		stored.put("deviceAttributes", "{\"tokens\":{\"pushNotification\":\"token-1\"}}");
-		sync = newSync();
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "n"))))
-			);
+		seedSynced("{\"tokens\":{\"pushNotification\":\"token-1\"}}");
+		collectConsent("n");
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 
@@ -391,15 +454,10 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void pendingConsent_sendsDeviceAttributesThroughBypass() {
+		consentRegistered();
+		stored.put("timeZone", "Asia/Tokyo");
 		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
 			.thenReturn(new SharedStateResult(SharedStateStatus.PENDING, null));
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Hub.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(
-					SharedStateStatus.SET,
-					Map.of("extensions", Map.of(IdentityConstants.SharedState.Consent.NAME, Map.of("version", "1.0.0")))
-				)
-			);
 
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 
@@ -537,8 +595,7 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void restoredParent_thenChildConfirmationReplacesParent() {
-		stored.put("deviceAttributes", "{\"prefs\":{}}");
-		sync = newSync();
+		seedSynced("{\"prefs\":{}}");
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(Map.of("prefs", Map.of("lang", "en")), lastProfileAttributes());
@@ -561,8 +618,7 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void persistedTimezone_isDedupedAfterRestart() {
-		stored.put("deviceAttributes", "{\"timezone\":\"Asia/Tokyo\"}");
-		sync = newSync();
+		seedSynced("{\"timezone\":\"Asia/Tokyo\"}");
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		assertTrue(dispatched.isEmpty());
 	}
@@ -618,9 +674,7 @@ public class DeviceAttributeSyncTests {
 	public void reset_clearsSentValues() {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo", "custom", Map.of("a", 1))));
 		succeedAll();
-		sync.reset(null);
-		assertNull(stored.get("timeZone"));
-		assertNull(stored.get("deviceAttributes"));
+		resetLikeExtension();
 		assertTrue(deviceStored.isEmpty());
 		assertTrue(lastProfileAttributes().isEmpty());
 
@@ -679,7 +733,7 @@ public class DeviceAttributeSyncTests {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		final Event oldRequest = dispatched.get(0);
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
-		sync.reset(null);
+		resetLikeExtension();
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/London")));
 		edgeResult(oldRequest, "success");
 
@@ -697,8 +751,8 @@ public class DeviceAttributeSyncTests {
 		doAnswer(call -> {
 				assertEquals("Asia/Tokyo", stored.get("timeZone"));
 				assertEquals(Map.of("timezone", "Asia/Tokyo"), lastProfileAttributes());
-				dispatched.add(call.getArgument(0));
-				return null;
+				final Event event = call.getArgument(0);
+				return isResultEvent(event) ? results.add(event) : dispatched.add(event);
 			})
 			.when(api)
 			.dispatch(any());
@@ -720,35 +774,66 @@ public class DeviceAttributeSyncTests {
 	}
 
 	@Test
-	public void invalidResult_doesNotCommitOrAdvanceQueue() {
+	public void matchingResultWithInvalidStatus_releasesQueueAndReportsFailure() {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
-		final Event activeRequest = dispatched.get(0);
-		for (final Map<String, Object> data : List.of(
-			Map.<String, Object>of(),
-			Map.<String, Object>of("status", "retry"),
-			Map.<String, Object>of("status", true)
-		)) {
-			sync.handleDeviceAttributeResult(
-				new Event.Builder(
-					"Device Attributes Response",
-					DeviceAttributeSync.BYPASS_TYPE,
-					EventSource.RESPONSE_CONTENT
-				)
-					.setEventData(data)
-					.chainToParentEvent(activeRequest)
-					.build()
-			);
-			assertEquals(1, dispatched.size());
-			assertTrue(stored.isEmpty());
-			assertTrue(published.isEmpty());
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/London")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "America/Denver")));
+		final List<Map<String, Object>> invalidResponses = List.of(
+			Map.of(),
+			Map.of("status", "retry"),
+			Map.of("status", true)
+		);
+		for (int index = 0; index < invalidResponses.size(); index++) {
+			edgeResponse(invalidResponses.get(index), dispatched.get(index));
+			assertEquals(index + 2, dispatched.size());
+			assertEquals(Map.of("status", "failed"), results.get(index).getEventData());
 		}
-		edgeResult(activeRequest, "success");
+		assertTrue(stored.isEmpty());
+		assertTrue(deviceStored.isEmpty());
+		assertTrue(published.isEmpty());
+	}
+
+	@Test
+	public void unchainedResultMatchedByRequestEventId_releasesQueue() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
+
+		edgeResponse(
+			Map.of("status", "failed", "requestEventId", dispatched.get(0).getUniqueIdentifier(), "reason", "decode"),
+			null
+		);
+
 		assertEquals(2, dispatched.size());
+		assertEquals(Map.of("status", "failed", "reason", "decode"), results.get(0).getEventData());
+	}
+
+	@Test
+	public void unchainedSuccessMatchedByRequestEventId_commitsValues() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+
+		edgeResponse(Map.of("status", "success", "requestEventId", dispatched.get(0).getUniqueIdentifier()), null);
+
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), syncedValues());
+		assertEquals("success", results.get(0).getEventData().get("status"));
+	}
+
+	@Test
+	public void nonMatchingResult_doesNotAdvanceQueueOrReport() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
+
+		edgeResponse(Map.of("status", "success", "requestEventId", "other"), null);
+		edgeResponse(Map.of("status", "success"), consequence(Map.of()));
+
+		assertEquals(1, dispatched.size());
+		assertTrue(results.isEmpty());
+		assertTrue(deviceStored.isEmpty());
 	}
 
 	@Test
 	public void queuedConsequence_readsLatestConsent() {
+		consentRegistered();
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), isNull(), anyBoolean(), any()))
@@ -765,18 +850,7 @@ public class DeviceAttributeSyncTests {
 	}
 
 	@Test
-	public void pendingConsent_doesNotTrustOwnerEvenWhenConsentExtensionIsAbsent() {
-		stored.put("timeZone", "Asia/Tokyo");
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(new SharedStateResult(SharedStateStatus.PENDING, null));
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Hub.NAME), any(), anyBoolean(), any()))
-			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Map.of("extensions", Map.of())));
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
-		assertEquals(1, dispatched.size());
-	}
-
-	@Test
-	public void success_notifiesMessagingWithOnlySentTokens() {
+	public void success_dispatchesSyncResultWithOnlySentAttributes() {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
 		edgeResult(dispatched.get(0), "success");
 		sync.handleDeviceAttributeRuleResponse(
@@ -784,14 +858,86 @@ public class DeviceAttributeSyncTests {
 		);
 		final Event edgeRequest = dispatched.get(1);
 		assertFalse(edgeRequest.getEventData().containsKey("timezone"));
-		edgeResult(edgeRequest, "success");
+		final Event response = new Event.Builder(
+			"Device Attributes Response",
+			DeviceAttributeSync.BYPASS_TYPE,
+			EventSource.RESPONSE_CONTENT
+		)
+			.setEventData(Map.of("status", "success"))
+			.chainToParentEvent(edgeRequest)
+			.build();
+		sync.handleDeviceAttributeResult(response);
+
 		assertEquals(2, dispatched.size());
-		assertEquals(1, confirmations.size());
-		final Event confirmed = confirmations.get(0);
-		assertEquals("Device attributes confirmed", confirmed.getName());
-		assertEquals(EventType.MESSAGING, confirmed.getType());
-		assertEquals(EventSource.RESPONSE_CONTENT, confirmed.getSource());
-		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), confirmed.getEventData());
+		assertEquals(2, results.size());
+		final Event result = results.get(1);
+		assertEquals("Device Attributes Sync Result", result.getName());
+		assertEquals(EventType.EDGE_IDENTITY, result.getType());
+		assertEquals(EventSource.RESPONSE_CONTENT, result.getSource());
+		assertEquals(response.getUniqueIdentifier(), result.getParentID());
+		assertEquals(
+			Map.of("status", "success", "attributes", Map.of("tokens", Map.of("pushNotification", "token-1"))),
+			result.getEventData()
+		);
+	}
+
+	@Test
+	public void failedAndDropped_dispatchFailedSyncResultWithReason() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
+		edgeResponse(Map.of("status", "failed", "reason", "network", "httpStatus", 503), dispatched.get(0));
+		edgeResult(dispatched.get(1), "dropped");
+
+		assertEquals(2, results.size());
+		assertEquals("Device Attributes Sync Result", results.get(0).getName());
+		assertEquals(EventType.EDGE_IDENTITY, results.get(0).getType());
+		assertEquals(EventSource.RESPONSE_CONTENT, results.get(0).getSource());
+		assertEquals(Map.of("status", "failed", "reason", "network"), results.get(0).getEventData());
+		assertEquals(Map.of("status", "failed"), results.get(1).getEventData());
+	}
+
+	@Test
+	public void profileAttributes_arePublishedOnlyInStandardSharedState() {
+		stored.put("timeZone", "Asia/Tokyo");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		edgeResult(dispatched.get(0), "success");
+
+		verify(api, never()).createXDMSharedState(any(), any());
+		assertEquals(
+			Map.of(
+				"profileAttributes",
+				Map.of("tokens", Map.of("pushNotification", "token-1"), "timezone", "Asia/Tokyo")
+			),
+			published.get(0)
+		);
+	}
+
+	@Test
+	public void reorderedArray_isNotSent() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("a", "b", "c"))));
+		edgeResult(dispatched.get(0), "success");
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("c", "a", "b"))));
+		assertEquals(1, dispatched.size());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("a", "b"))));
+		assertEquals(2, dispatched.size());
+	}
+
+	@Test
+	public void commit_replacesSubtreeWithNonMapOrEmptyMapAndMergesMaps() {
+		seedSynced("{\"prefs\":{\"lang\":\"en\",\"theme\":\"dark\"},\"other\":1}");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "fr"))));
+		edgeResult(dispatched.get(0), "success");
+		assertEquals(Map.of("prefs", Map.of("lang", "fr", "theme", "dark"), "other", 1), syncedValues());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", "off")));
+		edgeResult(dispatched.get(1), "success");
+		assertEquals(Map.of("prefs", "off", "other", 1), syncedValues());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("other", Map.of())));
+		edgeResult(dispatched.get(2), "success");
+		assertEquals(Map.of("prefs", "off", "other", Map.of()), syncedValues());
 	}
 
 	@Test
@@ -841,12 +987,8 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void queuedConsequence_doesNotTrustOwnerAfterLatestConsentIsDenied() {
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "y"))))
-			);
-		when(api.getSharedState(eq(IdentityConstants.SharedState.Messaging.NAME), any(), anyBoolean(), any()))
-			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Map.of("pushidentifier", "token-1")));
+		collectConsent("y");
+		messagingPushToken("token-1");
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", "first")));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), isNull(), anyBoolean(), any()))
@@ -860,10 +1002,7 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void queuedConsequence_readsLatestMessagingAndTimezoneOwners() {
-		when(api.getXDMSharedState(eq(IdentityConstants.SharedState.Consent.NAME), any(), anyBoolean(), any()))
-			.thenReturn(
-				new SharedStateResult(SharedStateStatus.SET, Map.of("consents", Map.of("collect", Map.of("val", "y"))))
-			);
+		collectConsent("y");
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", "first")));
 		sync.handleDeviceAttributeRuleResponse(
 			consequence(Map.of("timezone", "Europe/London", "tokens", Map.of("pushNotification", "token-1")))
@@ -873,7 +1012,11 @@ public class DeviceAttributeSyncTests {
 			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Map.of("pushidentifier", "token-1")));
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(1, dispatched.size());
-		assertTrue(confirmations.isEmpty());
+		assertEquals(1, results.size());
+		assertEquals(
+			Map.of("custom", "first", "timezone", "Europe/London", "tokens", Map.of("pushNotification", "token-1")),
+			syncedValues()
+		);
 	}
 
 	@Test
@@ -883,25 +1026,10 @@ public class DeviceAttributeSyncTests {
 		edgeResult(dispatched.get(0), "failed");
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		edgeResult(dispatched.get(1), "dropped");
-		assertTrue(confirmations.isEmpty());
+		assertEquals(2, results.size());
+		for (final Event result : results) assertEquals("failed", result.getEventData().get("status"));
 		assertTrue(deviceStored.isEmpty());
 		assertTrue(published.isEmpty());
-	}
-
-	@Test
-	public void migratedConfirmedValuesRemainIndependentFromProfileOwner() {
-		stored.put("deviceAttributes", "{\"timezone\":\"Europe/London\",\"tokens\":{\"pushNotification\":\"old\"}}");
-		stored.put("timeZone", "Asia/Tokyo");
-		sync = newSync();
-		assertNotNull(deviceStored.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES));
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/London")));
-		assertTrue(dispatched.isEmpty());
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "new"))));
-		edgeResult(dispatched.get(0), "success");
-		sync = newSync();
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "old"))));
-		assertEquals(2, dispatched.size());
-		assertEquals("Asia/Tokyo", stored.get("timeZone"));
 	}
 
 	@Test

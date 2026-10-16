@@ -15,16 +15,19 @@ import com.adobe.marketing.mobile.Event;
 import java.util.Map;
 
 /**
- * Handles a single attribute end-to-end: it claims a key on the incoming event, owns its dedup
- * and persistence, and reports its contribution to the outgoing payload.
+ * Handles a single profile attribute end-to-end: it claims a key on the incoming
+ * {@code PROFILE_ATTRIBUTE} event, owns its dedup + persistence, and reports its
+ * contribution to the outgoing collated {@code profile.updateAttributes} Edge payload and
+ * to the profile-attributes shared state.
  *
  * <p>Each attribute (timezone today; locale, push identifier, ... in the future) is one handler
- * registered independently for profile and device attribute paths. The two paths use separate
- * stores so that a value on one path cannot suppress dispatch on the other.
+ * registered in {@link ProfileAttributeHandlers}. The collector layer in {@link IdentityState}
+ * iterates every registered handler and stitches their contributions into a single Edge event
+ * and into the shared state.
  */
-interface AttributeHandler {
+interface ProfileAttributeHandler {
 	/**
-	 * Returns the key on the incoming event data that this handler
+	 * Returns the key on the incoming {@code PROFILE_ATTRIBUTE} event data that this handler
 	 * claims (e.g. {@code "timeZone"}). The collector uses this purely as an input filter:
 	 * {@link #collectFromEvent(Event)} is invoked only when this key is present in the event
 	 * data.
@@ -38,8 +41,9 @@ interface AttributeHandler {
 	String getAttributeKey();
 
 	/**
-	 * Reads this handler's value from the update {@code event}, optionally dedups against persistence, and
-	 * writes the new value to persistence before returning its contribution. Returns {@code null}
+	 * Reads this handler's value from the update {@code event}, dedups against persistence, and
+	 * on change writes the new value to persistence before returning the contribution to add to
+	 * the outgoing collated {@code profile.updateAttributes} Edge payload. Returns {@code null}
 	 * (or an empty map) when nothing should be contributed (key absent, value empty, or
 	 * unchanged).
 	 *
@@ -47,24 +51,14 @@ interface AttributeHandler {
 	 * death between persist and dispatch leaves the pending value in storage; the next sync will
 	 * pick it up via dedup.
 	 *
-	 * @param event the attribute update event
-	 * @param dedup whether unchanged values should be skipped
+	 * @param event the profile attributes update event
 	 * @return the contribution to merge into the outgoing payload, or {@code null}
 	 */
-	Map<String, Object> collectFromEvent(Event event, boolean dedup);
+	Map<String, Object> collectFromEvent(Event event);
 
 	/**
-	 * Collects an attribute using the existing profile-path dedup behavior.
-	 *
-	 * @param event the attribute update event
-	 * @return the changed attribute contribution, or {@code null}
-	 */
-	default Map<String, Object> collectFromEvent(final Event event) {
-		return collectFromEvent(event, true);
-	}
-
-	/**
-	 * Returns this handler's persisted contribution, or {@code null} (or an empty map) when nothing is stored.
+	 * Returns this handler's persisted contribution as it should appear in the profile-attributes
+	 * shared state, or {@code null} (or an empty map) when nothing is stored.
 	 *
 	 * @return the persisted contribution, or {@code null}
 	 */

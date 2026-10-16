@@ -159,15 +159,22 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
-	public void ruleResponsesAreReadyBeforeBootup() {
+	public void deviceAttributeAndResetEvents_waitForBootup() {
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		final Event response = new Event.Builder(
-			"Forward",
-			EventType.EDGE_IDENTITY,
-			DeviceAttributeSync.RULE_RESPONSE_SOURCE
-		)
-			.build();
-		assertTrue(extension.readyForEvent(response));
+		when(mockIdentityState.bootupIfReady(any())).thenReturn(false);
+		for (final Event event : new Event[] {
+			new Event.Builder("Forward", EventType.EDGE_IDENTITY, DeviceAttributeSync.RULE_RESPONSE_SOURCE).build(),
+			new Event.Builder("Response", DeviceAttributeSync.BYPASS_TYPE, EventSource.RESPONSE_CONTENT).build(),
+			new Event.Builder(
+				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				EventType.EDGE_IDENTITY,
+				EventSource.REQUEST_CONTENT
+			)
+				.build(),
+			new Event.Builder("Reset", EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET).build(),
+		}) {
+			assertFalse(extension.readyForEvent(event));
+		}
 	}
 
 	// ========================================================================================
@@ -1108,7 +1115,8 @@ public class IdentityExtensionTests {
 		extension.handleRequestReset(resetEvent);
 
 		verify(mockIdentityState).resetIdentifiers();
-		// reset clears profile attributes and republishes them as an empty standard shared state
+		// reset also clears synced profile attributes (and updates their shared states) for the new ECID
+		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
 		verify(mockExtensionApi)
 			.createSharedState(
 				eq(Collections.singletonMap("profileAttributes", Collections.emptyMap())),

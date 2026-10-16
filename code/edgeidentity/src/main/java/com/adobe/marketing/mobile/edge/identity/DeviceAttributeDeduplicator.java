@@ -13,203 +13,158 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.services.Log;
-import com.adobe.marketing.mobile.util.DataReader;
-import com.adobe.marketing.mobile.util.JSONUtils;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Compares device attributes with Edge-confirmed and consent-granted owner values.
- * Filtering never writes storage; only the successful Edge payload is committed.
+ * Keeps the device attributes confirmed by Edge as a nested map and filters out values that do not need to be
+ * sent again. A value is compared with the confirmed value at the same path and, when owner values are given
+ * (collect consent is "y"), with the owner value at that path. Arrays are compared as sets.
  */
 final class DeviceAttributeDeduplicator {
 
 	private static final String LOG_SOURCE = "DeviceAttributeDeduplicator";
 	private final ProfileAttributeStore store;
-	private final Map<List<String>, Object> synced = new LinkedHashMap<>();
+	private Map<String, Object> synced;
 
 	DeviceAttributeDeduplicator(final ProfileAttributeStore store) {
 		this.store = store;
 		final Map<String, Object> persisted = store.getMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-		if (persisted != null) synced.putAll(paths(persisted));
+		synced = persisted != null ? persisted : new LinkedHashMap<>();
 	}
 
+	/**
+	 * Returns the attributes that need to be sent to Edge. Values that match an owner value are not sent and are
+	 * committed, so later requests can be deduplicated against the confirmed values alone.
+	 *
+	 * @param attributes the attributes to filter
+	 * @param dedup whether to filter out unchanged values; when false, every valid value is returned
+	 * @param owners owner values to compare with, in the same shape as {@code attributes}; may be null
+	 * @return the attributes to send; empty when nothing changed
+	 */
 	Map<String, Object> filter(
 		final Map<String, Object> attributes,
 		final boolean dedup,
-		final Map<String, Object> messagingState,
-		final String timezone
+		final Map<String, Object> owners
 	) {
-		final Map<List<String>, Object> toSend = new LinkedHashMap<>();
-		for (final Map.Entry<List<String>, Object> entry : paths(attributes).entrySet()) {
-			final List<String> path = entry.getKey();
-			final Object value = entry.getValue();
-			final String canonical = canonicalize(value);
-			if (canonical == null) {
-				Log.warning(
-					IdentityConstants.LOG_TAG,
-					LOG_SOURCE,
-					"Dropping invalid device attribute at path %s.",
-					path
-				);
-				continue;
-			}
-			if (
-				dedup &&
-				(
-					canonical.equals(canonicalize(synced.get(path))) ||
-					matchesOwner(path, value, messagingState, timezone)
-				)
-			) continue;
-			try {
-				toSend.put(path, snapshot(canonical));
-			} catch (JSONException exception) {
-				Log.warning(
-					IdentityConstants.LOG_TAG,
-					LOG_SOURCE,
-					"Unable to snapshot device attribute at path %s.",
-					path
-				);
-			}
+		final Map<String, Object> changed = new LinkedHashMap<>();
+		final Map<String, Object> ownerMatches = new LinkedHashMap<>();
+		collect(attributes, dedup ? synced : null, dedup ? owners : null, changed, ownerMatches);
+		if (!ownerMatches.isEmpty()) {
+			commit(ownerMatches);
 		}
-		return tree(toSend);
+		return changed;
 	}
 
-	private static boolean matchesOwner(
-		final List<String> path,
-		final Object value,
-		final Map<String, Object> messagingState,
-		final String timezone
-	) {
-		if (path.equals(List.of(IdentityConstants.DeviceAttributes.TIMEZONE))) return value.equals(timezone);
-		if (
-			path.equals(
-				List.of(IdentityConstants.DeviceAttributes.TOKENS, IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION)
-			)
-		) {
-			return (
-				value instanceof String &&
-				value.equals(
-					DataReader.optString(messagingState, IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER, null)
-				)
-			);
-		}
-		return false;
-	}
-
-	void commit(final Map<String, Object> attributes) {
-		for (final Map.Entry<List<String>, Object> entry : paths(attributes).entrySet()) {
-			final String canonical = canonicalize(entry.getValue());
-			if (canonical == null) {
-				Log.warning(
-					IdentityConstants.LOG_TAG,
-					LOG_SOURCE,
-					"Cannot confirm invalid device attribute at path %s.",
-					entry.getKey()
-				);
-				continue;
-			}
-			try {
-				final Object value = snapshot(canonical);
-				removeRelatedPaths(entry.getKey());
-				synced.put(entry.getKey(), value);
-			} catch (JSONException exception) {
-				Log.warning(
-					IdentityConstants.LOG_TAG,
-					LOG_SOURCE,
-					"Unable to confirm device attribute at path %s.",
-					entry.getKey()
-				);
-			}
-		}
-		store.setMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES, readSynced());
-	}
-
-	Map<String, Object> readSynced() {
-		return tree(synced);
-	}
-
-	void clear() {
-		synced.clear();
-		store.remove(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-	}
-
-	private static Object snapshot(final String canonical) throws JSONException {
-		return JSONUtils.toMap(new JSONObject("{\"value\":" + canonical + "}")).get("value");
-	}
-
-	private void removeRelatedPaths(final List<String> path) {
-		synced.keySet().removeIf(existing -> isPrefix(existing, path) || isPrefix(path, existing));
-	}
-
-	private static boolean isPrefix(final List<String> prefix, final List<String> path) {
-		return prefix.size() <= path.size() && path.subList(0, prefix.size()).equals(prefix);
-	}
-
-	private static Map<List<String>, Object> paths(final Map<String, Object> attributes) {
-		final Map<List<String>, Object> result = new LinkedHashMap<>();
-		if (attributes != null) extract(attributes, Collections.emptyList(), result);
-		return result;
-	}
-
-	private static void extract(
+	private static void collect(
 		final Map<?, ?> attributes,
-		final List<String> prefix,
-		final Map<List<String>, Object> result
+		final Map<?, ?> synced,
+		final Map<?, ?> owners,
+		final Map<String, Object> changed,
+		final Map<String, Object> ownerMatches
 	) {
+		if (attributes == null) return;
 		for (final Map.Entry<?, ?> entry : attributes.entrySet()) {
 			if (!(entry.getKey() instanceof String)) {
 				Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Dropping device attribute with a non-string key.");
 				continue;
 			}
 			final String key = (String) entry.getKey();
-			if (prefix.isEmpty() && IdentityConstants.DeviceAttributes.APP.equals(key)) continue;
-			final List<String> path = new ArrayList<>(prefix);
-			path.add(key);
 			final Object value = entry.getValue();
 			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()) {
-				extract((Map<?, ?>) value, path, result);
-			} else {
-				result.put(path, value);
+				final Map<String, Object> changedChild = new LinkedHashMap<>();
+				final Map<String, Object> ownerMatchesChild = new LinkedHashMap<>();
+				collect((Map<?, ?>) value, child(synced, key), child(owners, key), changedChild, ownerMatchesChild);
+				if (!changedChild.isEmpty()) changed.put(key, changedChild);
+				if (!ownerMatchesChild.isEmpty()) ownerMatches.put(key, ownerMatchesChild);
+				continue;
 			}
+			final String canonical = canonicalize(value);
+			if (canonical == null) {
+				Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Dropping invalid device attribute '%s'.", key);
+				continue;
+			}
+			if (synced != null && canonical.equals(canonicalize(synced.get(key)))) continue;
+			if (owners != null && canonical.equals(canonicalize(owners.get(key)))) {
+				ownerMatches.put(key, copy(value));
+				continue;
+			}
+			changed.put(key, copy(value));
 		}
 	}
 
-	private static Map<String, Object> tree(final Map<List<String>, Object> attributes) {
-		final Map<String, Object> result = new LinkedHashMap<>();
-		for (final Map.Entry<List<String>, Object> entry : attributes.entrySet()) set(
-			entry.getValue(),
-			entry.getKey(),
-			0,
-			result
-		);
-		return result;
+	/**
+	 * Deep-merges {@code attributes} into the confirmed values and persists them. A map merges into an existing
+	 * map; any other value, or an empty map, replaces the existing value at that key.
+	 *
+	 * @param attributes the attributes confirmed by Edge
+	 */
+	void commit(final Map<String, Object> attributes) {
+		synced = merge(synced, attributes);
+		store.setMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES, synced);
+	}
+
+	Map<String, Object> readSynced() {
+		return new LinkedHashMap<>(synced);
+	}
+
+	void clear() {
+		synced = new LinkedHashMap<>();
+		store.remove(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void set(
-		final Object value,
-		final List<String> path,
-		final int index,
-		final Map<String, Object> attributes
-	) {
-		final String key = path.get(index);
-		if (index == path.size() - 1) {
-			attributes.put(key, value);
-			return;
+	private static Map<String, Object> merge(final Map<String, Object> base, final Map<String, Object> attributes) {
+		final Map<String, Object> result = new LinkedHashMap<>(base);
+		for (final Map.Entry<String, Object> entry : attributes.entrySet()) {
+			final Object value = entry.getValue();
+			final Object existing = result.get(entry.getKey());
+			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty() && existing instanceof Map<?, ?>) {
+				result.put(entry.getKey(), merge((Map<String, Object>) existing, (Map<String, Object>) value));
+			} else {
+				result.put(entry.getKey(), copy(value));
+			}
 		}
-		final Map<String, Object> child = attributes.get(key) instanceof Map<?, ?>
-			? new LinkedHashMap<>((Map<String, Object>) attributes.get(key))
-			: new LinkedHashMap<>();
-		set(value, path, index + 1, child);
-		attributes.put(key, child);
+		return result;
+	}
+
+	private static Map<?, ?> child(final Map<?, ?> map, final String key) {
+		final Object value = map != null ? map.get(key) : null;
+		return value instanceof Map<?, ?> ? (Map<?, ?>) value : null;
+	}
+
+	/** Deep copies a valid attribute value so later changes to the caller's collections are not retained. */
+	private static Object copy(final Object value) {
+		if (value instanceof Map<?, ?>) {
+			final Map<String, Object> result = new LinkedHashMap<>();
+			for (final Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+				result.put((String) entry.getKey(), copy(entry.getValue()));
+			}
+			return result;
+		}
+		final List<?> list = asList(value);
+		if (list != null) {
+			final List<Object> result = new ArrayList<>();
+			for (final Object element : list) result.add(copy(element));
+			return result;
+		}
+		return value;
+	}
+
+	private static List<?> asList(final Object value) {
+		if (value instanceof List<?>) return (List<?>) value;
+		if (value == null || !value.getClass().isArray()) return null;
+		final List<Object> list = new ArrayList<>();
+		for (int index = 0; index < Array.getLength(value); index++) list.add(Array.get(value, index));
+		return list;
 	}
 
 	@VisibleForTesting
@@ -254,21 +209,12 @@ final class DeviceAttributeDeduplicator {
 			}
 			return "{" + String.join(",", entries) + "}";
 		}
-		if (value instanceof List<?>) {
-			final List<String> elements = new ArrayList<>();
-			for (final Object element : (List<?>) value) {
+		final List<?> list = asList(value);
+		if (list != null) {
+			// Arrays are compared as sets, so element order does not matter.
+			final Set<String> elements = new TreeSet<>();
+			for (final Object element : list) {
 				final String canonicalElement = canonicalValue(element);
-				if (canonicalElement == null) {
-					return null;
-				}
-				elements.add(canonicalElement);
-			}
-			return "[" + String.join(",", elements) + "]";
-		}
-		if (value.getClass().isArray()) {
-			final List<String> elements = new ArrayList<>();
-			for (int index = 0; index < Array.getLength(value); index++) {
-				final String canonicalElement = canonicalValue(Array.get(value, index));
 				if (canonicalElement == null) {
 					return null;
 				}

@@ -39,7 +39,8 @@ final class IdentityConstants {
 		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
 		static final String UPDATE_DEVICE_ATTRIBUTES = "Update Device Attributes";
 		static final String DEVICE_ATTRIBUTES_TO_RULES_ENGINE = "Device attributes for rules engine";
-		static final String DEVICE_ATTRIBUTES_CONFIRMED = "Device attributes confirmed";
+		static final String DEVICE_ATTRIBUTES_EDGE_REQUEST = "Edge bypass request";
+		static final String DEVICE_ATTRIBUTES_SYNC_RESULT = "Device Attributes Sync Result";
 
 		private EventNames() {}
 	}
@@ -113,6 +114,7 @@ final class IdentityConstants {
 	static final class XDMKeys {
 
 		static final String IDENTITY_MAP = "identityMap";
+		static final String PROFILE_ATTRIBUTES = "profileAttributes";
 		static final String ID = "id";
 		static final String AUTHENTICATED_STATE = "authenticatedState";
 		static final String PRIMARY = "primary";
@@ -166,7 +168,7 @@ final class IdentityConstants {
 		// Keys for the outgoing generic EDGE request event payload. The event carries the collated
 		// data from every profile-attribute helper under a single "profile.updateAttributes" type.
 		// Per-attribute event-data keys, payload keys, and persistence keys are owned by the
-		// individual AttributeHandler implementations.
+		// individual ProfileAttributeHandler implementations.
 		static final String XDM = "xdm";
 		static final String DATA = "data";
 		static final String EVENT_TYPE = "eventType";
@@ -182,7 +184,16 @@ final class IdentityConstants {
 		static final String PUSH_NOTIFICATION = "pushNotification";
 		static final String TOKENS = "tokens";
 		static final String APP = "app";
+		static final String APP_ID = "id";
+		static final String APP_PLATFORM = "platform";
+		static final String PLATFORM_FCM = "fcm";
 		static final String SYNCED_VALUES = "confirmedAttributes";
+		static final String STATUS = "status";
+		static final String STATUS_SUCCESS = "success";
+		static final String STATUS_FAILED = "failed";
+		static final String REASON = "reason";
+		static final String REQUEST_EVENT_ID = "requestEventId";
+		static final String ATTRIBUTES = "attributes";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
 		static final String DEDUP_CONFIG_KEY = "edgeidentity.optimizeOperationalProfileDataSync";
 

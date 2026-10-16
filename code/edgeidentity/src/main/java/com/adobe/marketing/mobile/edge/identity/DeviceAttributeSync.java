@@ -26,6 +26,8 @@ import com.adobe.marketing.mobile.util.DataReader;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -34,27 +36,24 @@ import java.util.Map;
  * <ol>
  *     <li>{@link #handleDeviceAttributes(Event)} sends the public API data to the rules engine.</li>
  *     <li>Each forward-operational-data consequence comes back through {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
- *     <li>Consequences wait in a FIFO queue until the previous Edge request finishes. Values already
- *     synced are dropped and only changed values are sent to Edge.</li>
- *     <li>When Edge reports success ({@link #handleDeviceAttributeResult(Event)}), the complete confirmed store is persisted and
- *     published in {@code profileAttributes}, which Messaging reads to keep its token store in sync.</li>
+ *     <li>Consequences wait in a FIFO queue until the active Edge request finishes. Values already synced are
+ *     dropped and only changed values are sent to Edge.</li>
+ *     <li>When Edge responds ({@link #handleDeviceAttributeResult(Event)}), the active request is released. On
+ *     success the sent values are merged into the synced values and published in {@code profileAttributes}.
+ *     A {@code Device Attributes Sync Result} event reports the outcome.</li>
  * </ol>
- *
- * <p>Confirming a path replaces previously confirmed ancestor and descendant paths, while
- * preserving unrelated values. Failed requests leave the confirmed store unchanged.</p>
  */
 final class DeviceAttributeSync {
 
 	static final String RULE_RESPONSE_SOURCE = "com.adobe.eventSource.responseOperationalData";
 	static final String BYPASS_TYPE = "com.adobe.eventType.edgeBypassConsent";
 	private static final String LOG_SOURCE = "DeviceAttributeSync";
-	private static final String APP = "app";
 
 	private final ExtensionApi api;
 	private final ProfileAttributeStore profileAttributeStore;
-	private final Deque<Event> deviceAttributeQueue = new ArrayDeque<>();
-	private Event deviceAttributesForEdge;
-	private final DeviceAttributeDeduplicator deviceAttributeDeduplicator;
+	private final DeviceAttributeDeduplicator deduplicator;
+	private final Deque<Event> pendingRequests = new ArrayDeque<>();
+	private Event activeRequest;
 
 	DeviceAttributeSync(final ExtensionApi api, final ProfileAttributeStore profileAttributeStore) {
 		this(
@@ -77,14 +76,7 @@ final class DeviceAttributeSync {
 		this.api = api;
 		this.profileAttributeStore =
 			profileAttributeStore != null ? profileAttributeStore : new ProfileAttributeStore(null);
-		this.deviceAttributeDeduplicator = new DeviceAttributeDeduplicator(deviceAttributeStore);
-		// Preserve confirmed values from the earlier shared-store implementation.
-		final Map<String, Object> persisted = this.profileAttributeStore.getMap("deviceAttributes");
-		if (
-			deviceAttributeStore.getMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES) == null && persisted != null
-		) {
-			deviceAttributeDeduplicator.commit(persisted);
-		}
+		this.deduplicator = new DeviceAttributeDeduplicator(deviceAttributeStore);
 	}
 
 	/** Forwards public API data to the rules engine, which decides which attributes may be sent. */
@@ -94,61 +86,59 @@ final class DeviceAttributeSync {
 			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty or invalid device attribute request.");
 			return;
 		}
-		final Event operationalEvent = new Event.Builder(
-			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
-			IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
-			EventSource.REQUEST_CONTENT
-		)
-			.setEventData(data)
-			.chainToParentEvent(event)
-			.build();
-		api.dispatch(operationalEvent);
+		Log.debug(
+			IdentityConstants.LOG_TAG,
+			LOG_SOURCE,
+			"Forwarding device attributes to the rules engine. Nothing is sent to Edge unless a forward operational data rule matches."
+		);
+		api.dispatch(
+			new Event.Builder(
+				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
+				IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
+				EventSource.REQUEST_CONTENT
+			)
+				.setEventData(data)
+				.chainToParentEvent(event)
+				.build()
+		);
 	}
 
-	/** Queues a consequence until the previous Edge request has completed. */
+	/** Queues a rule consequence until the active Edge request has completed. */
 	void handleDeviceAttributeRuleResponse(final Event event) {
 		if (event.getEventData() == null || event.getEventData().isEmpty()) {
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Rule response contains no device attributes.");
 			return;
 		}
-		deviceAttributeQueue.addLast(event);
-		sendNextDeviceAttributeRequest();
+		pendingRequests.addLast(event);
+		processQueue();
 	}
 
-	private void sendNextDeviceAttributeRequest() {
-		while (deviceAttributesForEdge == null && !deviceAttributeQueue.isEmpty()) sendChangedValues(
-			deviceAttributeQueue.removeFirst()
-		);
+	/** Sends queued requests until one is waiting for an Edge response or the queue is empty. */
+	private void processQueue() {
+		while (activeRequest == null && !pendingRequests.isEmpty()) {
+			final Event request = buildEdgeRequest(pendingRequests.removeFirst());
+			if (request != null) {
+				activeRequest = request;
+				api.dispatch(request);
+			}
+		}
 	}
 
-	private void sendChangedValues(final Event event) {
-		final Map<String, Object> attributes = event.getEventData();
-		final boolean dedup = !Boolean.FALSE.equals(
-			configuration().get(IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY)
+	/** Returns the Edge request for the changed values in {@code ruleResponse}, or null if there is nothing to send. */
+	private Event buildEdgeRequest(final Event ruleResponse) {
+		final Map<String, Object> attributes = new HashMap<>(ruleResponse.getEventData());
+		attributes.remove(IdentityConstants.DeviceAttributes.APP);
+		final boolean dedup = DataReader.optBoolean(
+			configuration(),
+			IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY,
+			true
 		);
-		final boolean compareOwners = dedup && isCollectConsentGranted();
-		final SharedStateResult messagingResult = compareOwners
-			? api.getSharedState(
-				IdentityConstants.SharedState.Messaging.NAME,
-				null,
-				false,
-				SharedStateResolution.LAST_SET
-			)
-			: null;
-		final Map<String, Object> messagingState = messagingResult != null &&
-			messagingResult.getStatus() == SharedStateStatus.SET
-			? messagingResult.getValue()
-			: null;
-		final String timezone = compareOwners ? profileAttributeStore.getString("timeZone") : null;
-		final Map<String, Object> payload = deviceAttributeDeduplicator.filter(
-			attributes,
-			dedup,
-			messagingState,
-			timezone
-		);
-		if (payload.isEmpty()) {
+		final Map<String, Object> owners = dedup && isCollectConsentYes() ? ownerValues() : null;
+		final Map<String, Object> changed = deduplicator.filter(attributes, dedup, owners);
+		if (changed.isEmpty()) {
+			// TODO: Publish a result event when all values are deduplicated.
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes unchanged, not sending to Edge.");
-			return;
+			return null;
 		}
 
 		final Application application = MobileCore.getApplication();
@@ -159,108 +149,182 @@ final class DeviceAttributeSync {
 				LOG_SOURCE,
 				"Cannot send device attributes without an app package identifier."
 			);
-			return;
+			return null;
 		}
-		payload.put(APP, Map.of("id", appId, "platform", "fcm"));
-		final Event edgeEvent = new Event.Builder("Edge bypass request", BYPASS_TYPE, EventSource.REQUEST_CONTENT)
-			.setEventData(payload)
-			.chainToParentEvent(event)
+		final Map<String, Object> app = new HashMap<>();
+		app.put(IdentityConstants.DeviceAttributes.APP_ID, appId);
+		app.put(IdentityConstants.DeviceAttributes.APP_PLATFORM, IdentityConstants.DeviceAttributes.PLATFORM_FCM);
+		changed.put(IdentityConstants.DeviceAttributes.APP, app);
+		return new Event.Builder(
+			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_EDGE_REQUEST,
+			BYPASS_TYPE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(changed)
+			.chainToParentEvent(ruleResponse)
 			.build();
-		deviceAttributesForEdge = edgeEvent;
-		api.dispatch(edgeEvent);
 	}
 
-	/** Stores successful values before processing the next queued consequence. */
+	/** Handles the Edge response for the active request, then sends the next queued request. */
 	void handleDeviceAttributeResult(final Event event) {
-		if (
-			deviceAttributesForEdge == null ||
-			!deviceAttributesForEdge.getUniqueIdentifier().equals(event.getParentID())
-		) return;
-		final String status = DataReader.optString(event.getEventData(), "status", null);
-		if (!"success".equals(status) && !"failed".equals(status) && !"dropped".equals(status)) {
-			Log.warning(
+		if (!isResponseToActiveRequest(event)) {
+			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Ignoring device attribute result with an invalid status."
+				"Ignoring device attribute response that does not match the active request."
 			);
 			return;
 		}
-		if ("success".equals(status)) {
-			final Map<String, Object> attributes = deviceAttributesForEdge.getEventData();
-			deviceAttributeDeduplicator.commit(attributes);
+		final Map<String, Object> attributes = new HashMap<>(activeRequest.getEventData());
+		attributes.remove(IdentityConstants.DeviceAttributes.APP);
+		activeRequest = null;
+
+		final Map<String, Object> responseData = event.getEventData();
+		final String status = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.STATUS, null);
+		final Map<String, Object> result = new HashMap<>();
+		if (IdentityConstants.DeviceAttributes.STATUS_SUCCESS.equals(status)) {
+			deduplicator.commit(attributes);
 			final String timezone = DataReader.optString(attributes, IdentityConstants.DeviceAttributes.TIMEZONE, null);
-			if (timezone != null) profileAttributeStore.setString("timeZone", timezone);
+			if (timezone != null) {
+				profileAttributeStore.setString(IdentityConstants.DeviceAttributes.TIME_ZONE, timezone);
+			}
 			publishProfileAttributes(event);
-			final Map<String, Object> tokens = DataReader.optTypedMap(
-				Object.class,
-				attributes,
-				IdentityConstants.DeviceAttributes.TOKENS,
+			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_SUCCESS);
+			result.put(IdentityConstants.DeviceAttributes.ATTRIBUTES, attributes);
+		} else {
+			final String reason = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.REASON, null);
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Device attribute sync failed with status '%s' and reason '%s'. Values remain unsynced.",
+				status,
+				reason
+			);
+			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_FAILED);
+			if (reason != null) result.put(IdentityConstants.DeviceAttributes.REASON, reason);
+		}
+		api.dispatch(
+			new Event.Builder(
+				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_SYNC_RESULT,
+				EventType.EDGE_IDENTITY,
+				EventSource.RESPONSE_CONTENT
+			)
+				.setEventData(result)
+				.chainToParentEvent(event)
+				.build()
+		);
+		processQueue();
+	}
+
+	/** A response matches when it is chained to the active request or names it in {@code requestEventId}. */
+	private boolean isResponseToActiveRequest(final Event event) {
+		if (activeRequest == null) return false;
+		final String requestId = activeRequest.getUniqueIdentifier();
+		return (
+			requestId.equals(event.getParentID()) ||
+			requestId.equals(
+				DataReader.optString(event.getEventData(), IdentityConstants.DeviceAttributes.REQUEST_EVENT_ID, null)
+			)
+		);
+	}
+
+	/**
+	 * Returns the values owned by other sources, in the same shape as the device attributes: the timezone set
+	 * through the profile attributes API and the push token in the Messaging shared state.
+	 */
+	private Map<String, Object> ownerValues() {
+		final Map<String, Object> owners = new HashMap<>();
+		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);
+		if (timezone != null) owners.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
+
+		final SharedStateResult messaging = api.getSharedState(
+			IdentityConstants.SharedState.Messaging.NAME,
+			null,
+			false,
+			SharedStateResolution.LAST_SET
+		);
+		if (messaging != null && messaging.getStatus() == SharedStateStatus.SET) {
+			final String pushToken = DataReader.optString(
+				messaging.getValue(),
+				IdentityConstants.SharedState.Messaging.PUSH_IDENTIFIER,
 				null
 			);
-			if (tokens != null && !tokens.isEmpty()) {
-				api.dispatch(
-					new Event.Builder(
-						IdentityConstants.EventNames.DEVICE_ATTRIBUTES_CONFIRMED,
-						EventType.MESSAGING,
-						EventSource.RESPONSE_CONTENT
-					)
-						.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TOKENS, tokens))
-						.chainToParentEvent(event)
-						.build()
+			if (pushToken != null) {
+				owners.put(
+					IdentityConstants.DeviceAttributes.TOKENS,
+					Collections.singletonMap(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, pushToken)
 				);
 			}
-		} else {
-			Log.warning(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Device attribute sync %s: %s. Values remain unsynced.",
-				status,
-				DataReader.optString(event.getEventData(), "reason", "unknown")
-			);
 		}
-		deviceAttributesForEdge = null;
-		sendNextDeviceAttributeRequest();
+		return owners;
 	}
 
-	private boolean isCollectConsentGranted() {
+	/**
+	 * Returns true when collect consent is "y". When the Consent extension is not registered, consent is treated
+	 * as "y", matching the Edge extension.
+	 */
+	private boolean isCollectConsentYes() {
+		final SharedStateResult hub = api.getSharedState(
+			IdentityConstants.SharedState.Hub.NAME,
+			null,
+			false,
+			SharedStateResolution.LAST_SET
+		);
+		if (hub == null || hub.getStatus() != SharedStateStatus.SET) return false;
+		final Map<String, Object> extensions = DataReader.optTypedMap(
+			Object.class,
+			hub.getValue(),
+			IdentityConstants.SharedState.Hub.EXTENSIONS,
+			null
+		);
+		final Map<String, Object> consentExtension = DataReader.optTypedMap(
+			Object.class,
+			extensions,
+			IdentityConstants.SharedState.Consent.NAME,
+			null
+		);
+		if (consentExtension == null || consentExtension.isEmpty()) return true;
+
 		final SharedStateResult consentResult = api.getXDMSharedState(
 			IdentityConstants.SharedState.Consent.NAME,
 			null,
 			false,
 			SharedStateResolution.ANY
 		);
-		if (consentResult != null && consentResult.getStatus() == SharedStateStatus.SET) {
-			final Map<String, Object> consents = DataReader.optTypedMap(
-				Object.class,
-				consentResult.getValue(),
-				IdentityConstants.SharedState.Consent.CONSENTS,
-				null
-			);
-			final Map<String, Object> collect = DataReader.optTypedMap(
-				Object.class,
-				consents,
-				IdentityConstants.SharedState.Consent.COLLECT,
-				null
-			);
-			final String value = DataReader.optString(collect, IdentityConstants.SharedState.Consent.VALUE, null);
-			return IdentityConstants.SharedState.Consent.YES.equals(value);
-		}
-
-		return false;
+		if (consentResult == null || consentResult.getStatus() != SharedStateStatus.SET) return false;
+		final Map<String, Object> consents = DataReader.optTypedMap(
+			Object.class,
+			consentResult.getValue(),
+			IdentityConstants.SharedState.Consent.CONSENTS,
+			null
+		);
+		final Map<String, Object> collect = DataReader.optTypedMap(
+			Object.class,
+			consents,
+			IdentityConstants.SharedState.Consent.COLLECT,
+			null
+		);
+		final String value = DataReader.optString(collect, IdentityConstants.SharedState.Consent.VALUE, null);
+		return IdentityConstants.SharedState.Consent.YES.equals(value);
 	}
 
+	/**
+	 * Clears queued requests and all synced values, then republishes the profile attributes. The profile
+	 * attribute store itself is cleared by {@link IdentityState#clearProfileAttributes}.
+	 */
 	void reset(final Event event) {
-		deviceAttributeQueue.clear();
-		deviceAttributesForEdge = null;
-		deviceAttributeDeduplicator.clear();
-		profileAttributeStore.clearAll();
+		// TODO: Publish a result event for requests dropped by a reset.
+		pendingRequests.clear();
+		activeRequest = null;
+		deduplicator.clear();
 		publishProfileAttributes(event);
 	}
 
+	/** Publishes the synced device attributes merged with the consent-path timezone in the standard shared state. */
 	void publishProfileAttributes(final Event event) {
-		final Map<String, Object> attributes = deviceAttributeDeduplicator.readSynced();
-		final String timezone = profileAttributeStore.getString("timeZone");
-		if (timezone != null) attributes.put("timezone", timezone);
+		final Map<String, Object> attributes = new LinkedHashMap<>(deduplicator.readSynced());
+		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);
+		if (timezone != null) attributes.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
 		api.createSharedState(
 			Collections.singletonMap(IdentityConstants.ProfileAttributes.SHARED_STATE_KEY, attributes),
 			event
