@@ -233,10 +233,10 @@ public class Identity {
 
 	/**
 	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
-	 * independently of collect consent. Launch rules decide which values are sent. By default, a value is
-	 * sent only when it differs from the last successfully synced value; set
-	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to send every
-	 * update. Requests are sent one at a time. Null and non-JSON values are dropped. Any {@code app} value is
+	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
+	 * push token are sent only when they differ from the last successfully synced value, and all other values are
+	 * always sent; set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to
+	 * send every update. Requests are sent one at a time. Null and non-JSON values are dropped. Any {@code app} value is
 	 * replaced by the SDK.
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values

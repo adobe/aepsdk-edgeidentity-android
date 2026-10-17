@@ -38,10 +38,11 @@ import java.util.Map;
  * <ol>
  *     <li>{@link #handleDeviceAttributes(Event)} sends the public API data to the rules engine.</li>
  *     <li>Each forward-operational-data consequence comes back through {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
- *     <li>Consequences wait in a FIFO queue until the active Edge request finishes. Values already synced are
- *     dropped and only changed values are sent to Edge.</li>
+ *     <li>Consequences wait in a FIFO queue until the active Edge request finishes. Known values
+ *     ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}) that are already synced are dropped; all other
+ *     values are sent to Edge.</li>
  *     <li>When Edge responds ({@link #handleDeviceAttributeResult(Event)}), the active request is released. On
- *     success the sent values are merged into the synced values and published in {@code profileAttributes}.
+ *     success the sent known values are merged into the synced values and published in {@code profileAttributes}.
  *     A {@code Device Attributes Sync Result} event reports the outcome.</li>
  * </ol>
  */

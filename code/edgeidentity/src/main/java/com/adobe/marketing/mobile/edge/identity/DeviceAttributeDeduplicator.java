@@ -15,6 +15,7 @@ import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.services.Log;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,26 +26,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Keeps the device attributes confirmed by Edge as a nested map and filters out values that do not need to be
- * sent again. A value is compared with the confirmed value at the same path and, when owner values are given
- * (collect consent is "y"), with the owner value at that path. Arrays are compared as sets.
+ * Keeps the confirmed values of the known device attributes ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS})
+ * as a nested map and filters out known values that do not need to be sent again. A known value is compared with the
+ * confirmed value at the same path and, when owner values are given (collect consent is "y"), with the owner value at
+ * that path. Arrays are compared as sets. Every other valid value is always sent and never stored.
  */
 final class DeviceAttributeDeduplicator {
 
 	private static final String LOG_SOURCE = "DeviceAttributeDeduplicator";
-
-	/**
-	 * The deepest allowed container. The top-level attributes map is depth 0, a map or array directly inside it is
-	 * depth 1, and so on. A deeper container is an invalid value and is dropped.
-	 */
-	static final int MAX_DEPTH = 32;
 	private final ProfileAttributeStore store;
 	private Map<String, Object> synced;
 
 	DeviceAttributeDeduplicator(final ProfileAttributeStore store) {
 		this.store = store;
 		final Map<String, Object> persisted = store.getMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-		synced = persisted != null ? persisted : new LinkedHashMap<>();
+		synced = persisted != null ? deduplicatedValues(persisted) : new LinkedHashMap<>();
+		if (persisted != null && !synced.equals(persisted)) {
+			store.setMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES, synced);
+		}
 	}
 
 	/** The result of {@link #filter}: the values to send to Edge and the values already held by their owner. */
@@ -60,19 +59,26 @@ final class DeviceAttributeDeduplicator {
 	}
 
 	/**
-	 * Splits the attributes into the values that need to be sent to Edge and the values that match an owner value.
-	 * Owner matches are not sent; the caller commits them so later requests can be deduplicated against the
-	 * confirmed values alone.
+	 * Splits the attributes into the values that need to be sent to Edge and the known values that match an owner
+	 * value. Owner matches are not sent; the caller commits them so later requests can be deduplicated against the
+	 * confirmed values alone. Values that are not known are always returned as changed.
 	 *
 	 * @param attributes the attributes to filter
-	 * @param dedup whether to filter out unchanged values; when false, every valid value is returned as changed
+	 * @param dedup whether to filter out unchanged known values; when false, every valid value is returned as changed
 	 * @param owners owner values to compare with, in the same shape as {@code attributes}; may be null
 	 * @return the changed values and the owner matches; each is empty when there are none
 	 */
 	FilterResult filter(final Map<String, Object> attributes, final boolean dedup, final Map<String, Object> owners) {
 		final Map<String, Object> changed = new LinkedHashMap<>();
 		final Map<String, Object> ownerMatches = new LinkedHashMap<>();
-		collect(attributes, dedup ? synced : null, dedup ? owners : null, changed, ownerMatches, 0);
+		collect(
+			attributes,
+			dedup ? synced : null,
+			dedup ? owners : null,
+			changed,
+			ownerMatches,
+			Collections.<String>emptyList()
+		);
 		return new FilterResult(changed, ownerMatches);
 	}
 
@@ -82,7 +88,7 @@ final class DeviceAttributeDeduplicator {
 		final Map<?, ?> owners,
 		final Map<String, Object> changed,
 		final Map<String, Object> ownerMatches,
-		final int depth
+		final List<String> parentPath
 	) {
 		if (attributes == null) return;
 		for (final Map.Entry<?, ?> entry : attributes.entrySet()) {
@@ -92,7 +98,11 @@ final class DeviceAttributeDeduplicator {
 			}
 			final String key = (String) entry.getKey();
 			final Object value = entry.getValue();
-			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty() && depth < MAX_DEPTH) {
+			final List<String> path = new ArrayList<>(parentPath);
+			path.add(key);
+			// A known value is compared as a whole; maps on the way to it, and other maps, are split into their values.
+			final boolean known = IdentityConstants.DeviceAttributes.DEDUPLICATED_PATHS.contains(path);
+			if (!known && value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()) {
 				final Map<String, Object> changedChild = new LinkedHashMap<>();
 				final Map<String, Object> ownerMatchesChild = new LinkedHashMap<>();
 				collect(
@@ -101,19 +111,19 @@ final class DeviceAttributeDeduplicator {
 					child(owners, key),
 					changedChild,
 					ownerMatchesChild,
-					depth + 1
+					path
 				);
 				if (!changedChild.isEmpty()) changed.put(key, changedChild);
 				if (!ownerMatchesChild.isEmpty()) ownerMatches.put(key, ownerMatchesChild);
 				continue;
 			}
-			final String canonical = canonicalize(value, depth + 1);
+			final String canonical = canonicalize(value);
 			if (canonical == null) {
 				Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Dropping invalid device attribute '%s'.", key);
 				continue;
 			}
-			if (synced != null && canonical.equals(canonicalize(synced.get(key), depth + 1))) continue;
-			if (owners != null && canonical.equals(canonicalize(owners.get(key), depth + 1))) {
+			if (known && synced != null && canonical.equals(canonicalize(synced.get(key)))) continue;
+			if (known && owners != null && canonical.equals(canonicalize(owners.get(key)))) {
 				ownerMatches.put(key, copy(value));
 				continue;
 			}
@@ -122,13 +132,21 @@ final class DeviceAttributeDeduplicator {
 	}
 
 	/**
-	 * Deep-merges {@code attributes} into the confirmed values and persists them. A map merges into an existing
-	 * map; any other value, or an empty map, replaces the existing value at that key.
+	 * Stores the known values in {@code attributes} as confirmed and persists them. Each known value replaces the
+	 * whole confirmed value at its path, and confirmed values at other paths are kept. Other values are ignored.
 	 *
 	 * @param attributes the attributes confirmed by Edge
 	 */
+	@SuppressWarnings("unchecked")
 	void commit(final Map<String, Object> attributes) {
-		synced = merge(synced, attributes);
+		final Map<String, Object> known = deduplicatedValues(attributes);
+		if (known.isEmpty()) return;
+		final Map<String, Object> result = (Map<String, Object>) copy(synced);
+		for (final List<String> path : IdentityConstants.DeviceAttributes.DEDUPLICATED_PATHS) {
+			final Object value = valueAt(known, path);
+			if (value != null) put(result, path, value);
+		}
+		synced = result;
 		store.setMap(IdentityConstants.DeviceAttributes.SYNCED_VALUES, synced);
 	}
 
@@ -141,19 +159,34 @@ final class DeviceAttributeDeduplicator {
 		store.remove(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
 	}
 
-	@SuppressWarnings("unchecked")
-	private static Map<String, Object> merge(final Map<String, Object> base, final Map<String, Object> attributes) {
-		final Map<String, Object> result = new LinkedHashMap<>(base);
-		for (final Map.Entry<String, Object> entry : attributes.entrySet()) {
-			final Object value = entry.getValue();
-			final Object existing = result.get(entry.getKey());
-			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty() && existing instanceof Map<?, ?>) {
-				result.put(entry.getKey(), merge((Map<String, Object>) existing, (Map<String, Object>) value));
-			} else {
-				result.put(entry.getKey(), copy(value));
-			}
+	/** Returns a copy of only the values at {@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}. */
+	private static Map<String, Object> deduplicatedValues(final Map<String, Object> attributes) {
+		final Map<String, Object> result = new LinkedHashMap<>();
+		for (final List<String> path : IdentityConstants.DeviceAttributes.DEDUPLICATED_PATHS) {
+			final Object value = valueAt(attributes, path);
+			if (value != null) put(result, path, value);
 		}
 		return result;
+	}
+
+	/** Returns the value at {@code path}, or null if there is none. */
+	private static Object valueAt(final Map<String, Object> map, final List<String> path) {
+		Object value = map;
+		for (final String key : path) {
+			value = value instanceof Map<?, ?> ? ((Map<?, ?>) value).get(key) : null;
+		}
+		return value;
+	}
+
+	/** Sets a copy of {@code value} at {@code path}, creating intermediate maps as needed and keeping siblings. */
+	@SuppressWarnings("unchecked")
+	private static void put(final Map<String, Object> map, final List<String> path, final Object value) {
+		Map<String, Object> parent = map;
+		for (final String key : path.subList(0, path.size() - 1)) {
+			if (!(parent.get(key) instanceof Map<?, ?>)) parent.put(key, new LinkedHashMap<String, Object>());
+			parent = (Map<String, Object>) parent.get(key);
+		}
+		parent.put(path.get(path.size() - 1), copy(value));
 	}
 
 	private static Map<?, ?> child(final Map<?, ?> map, final String key) {
@@ -190,14 +223,10 @@ final class DeviceAttributeDeduplicator {
 	/** Returns the canonical form of a value directly inside the attributes map, or null if it is invalid. */
 	@VisibleForTesting
 	static String canonicalize(final Object value) {
-		return canonicalize(value, 1);
+		return value == null || value == JSONObject.NULL ? null : canonicalValue(value);
 	}
 
-	private static String canonicalize(final Object value, final int depth) {
-		return value == null || value == JSONObject.NULL ? null : canonicalValue(value, depth);
-	}
-
-	private static String canonicalValue(final Object value, final int depth) {
+	private static String canonicalValue(final Object value) {
 		if (value == null || value == JSONObject.NULL) {
 			return "null";
 		}
@@ -216,11 +245,6 @@ final class DeviceAttributeDeduplicator {
 				return null;
 			}
 		}
-		final boolean isContainer =
-			value instanceof Map<?, ?> || value instanceof List<?> || value.getClass().isArray();
-		if (isContainer && depth > MAX_DEPTH) {
-			return null;
-		}
 		if (value instanceof Map<?, ?>) {
 			final Map<String, Object> sorted = new TreeMap<>();
 			for (final Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
@@ -231,7 +255,7 @@ final class DeviceAttributeDeduplicator {
 			}
 			final List<String> entries = new ArrayList<>();
 			for (final Map.Entry<String, Object> entry : sorted.entrySet()) {
-				final String canonicalValue = canonicalValue(entry.getValue(), depth + 1);
+				final String canonicalValue = canonicalValue(entry.getValue());
 				if (canonicalValue == null) {
 					return null;
 				}
@@ -244,7 +268,7 @@ final class DeviceAttributeDeduplicator {
 			// Arrays are compared as sets, so element order does not matter.
 			final Set<String> elements = new TreeSet<>();
 			for (final Object element : list) {
-				final String canonicalElement = canonicalValue(element, depth + 1);
+				final String canonicalElement = canonicalValue(element);
 				if (canonicalElement == null) {
 					return null;
 				}

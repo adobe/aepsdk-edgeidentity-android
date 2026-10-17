@@ -598,87 +598,87 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void parentThenChild_confirmationReplacesParentAndDrainsQueue() {
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of())));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of())));
 		edgeResult(dispatched.get(0), "success");
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/Paris")));
 		edgeResult(dispatched.get(1), "success");
 
-		assertEquals(Map.of("prefs", Map.of("lang", "en")), lastProfileAttributes());
-		assertEquals(Map.of(), dispatched.get(0).getEventData().get("prefs"));
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
+		assertEquals(Map.of(), dispatched.get(0).getEventData().get("tokens"));
 		assertEquals(3, dispatched.size());
 		edgeResult(dispatched.get(2), "success");
 		sync.publishProfileAttributes(null);
-		assertEquals(Map.of("prefs", Map.of("lang", "en"), "timezone", "Europe/Paris"), lastProfileAttributes());
+		final Map<String, Object> expected = Map.of(
+			"tokens",
+			Map.of("pushNotification", "token-1"),
+			"timezone",
+			"Europe/Paris"
+		);
+		assertEquals(expected, lastProfileAttributes());
 		sync = newSync();
 		sync.publishProfileAttributes(null);
-		assertEquals(Map.of("prefs", Map.of("lang", "en"), "timezone", "Europe/Paris"), lastProfileAttributes());
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+		assertEquals(expected, lastProfileAttributes());
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		assertEquals(3, dispatched.size());
 	}
 
 	@Test
-	public void childThenParent_confirmationRemovesStaleChildBeforeAndAfterRestart() {
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+	public void childThenEmptyParent_keepsConfirmedChildBeforeAndAfterRestart() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		edgeResult(dispatched.get(0), "success");
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of())));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of())));
+		assertEquals(Map.of(), dispatched.get(1).getEventData().get("tokens"));
 		edgeResult(dispatched.get(1), "success");
-		assertEquals(Map.of("prefs", Map.of()), lastProfileAttributes());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
 
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
-		assertEquals(3, dispatched.size());
-		edgeResult(dispatched.get(2), "failed");
 		sync = newSync();
 		sync.publishProfileAttributes(null);
-		assertEquals(Map.of("prefs", Map.of()), lastProfileAttributes());
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
-		assertEquals(4, dispatched.size());
-		edgeResult(dispatched.get(3), "success");
-		assertEquals(Map.of("prefs", Map.of("lang", "en")), lastProfileAttributes());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of())));
+		assertEquals(3, dispatched.size());
 	}
 
 	@Test
-	public void relatedPathCleanup_preservesSiblingsAndLiteralDottedKeys() {
-		sync.handleDeviceAttributeRuleResponse(
-			consequence(
-				Map.of("prefs", Map.of("settings", Map.of("lang", "en"), "theme", "dark"), "prefs.settings", "literal")
-			)
+	public void literalDottedKey_isNotTreatedAsKnownPath() {
+		final Map<String, Object> attributes = Map.of(
+			"tokens",
+			Map.of("pushNotification", "token-1"),
+			"tokens.pushNotification",
+			"literal"
 		);
+		sync.handleDeviceAttributeRuleResponse(consequence(attributes));
 		edgeResult(dispatched.get(0), "success");
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("settings", "disabled"))));
-		edgeResult(dispatched.get(1), "success");
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(attributes));
+		assertEquals(2, dispatched.size());
 		assertEquals(
-			Map.of("prefs", Map.of("settings", "disabled", "theme", "dark"), "prefs.settings", "literal"),
-			lastProfileAttributes()
-		);
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("settings", Map.of("lang", "en")))));
-		edgeResult(dispatched.get(2), "success");
-		assertEquals(
-			Map.of("prefs", Map.of("settings", Map.of("lang", "en"), "theme", "dark"), "prefs.settings", "literal"),
-			lastProfileAttributes()
+			Map.of("tokens.pushNotification", "literal", "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(1).getEventData()
 		);
 	}
 
 	@Test
-	public void restoredParent_thenChildConfirmationReplacesParent() {
-		seedSynced("{\"prefs\":{}}");
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+	public void restoredEmptyParent_isPrunedAndChildConfirmationIsStored() {
+		seedSynced("{\"tokens\":{}}");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		edgeResult(dispatched.get(0), "success");
-		assertEquals(Map.of("prefs", Map.of("lang", "en")), lastProfileAttributes());
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		assertEquals(1, dispatched.size());
 	}
 
 	@Test
 	public void failedParentReplacement_preservesConfirmedChildren() {
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		edgeResult(dispatched.get(0), "success");
 		final Object persisted = deviceStored.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of())));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of())));
 		edgeResult(dispatched.get(1), "failed");
 		assertEquals(persisted, deviceStored.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES));
-		assertEquals(Map.of("prefs", Map.of("lang", "en")), lastProfileAttributes());
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "en"))));
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), lastProfileAttributes());
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 		assertEquals(2, dispatched.size());
 	}
 
@@ -724,14 +724,14 @@ public class DeviceAttributeSyncTests {
 	}
 
 	@Test
-	public void customNestedValues_areDedupedPerLeaf() {
+	public void customNestedValues_areAlwaysSentInFull() {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", Map.of("a", 1, "b", 2))));
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", Map.of("a", 1, "b", 3))));
 		edgeResult(dispatched.get(0), "success");
 
 		assertEquals(2, dispatched.size());
 		assertEquals(
-			Map.of("custom", Map.of("b", 3), "app", Map.of("id", "com.example", "platform", "fcm")),
+			Map.of("custom", Map.of("a", 1, "b", 3), "app", Map.of("id", "com.example", "platform", "fcm")),
 			dispatched.get(1).getEventData()
 		);
 	}
@@ -1010,44 +1010,59 @@ public class DeviceAttributeSyncTests {
 
 	@Test
 	public void reorderedArray_isNotSent() {
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("a", "b", "c"))));
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", List.of("a", "b", "c"))))
+		);
 		edgeResult(dispatched.get(0), "success");
 
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("c", "a", "b"))));
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", List.of("c", "a", "b"))))
+		);
 		assertEquals(1, dispatched.size());
 
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tags", List.of("a", "b"))));
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", List.of("a", "b"))))
+		);
 		assertEquals(2, dispatched.size());
 	}
 
 	@Test
 	public void commit_replacesSubtreeWithNonMapOrEmptyMapAndMergesMaps() {
-		seedSynced("{\"prefs\":{\"lang\":\"en\",\"theme\":\"dark\"},\"other\":1}");
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", Map.of("lang", "fr"))));
+		seedSynced("{\"tokens\":{\"pushNotification\":\"token-1\"},\"timezone\":\"Asia/Tokyo\"}");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-2"))));
 		edgeResult(dispatched.get(0), "success");
-		assertEquals(Map.of("prefs", Map.of("lang", "fr", "theme", "dark"), "other", 1), syncedValues());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-2"), "timezone", "Asia/Tokyo"), syncedValues());
 
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("prefs", "off")));
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", Map.of("token", "token-3"))))
+		);
 		edgeResult(dispatched.get(1), "success");
-		assertEquals(Map.of("prefs", "off", "other", 1), syncedValues());
+		assertEquals(
+			Map.of("tokens", Map.of("pushNotification", Map.of("token", "token-3")), "timezone", "Asia/Tokyo"),
+			syncedValues()
+		);
 
-		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("other", Map.of())));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", Map.of()))));
 		edgeResult(dispatched.get(2), "success");
-		assertEquals(Map.of("prefs", "off", "other", Map.of()), syncedValues());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", Map.of()), "timezone", "Asia/Tokyo"), syncedValues());
 	}
 
 	@Test
-	public void nestedPushObject_deduplicatesChangedLeavesIndependently() {
+	public void nestedPushObject_isComparedAsAWhole() {
 		sync.handleDeviceAttributeRuleResponse(
 			consequence(Map.of("tokens", Map.of("pushNotification", Map.of("token", "t1", "metadata", "old"))))
 		);
 		edgeResult(dispatched.get(0), "success");
 		dispatched.clear();
 		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", Map.of("metadata", "old", "token", "t1"))))
+		);
+		assertTrue(dispatched.isEmpty());
+		sync.handleDeviceAttributeRuleResponse(
 			consequence(Map.of("tokens", Map.of("pushNotification", Map.of("token", "t1", "metadata", "new"))))
 		);
 		assertEquals(
-			Map.of("pushNotification", Map.of("metadata", "new")),
+			Map.of("pushNotification", Map.of("token", "t1", "metadata", "new")),
 			dispatched.get(0).getEventData().get("tokens")
 		);
 	}
@@ -1111,7 +1126,7 @@ public class DeviceAttributeSyncTests {
 		assertEquals(2, results.size());
 		assertEquals("unchanged", results.get(1).getEventData().get("reason"));
 		assertEquals(
-			Map.of("custom", "first", "timezone", "Europe/London", "tokens", Map.of("pushNotification", "token-1")),
+			Map.of("timezone", "Europe/London", "tokens", Map.of("pushNotification", "token-1")),
 			syncedValues()
 		);
 	}
@@ -1354,13 +1369,13 @@ public class DeviceAttributeSyncTests {
 		confirmed.clear();
 
 		sync.handleDeviceAttributeRuleResponse(
-			consequence(Map.of("tokens", Map.of("pushNotification", "token-2", "other", "o-1")))
+			consequence(Map.of("tokens", Map.of("pushNotification", "token-1", "other", "o-2")))
 		);
-		assertEquals(Map.of("pushNotification", "token-2"), dispatched.get(1).getEventData().get("tokens"));
+		assertEquals(Map.of("other", "o-2"), dispatched.get(1).getEventData().get("tokens"));
 		final Event response = edgeResultEvent(dispatched.get(1), "success");
 
 		assertEquals(1, confirmed.size());
-		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-2")), confirmed.get(0).getEventData());
+		assertEquals(Map.of("tokens", Map.of("other", "o-2")), confirmed.get(0).getEventData());
 		assertEquals(response.getUniqueIdentifier(), confirmed.get(0).getParentID());
 	}
 
@@ -1411,5 +1426,53 @@ public class DeviceAttributeSyncTests {
 
 		assertEquals(2, dispatched.size());
 		assertEquals("Europe/London", dispatched.get(1).getEventData().get("timezone"));
+	}
+
+	@Test
+	public void customKey_sentTwice_isSentBothTimesAndNeverStored() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", "value")));
+		edgeResult(dispatched.get(0), "success");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("custom", "value")));
+		edgeResult(dispatched.get(1), "success");
+
+		assertEquals(2, dispatched.size());
+		assertEquals("value", dispatched.get(1).getEventData().get("custom"));
+		assertNull(deviceStored.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES));
+		assertFalse(lastProfileAttributes().containsKey("custom"));
+	}
+
+	@Test
+	public void mixedRequest_sendsOnlyCustomKeyAndStoresOnlyKnownValues() {
+		seedSynced("{\"timezone\":\"Asia/Tokyo\"}");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo", "custom", "value")));
+
+		assertEquals(1, dispatched.size());
+		assertEquals(
+			Map.of("custom", "value", "app", Map.of("id", "com.example", "platform", "fcm")),
+			dispatched.get(0).getEventData()
+		);
+		assertTrue(results.isEmpty());
+
+		edgeResult(dispatched.get(0), "success");
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), syncedValues());
+	}
+
+	@Test
+	public void unknownTokenKey_withSyncedPushToken_sendsOnlyUnknownKey() {
+		seedSynced("{\"tokens\":{\"pushNotification\":\"token-1\"}}");
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", "token-1", "foo", "bar")))
+		);
+
+		assertEquals(1, dispatched.size());
+		assertEquals(Map.of("foo", "bar"), dispatched.get(0).getEventData().get("tokens"));
+	}
+
+	@Test
+	public void persistedUnknownValues_arePrunedOnLoad() {
+		seedSynced("{\"timezone\":\"Asia/Tokyo\",\"custom\":\"value\",\"tokens\":{\"foo\":\"bar\"}}");
+		sync.publishProfileAttributes(null);
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), lastProfileAttributes());
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), syncedValues());
 	}
 }
