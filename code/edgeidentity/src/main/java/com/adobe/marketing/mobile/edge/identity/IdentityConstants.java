@@ -203,6 +203,7 @@ final class IdentityConstants {
 		static final String REASON_UNCHANGED = "unchanged";
 		static final String REASON_IDENTITY_RESET = "identityReset";
 		static final String REASON_MISSING_APP_IDENTIFIER = "missingAppIdentifier";
+		static final String REASON_INTERNAL_ERROR = "internalError";
 
 		private DeviceAttributes() {}
 	}

@@ -78,7 +78,7 @@ class ProfileAttributeStore {
 				json.put(entry.getKey(), toJsonValue(entry.getValue()));
 			}
 			setString(key, json.toString());
-		} catch (JSONException exception) {
+		} catch (Exception exception) {
 			Log.error(IdentityConstants.LOG_TAG, LOG_SOURCE, "Unable to persist map for key '" + key + "'.");
 		}
 	}

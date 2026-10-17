@@ -1148,4 +1148,25 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi).createPendingXDMSharedState(eq(resetEvent));
 		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
 	}
+
+	@Test
+	public void test_handleRequestReset_whenClearingAttributesThrows_stillResolvesXDMSharedState() {
+		final IdentityProperties properties = new IdentityProperties();
+		when(mockIdentityState.getIdentityProperties()).thenReturn(properties);
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
+		Mockito
+			.doThrow(new IllegalStateException("clear failed"))
+			.when(mockIdentityState)
+			.clearProfileAttributes(any(), any());
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+
+		Event resetEvent = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
+			.build();
+
+		extension.handleRequestReset(resetEvent);
+
+		verify(mockIdentityState).resetIdentifiers();
+		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
+	}
 }

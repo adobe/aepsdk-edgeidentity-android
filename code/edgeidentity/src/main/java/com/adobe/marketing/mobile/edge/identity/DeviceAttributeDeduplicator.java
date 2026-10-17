@@ -32,6 +32,12 @@ import org.json.JSONObject;
 final class DeviceAttributeDeduplicator {
 
 	private static final String LOG_SOURCE = "DeviceAttributeDeduplicator";
+
+	/**
+	 * The deepest allowed container. The top-level attributes map is depth 0, a map or array directly inside it is
+	 * depth 1, and so on. A deeper container is an invalid value and is dropped.
+	 */
+	static final int MAX_DEPTH = 32;
 	private final ProfileAttributeStore store;
 	private Map<String, Object> synced;
 
@@ -66,7 +72,7 @@ final class DeviceAttributeDeduplicator {
 	FilterResult filter(final Map<String, Object> attributes, final boolean dedup, final Map<String, Object> owners) {
 		final Map<String, Object> changed = new LinkedHashMap<>();
 		final Map<String, Object> ownerMatches = new LinkedHashMap<>();
-		collect(attributes, dedup ? synced : null, dedup ? owners : null, changed, ownerMatches);
+		collect(attributes, dedup ? synced : null, dedup ? owners : null, changed, ownerMatches, 0);
 		return new FilterResult(changed, ownerMatches);
 	}
 
@@ -75,7 +81,8 @@ final class DeviceAttributeDeduplicator {
 		final Map<?, ?> synced,
 		final Map<?, ?> owners,
 		final Map<String, Object> changed,
-		final Map<String, Object> ownerMatches
+		final Map<String, Object> ownerMatches,
+		final int depth
 	) {
 		if (attributes == null) return;
 		for (final Map.Entry<?, ?> entry : attributes.entrySet()) {
@@ -85,21 +92,28 @@ final class DeviceAttributeDeduplicator {
 			}
 			final String key = (String) entry.getKey();
 			final Object value = entry.getValue();
-			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()) {
+			if (value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty() && depth < MAX_DEPTH) {
 				final Map<String, Object> changedChild = new LinkedHashMap<>();
 				final Map<String, Object> ownerMatchesChild = new LinkedHashMap<>();
-				collect((Map<?, ?>) value, child(synced, key), child(owners, key), changedChild, ownerMatchesChild);
+				collect(
+					(Map<?, ?>) value,
+					child(synced, key),
+					child(owners, key),
+					changedChild,
+					ownerMatchesChild,
+					depth + 1
+				);
 				if (!changedChild.isEmpty()) changed.put(key, changedChild);
 				if (!ownerMatchesChild.isEmpty()) ownerMatches.put(key, ownerMatchesChild);
 				continue;
 			}
-			final String canonical = canonicalize(value);
+			final String canonical = canonicalize(value, depth + 1);
 			if (canonical == null) {
 				Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Dropping invalid device attribute '%s'.", key);
 				continue;
 			}
-			if (synced != null && canonical.equals(canonicalize(synced.get(key)))) continue;
-			if (owners != null && canonical.equals(canonicalize(owners.get(key)))) {
+			if (synced != null && canonical.equals(canonicalize(synced.get(key), depth + 1))) continue;
+			if (owners != null && canonical.equals(canonicalize(owners.get(key), depth + 1))) {
 				ownerMatches.put(key, copy(value));
 				continue;
 			}
@@ -173,12 +187,17 @@ final class DeviceAttributeDeduplicator {
 		return list;
 	}
 
+	/** Returns the canonical form of a value directly inside the attributes map, or null if it is invalid. */
 	@VisibleForTesting
 	static String canonicalize(final Object value) {
-		return value == null || value == JSONObject.NULL ? null : canonicalValue(value);
+		return canonicalize(value, 1);
 	}
 
-	private static String canonicalValue(final Object value) {
+	private static String canonicalize(final Object value, final int depth) {
+		return value == null || value == JSONObject.NULL ? null : canonicalValue(value, depth);
+	}
+
+	private static String canonicalValue(final Object value, final int depth) {
 		if (value == null || value == JSONObject.NULL) {
 			return "null";
 		}
@@ -197,6 +216,11 @@ final class DeviceAttributeDeduplicator {
 				return null;
 			}
 		}
+		final boolean isContainer =
+			value instanceof Map<?, ?> || value instanceof List<?> || value.getClass().isArray();
+		if (isContainer && depth > MAX_DEPTH) {
+			return null;
+		}
 		if (value instanceof Map<?, ?>) {
 			final Map<String, Object> sorted = new TreeMap<>();
 			for (final Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
@@ -207,7 +231,7 @@ final class DeviceAttributeDeduplicator {
 			}
 			final List<String> entries = new ArrayList<>();
 			for (final Map.Entry<String, Object> entry : sorted.entrySet()) {
-				final String canonicalValue = canonicalValue(entry.getValue());
+				final String canonicalValue = canonicalValue(entry.getValue(), depth + 1);
 				if (canonicalValue == null) {
 					return null;
 				}
@@ -220,7 +244,7 @@ final class DeviceAttributeDeduplicator {
 			// Arrays are compared as sets, so element order does not matter.
 			final Set<String> elements = new TreeSet<>();
 			for (final Object element : list) {
-				final String canonicalElement = canonicalValue(element);
+				final String canonicalElement = canonicalValue(element, depth + 1);
 				if (canonicalElement == null) {
 					return null;
 				}

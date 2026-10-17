@@ -373,8 +373,18 @@ class IdentityExtension extends Extension {
 		state.resetIdentifiers();
 		// Clear synced profile attributes (and update their shared states) so the next update re-syncs
 		// against the new ECID
-		state.clearProfileAttributes(sharedStateHandle, event);
-		deviceAttributeSync.reset(event);
+		try {
+			state.clearProfileAttributes(sharedStateHandle, event);
+			deviceAttributeSync.reset(event);
+		} catch (Exception exception) {
+			// The pending XDM shared state must always be resolved, or extensions reading it would wait forever.
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to clear profile and device attributes during identity reset: %s",
+				exception.getLocalizedMessage()
+			);
+		}
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event

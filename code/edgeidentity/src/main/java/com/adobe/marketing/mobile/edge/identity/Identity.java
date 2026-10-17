@@ -242,22 +242,32 @@ public class Identity {
 	 * @param attributes map of attribute names to JSON-compatible values
 	 */
 	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
-		if (attributes == null || attributes.isEmpty()) {
+		try {
+			if (attributes == null || attributes.isEmpty()) {
+				Log.warning(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Unable to update device attributes, attributes are null or empty."
+				);
+				return;
+			}
+			final Event event = new Event.Builder(
+				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				EventType.EDGE_IDENTITY,
+				EventSource.REQUEST_CONTENT
+			)
+				.setEventData(new HashMap<>(attributes))
+				.build();
+			MobileCore.dispatchEvent(event);
+		} catch (Exception exception) {
+			// The caller's map may be changed on another thread while it is copied; never throw into the app.
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Unable to update device attributes, attributes are null or empty."
+				"Unable to update device attributes, an error occurred: %s",
+				exception.getLocalizedMessage()
 			);
-			return;
 		}
-		final Event event = new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
-			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
-		)
-			.setEventData(new HashMap<>(attributes))
-			.build();
-		MobileCore.dispatchEvent(event);
 	}
 
 	/**

@@ -339,4 +339,46 @@ public class DeviceAttributeDeduplicatorTests {
 		map.put("a", List.of(2, 1, 2));
 		return map;
 	}
+
+	@Test
+	public void mapsNestedUpToMaxDepthAreKept() {
+		final Map<String, Object> attributes = Map.of("custom", nestedMaps(32), "timezone", "Asia/Tokyo");
+		assertEquals(attributes, deduplicator.filter(attributes, false, null).changed);
+	}
+
+	@Test
+	public void mapsNestedBeyondMaxDepthAreDroppedAndSiblingsKept() {
+		final Map<String, Object> attributes = Map.of("custom", nestedMaps(33), "timezone", "Asia/Tokyo");
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), deduplicator.filter(attributes, false, null).changed);
+	}
+
+	@Test
+	public void arraysNestedUpToMaxDepthAreKept() {
+		final Map<String, Object> attributes = Map.of("custom", nestedLists(32), "timezone", "Asia/Tokyo");
+		assertEquals(attributes, deduplicator.filter(attributes, false, null).changed);
+	}
+
+	@Test
+	public void arraysNestedBeyondMaxDepthAreDroppedAndSiblingsKept() {
+		final Map<String, Object> attributes = Map.of("custom", nestedLists(33), "timezone", "Asia/Tokyo");
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), deduplicator.filter(attributes, false, null).changed);
+	}
+
+	/** Returns {@code levels} maps nested inside each other, with a string in the innermost one. */
+	private static Map<String, Object> nestedMaps(final int levels) {
+		Map<String, Object> value = Map.of("leaf", "value");
+		for (int level = 1; level < levels; level++) {
+			value = Map.of("level", value);
+		}
+		return value;
+	}
+
+	/** Returns {@code levels} lists nested inside each other, with a string in the innermost one. */
+	private static List<Object> nestedLists(final int levels) {
+		List<Object> value = List.of("value");
+		for (int level = 1; level < levels; level++) {
+			value = List.of(value);
+		}
+		return value;
+	}
 }

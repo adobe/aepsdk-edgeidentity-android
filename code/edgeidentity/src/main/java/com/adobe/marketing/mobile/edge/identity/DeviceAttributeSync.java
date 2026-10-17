@@ -116,8 +116,12 @@ final class DeviceAttributeSync {
 	/** Sends queued requests until one is waiting for an Edge response or the queue is empty. */
 	private void processQueue() {
 		while (activeRequest == null && !pendingRequests.isEmpty()) {
-			final Event request = buildEdgeRequest(pendingRequests.removeFirst());
-			if (request != null) {
+			final Event ruleResponse = pendingRequests.removeFirst();
+			try {
+				final Event request = buildEdgeRequest(ruleResponse);
+				if (request == null) {
+					continue;
+				}
 				activeRequest = request;
 				Log.debug(
 					IdentityConstants.LOG_TAG,
@@ -126,6 +130,36 @@ final class DeviceAttributeSync {
 					request.getUniqueIdentifier()
 				);
 				api.dispatch(request);
+			} catch (Exception exception) {
+				// Never leave the queue blocked on a request that was not sent.
+				activeRequest = null;
+				Log.warning(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Unable to send device attributes for rule event '%s': %s",
+					ruleResponse.getUniqueIdentifier(),
+					exception.getLocalizedMessage()
+				);
+				try {
+					final Map<String, Object> attributes = ruleResponse.getEventData() != null
+						? new HashMap<>(ruleResponse.getEventData())
+						: new HashMap<>();
+					attributes.remove(IdentityConstants.DeviceAttributes.APP);
+					dispatchSyncResult(
+						IdentityConstants.DeviceAttributes.STATUS_FAILED,
+						IdentityConstants.DeviceAttributes.REASON_INTERNAL_ERROR,
+						attributes,
+						ruleResponse
+					);
+				} catch (Exception resultException) {
+					Log.warning(
+						IdentityConstants.LOG_TAG,
+						LOG_SOURCE,
+						"Unable to report the device attribute sync result for rule event '%s': %s",
+						ruleResponse.getUniqueIdentifier(),
+						resultException.getLocalizedMessage()
+					);
+				}
 			}
 		}
 	}
@@ -205,40 +239,49 @@ final class DeviceAttributeSync {
 			);
 			return;
 		}
-		final String requestId = activeRequest.getUniqueIdentifier();
-		final Map<String, Object> attributes = new HashMap<>(activeRequest.getEventData());
-		attributes.remove(IdentityConstants.DeviceAttributes.APP);
+		final Event request = activeRequest;
 		activeRequest = null;
+		// Always move on to the next queued request, even if handling this response fails.
+		try {
+			final String requestId = request.getUniqueIdentifier();
+			final Map<String, Object> attributes = new HashMap<>(request.getEventData());
+			attributes.remove(IdentityConstants.DeviceAttributes.APP);
 
-		final Map<String, Object> responseData = event.getEventData();
-		final String status = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.STATUS, null);
-		if (IdentityConstants.DeviceAttributes.STATUS_SUCCESS.equals(status)) {
-			deduplicator.commit(attributes);
-			final String timezone = DataReader.optString(attributes, IdentityConstants.DeviceAttributes.TIMEZONE, null);
-			if (timezone != null) {
-				profileAttributeStore.setString(IdentityConstants.DeviceAttributes.TIME_ZONE, timezone);
+			final Map<String, Object> responseData = event.getEventData();
+			final String status = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.STATUS, null);
+			if (IdentityConstants.DeviceAttributes.STATUS_SUCCESS.equals(status)) {
+				deduplicator.commit(attributes);
+				final String timezone = DataReader.optString(
+					attributes,
+					IdentityConstants.DeviceAttributes.TIMEZONE,
+					null
+				);
+				if (timezone != null) {
+					profileAttributeStore.setString(IdentityConstants.DeviceAttributes.TIME_ZONE, timezone);
+				}
+				publishProfileAttributes(event);
+				Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
+				dispatchTokensConfirmed(attributes, event);
+				dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_SUCCESS, "", attributes, event);
+			} else {
+				final String reason = DataReader.optString(
+					responseData,
+					IdentityConstants.DeviceAttributes.REASON,
+					IdentityConstants.DeviceAttributes.UNKNOWN_REASON
+				);
+				Log.warning(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Device attribute sync failed (request '%s') with status '%s' and reason '%s'. Values remain unsynced.",
+					requestId,
+					status != null ? status : "missing",
+					reason
+				);
+				dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_FAILED, reason, attributes, event);
 			}
-			publishProfileAttributes(event);
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
-			dispatchTokensConfirmed(attributes, event);
-			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_SUCCESS, "", attributes, event);
-		} else {
-			final String reason = DataReader.optString(
-				responseData,
-				IdentityConstants.DeviceAttributes.REASON,
-				IdentityConstants.DeviceAttributes.UNKNOWN_REASON
-			);
-			Log.warning(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Device attribute sync failed (request '%s') with status '%s' and reason '%s'. Values remain unsynced.",
-				requestId,
-				status != null ? status : "missing",
-				reason
-			);
-			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_FAILED, reason, attributes, event);
+		} finally {
+			processQueue();
 		}
-		processQueue();
 	}
 
 	/** Tells Messaging which tokens Edge confirmed, so it does not need to send them again. */

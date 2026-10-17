@@ -31,9 +31,11 @@ import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.util.JSONUtils;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -676,6 +678,23 @@ public class IdentityTests {
 	public void testUpdateDeviceAttributesBypassConsent_nullAttributesDoesNotDispatch() {
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
 			Identity.updateDeviceAttributesBypassConsent(null);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_whenCopyingAttributesThrows_doesNotThrowOrDispatch() {
+		final Map<String, Object> attributes = new HashMap<String, Object>() {
+			@Override
+			public Set<Map.Entry<String, Object>> entrySet() {
+				throw new ConcurrentModificationException();
+			}
+		};
+		attributes.put("timezone", "Asia/Tokyo");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
 
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		}

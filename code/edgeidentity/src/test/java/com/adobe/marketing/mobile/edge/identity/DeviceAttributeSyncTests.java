@@ -1363,4 +1363,53 @@ public class DeviceAttributeSyncTests {
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-2")), confirmed.get(0).getEventData());
 		assertEquals(response.getUniqueIdentifier(), confirmed.get(0).getParentID());
 	}
+
+	@Test
+	public void dispatchFailure_reportsInternalErrorAndSendsNextQueuedRequest() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		final Map<String, Object> app = Map.of("id", "com.example", "platform", "fcm");
+		final Event failing = consequence(Map.of("app", app, "tokens", Map.of("pushNotification", "token-1")));
+		sync.handleDeviceAttributeRuleResponse(failing);
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/London")));
+		final int[] sends = { 0 };
+		doAnswer(call -> {
+				final Event event = call.getArgument(0);
+				if (IdentityConstants.DeviceAttributes.BYPASS_TYPE.equals(event.getType()) && sends[0]++ == 0) {
+					throw new IllegalStateException("dispatch failed");
+				}
+				return record(event);
+			})
+			.when(api)
+			.dispatch(any());
+
+		edgeResult(dispatched.get(0), "success");
+
+		assertEquals(2, results.size());
+		assertSyncResult(
+			results.get(1),
+			"failed",
+			"internalError",
+			Map.of("tokens", Map.of("pushNotification", "token-1")),
+			failing
+		);
+		assertEquals(2, dispatched.size());
+		assertEquals("Europe/London", dispatched.get(1).getEventData().get("timezone"));
+
+		edgeResult(dispatched.get(1), "success");
+		assertEquals(3, results.size());
+		assertEquals("Europe/London", syncedValues().get("timezone"));
+	}
+
+	@Test
+	public void successHandlingThrows_stillSendsNextQueuedRequest() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Europe/London")));
+		assertEquals(1, dispatched.size());
+		doThrow(new IllegalStateException("publish failed")).when(api).createSharedState(anyMap(), any());
+
+		assertThrows(IllegalStateException.class, () -> edgeResult(dispatched.get(0), "success"));
+
+		assertEquals(2, dispatched.size());
+		assertEquals("Europe/London", dispatched.get(1).getEventData().get("timezone"));
+	}
 }
