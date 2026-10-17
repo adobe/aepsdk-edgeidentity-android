@@ -17,6 +17,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,11 +46,11 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void filterDoesNotWriteUntilCommit() {
 		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
-		assertEquals(attributes, deduplicator.filter(attributes, true, null));
-		assertEquals(attributes, deduplicator.filter(attributes, true, null));
+		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
+		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
 		assertTrue(persisted.isEmpty());
 		deduplicator.commit(attributes);
-		assertTrue(deduplicator.filter(attributes, true, null).isEmpty());
+		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
 		assertEquals(attributes, new DeviceAttributeDeduplicator(store).readSynced());
 	}
 
@@ -58,7 +59,7 @@ public class DeviceAttributeDeduplicatorTests {
 		deduplicator.commit(Map.of("custom", Map.of("a", "old", "b", "same")));
 		assertEquals(
 			Map.of("custom", Map.of("a", "new")),
-			deduplicator.filter(Map.of("custom", Map.of("a", "new", "b", "same")), true, null)
+			deduplicator.filter(Map.of("custom", Map.of("a", "new", "b", "same")), true, null).changed
 		);
 	}
 
@@ -66,12 +67,12 @@ public class DeviceAttributeDeduplicatorTests {
 	public void filteredPayloadDoesNotRetainMutableValues() {
 		final List<Object> values = new ArrayList<>(List.of(new HashMap<>(Map.of("value", "original"))));
 		final Map<String, Object> attributes = Map.of("custom", values);
-		final Map<String, Object> payload = deduplicator.filter(attributes, true, null);
+		final Map<String, Object> payload = deduplicator.filter(attributes, true, null).changed;
 		values.clear();
 		assertEquals(Map.of("custom", List.of(Map.of("value", "original"))), payload);
 		deduplicator.commit(payload);
-		assertTrue(deduplicator.filter(payload, true, null).isEmpty());
-		assertEquals(attributes, deduplicator.filter(attributes, true, null));
+		assertTrue(deduplicator.filter(payload, true, null).changed.isEmpty());
+		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
 	}
 
 	@Test
@@ -83,7 +84,7 @@ public class DeviceAttributeDeduplicatorTests {
 	}
 
 	@Test
-	public void ownerMatchesAreNotReturnedAndAreCommitted() {
+	public void ownerMatchesAreReturnedSeparatelyAndNotCommitted() {
 		final Map<String, Object> attributes = Map.of(
 			"timezone",
 			"Europe/London",
@@ -96,22 +97,41 @@ public class DeviceAttributeDeduplicatorTests {
 			"tokens",
 			Map.of("pushNotification", "other")
 		);
-		assertEquals(
-			Map.of("tokens", Map.of("pushNotification", "push")),
-			deduplicator.filter(attributes, true, owners)
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, true, owners);
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), result.changed);
+		assertEquals(Map.of("timezone", "Europe/London"), result.ownerMatches);
+		assertTrue(persisted.isEmpty());
+		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
+	}
+
+	@Test
+	public void nestedOwnerMatchesKeepTheirPath() {
+		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", "push", "other", "x"));
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
+			attributes,
+			true,
+			Map.of("tokens", Map.of("pushNotification", "push"))
 		);
-		assertEquals(
-			Map.of("timezone", "Europe/London"),
-			persisted.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES)
-		);
-		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), deduplicator.filter(attributes, true, null));
+		assertEquals(Map.of("tokens", Map.of("other", "x")), result.changed);
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), result.ownerMatches);
+	}
+
+	@Test
+	public void syncedValuesAreNotReportedAsOwnerMatches() {
+		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
+		deduplicator.commit(attributes);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, true, attributes);
+		assertTrue(result.changed.isEmpty());
+		assertTrue(result.ownerMatches.isEmpty());
 	}
 
 	@Test
 	public void disabledDedupIgnoresSyncedAndOwnerValues() {
 		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
 		deduplicator.commit(attributes);
-		assertEquals(attributes, deduplicator.filter(attributes, false, attributes));
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, false, attributes);
+		assertEquals(attributes, result.changed);
+		assertTrue(result.ownerMatches.isEmpty());
 		assertEquals(attributes, deduplicator.readSynced());
 	}
 
@@ -120,11 +140,11 @@ public class DeviceAttributeDeduplicatorTests {
 		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", ""));
 		assertEquals(
 			attributes,
-			deduplicator.filter(attributes, true, Map.of("tokens", Map.of("pushNotification", "previous")))
+			deduplicator.filter(attributes, true, Map.of("tokens", Map.of("pushNotification", "previous"))).changed
 		);
-		assertEquals(attributes, deduplicator.filter(attributes, true, null));
+		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
 		deduplicator.commit(attributes);
-		assertTrue(deduplicator.filter(attributes, true, null).isEmpty());
+		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
 	}
 
 	@Test
@@ -134,11 +154,11 @@ public class DeviceAttributeDeduplicatorTests {
 		attributes.put("array", List.of());
 		attributes.put("object", Map.of());
 		final Map<String, Object> expected = Map.of("array", List.of(), "object", Map.of());
-		final Map<String, Object> changed = deduplicator.filter(attributes, false, null);
+		final Map<String, Object> changed = deduplicator.filter(attributes, false, null).changed;
 		assertEquals(expected, changed);
 		deduplicator.commit(changed);
 		assertEquals(expected, deduplicator.readSynced());
-		assertTrue(deduplicator.filter(attributes, true, null).isEmpty());
+		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
 	}
 
 	@Test
@@ -149,7 +169,7 @@ public class DeviceAttributeDeduplicatorTests {
 		nested.put("invalid", new Object());
 		assertEquals(
 			Map.of("nested", Map.of("valid", "value")),
-			deduplicator.filter(Map.of("nested", nested, "nan", Double.NaN), false, null)
+			deduplicator.filter(Map.of("nested", nested, "nan", Double.NaN), false, null).changed
 		);
 		assertTrue(persisted.isEmpty());
 	}
@@ -157,15 +177,23 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void arraysAreComparedAsSets() {
 		deduplicator.commit(Map.of("array", List.of("first", "second")));
-		assertTrue(deduplicator.filter(Map.of("array", List.of("second", "first")), true, null).isEmpty());
-		assertTrue(deduplicator.filter(Map.of("array", new String[] { "second", "first" }), true, null).isEmpty());
+		assertTrue(deduplicator.filter(Map.of("array", List.of("second", "first")), true, null).changed.isEmpty());
+		assertTrue(
+			deduplicator.filter(Map.of("array", new String[] { "second", "first" }), true, null).changed.isEmpty()
+		);
 		assertEquals(
 			Map.of("array", List.of("first")),
-			deduplicator.filter(Map.of("array", List.of("first")), true, null)
+			deduplicator.filter(Map.of("array", List.of("first")), true, null).changed
 		);
 		assertEquals(
 			Map.of("array", Arrays.asList("first", null)),
-			deduplicator.filter(Map.of("array", Arrays.asList("first", null)), true, null)
+			deduplicator.filter(Map.of("array", Arrays.asList("first", null)), true, null).changed
+		);
+		deduplicator.commit(Map.of("nested", List.of(List.of("x", "y"), List.of("z"))));
+		assertTrue(
+			deduplicator
+				.filter(Map.of("nested", List.of(List.of("z", "z"), List.of("y", "x", "x"))), true, null)
+				.changed.isEmpty()
 		);
 	}
 
@@ -189,10 +217,10 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void booleansRemainDistinctFromNumbersAndNumbersSurviveSnapshots() {
 		deduplicator.commit(Map.of("value", true));
-		assertEquals(Map.of("value", 1), deduplicator.filter(Map.of("value", 1), true, null));
-		deduplicator.commit(deduplicator.filter(Map.of("value", 1.0), true, null));
-		assertTrue(deduplicator.filter(Map.of("value", 1.0), true, null).isEmpty());
-		assertTrue(new DeviceAttributeDeduplicator(store).filter(Map.of("value", 1.0), true, null).isEmpty());
+		assertEquals(Map.of("value", 1), deduplicator.filter(Map.of("value", 1), true, null).changed);
+		deduplicator.commit(deduplicator.filter(Map.of("value", 1.0), true, null).changed);
+		assertTrue(deduplicator.filter(Map.of("value", 1.0), true, null).changed.isEmpty());
+		assertTrue(new DeviceAttributeDeduplicator(store).filter(Map.of("value", 1.0), true, null).changed.isEmpty());
 	}
 
 	@Test
@@ -228,5 +256,87 @@ public class DeviceAttributeDeduplicatorTests {
 		final Map<String, Object> nestedNull = new HashMap<>();
 		nestedNull.put("value", null);
 		assertEquals("{\"value\":null}", DeviceAttributeDeduplicator.canonicalize(nestedNull));
+	}
+
+	// Shared canonicalize cases: keep in sync with the iOS DeviceAttributeDeduplicator tests.
+
+	@Test
+	public void testCanonicalization_sharedEqualCases() {
+		final Map<String, Object> reorderedKeys = new LinkedHashMap<>();
+		reorderedKeys.put("b", 2);
+		reorderedKeys.put("a", 1);
+		final Object[][] equalPairs = {
+			{ 1, 1.0 },
+			{ 0, -0.0 },
+			{ 5L, 5.0f },
+			{ "a", "a" },
+			{ reorderedKeys, Map.of("a", 1, "b", 2) },
+			{ List.of("a", "b"), List.of("b", "a") },
+			{ List.of("a", "a", "b"), List.of("b", "a") },
+			{ List.of(List.of("x", "y"), List.of("z")), List.of(List.of("z"), List.of("y", "x")) },
+			{ Map.of("k", List.of(1, List.of(2, 3, 3))), Map.of("k", List.of(List.of(3, 2), 1.0)) },
+			{ List.of(Map.of("a", 1), Map.of("b", 2)), List.of(Map.of("b", 2), Map.of("a", 1)) },
+		};
+		for (final Object[] pair : equalPairs) {
+			final String first = DeviceAttributeDeduplicator.canonicalize(pair[0]);
+			assertNotNull(first);
+			assertEquals(first, DeviceAttributeDeduplicator.canonicalize(pair[1]));
+		}
+	}
+
+	@Test
+	public void testCanonicalization_sharedDistinctCases() {
+		final Object[][] distinctPairs = {
+			{ true, 1 },
+			{ false, 0 },
+			{ "1", 1 },
+			{ 1.5, 1 },
+			{ List.of(), Map.of() },
+			{ Arrays.asList((Object) null), List.of() },
+			{ Collections.singletonMap("a", null), Map.of() },
+			{ List.of(List.of("a", "b")), List.of("a", "b") },
+		};
+		for (final Object[] pair : distinctPairs) {
+			assertNotEquals(
+				DeviceAttributeDeduplicator.canonicalize(pair[0]),
+				DeviceAttributeDeduplicator.canonicalize(pair[1])
+			);
+		}
+	}
+
+	@Test
+	public void testCanonicalization_sharedInvalidCases() {
+		final Object[] invalid = {
+			null,
+			Double.NaN,
+			Double.POSITIVE_INFINITY,
+			Double.NEGATIVE_INFINITY,
+			new Object(),
+			Map.of(1, "x"),
+			List.of("a", Double.NaN),
+			Map.of("a", Double.POSITIVE_INFINITY),
+		};
+		for (final Object value : invalid) {
+			assertNull(DeviceAttributeDeduplicator.canonicalize(value));
+		}
+	}
+
+	@Test
+	public void testCanonicalization_sharedExpectedStrings() {
+		assertEquals("\"a\"", DeviceAttributeDeduplicator.canonicalize("a"));
+		assertEquals("true", DeviceAttributeDeduplicator.canonicalize(true));
+		assertEquals("1", DeviceAttributeDeduplicator.canonicalize(1.0));
+		assertEquals("0", DeviceAttributeDeduplicator.canonicalize(-0.0));
+		assertEquals("[\"a\",\"b\"]", DeviceAttributeDeduplicator.canonicalize(List.of("b", "a", "a")));
+		assertEquals("{\"a\":[1,2],\"b\":null}", DeviceAttributeDeduplicator.canonicalize(mapWithNull()));
+		assertEquals("[]", DeviceAttributeDeduplicator.canonicalize(List.of()));
+		assertEquals("{}", DeviceAttributeDeduplicator.canonicalize(Map.of()));
+	}
+
+	private static Map<String, Object> mapWithNull() {
+		final Map<String, Object> map = new HashMap<>();
+		map.put("b", null);
+		map.put("a", List.of(2, 1, 2));
+		return map;
 	}
 }

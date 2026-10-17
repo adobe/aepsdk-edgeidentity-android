@@ -179,6 +179,10 @@ final class IdentityConstants {
 
 	static final class DeviceAttributes {
 
+		static final String RULE_RESPONSE_SOURCE = "com.adobe.eventSource.responseOperationalData";
+		static final String BYPASS_TYPE = "com.adobe.eventType.edgeBypassConsent";
+		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
+		static final String OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC = "edgeidentity.optimizeOperationalProfileDataSync";
 		static final String TIME_ZONE = "timeZone";
 		static final String TIMEZONE = "timezone";
 		static final String PUSH_NOTIFICATION = "pushNotification";
@@ -194,8 +198,7 @@ final class IdentityConstants {
 		static final String REASON = "reason";
 		static final String REQUEST_EVENT_ID = "requestEventId";
 		static final String ATTRIBUTES = "attributes";
-		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
-		static final String DEDUP_CONFIG_KEY = "edgeidentity.optimizeOperationalProfileDataSync";
+		static final String UNKNOWN_REASON = "unknown";
 
 		private DeviceAttributes() {}
 	}

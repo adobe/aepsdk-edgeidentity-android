@@ -41,27 +41,33 @@ final class DeviceAttributeDeduplicator {
 		synced = persisted != null ? persisted : new LinkedHashMap<>();
 	}
 
+	/** The result of {@link #filter}: the values to send to Edge and the values already held by their owner. */
+	static final class FilterResult {
+
+		final Map<String, Object> changed;
+		final Map<String, Object> ownerMatches;
+
+		FilterResult(final Map<String, Object> changed, final Map<String, Object> ownerMatches) {
+			this.changed = changed;
+			this.ownerMatches = ownerMatches;
+		}
+	}
+
 	/**
-	 * Returns the attributes that need to be sent to Edge. Values that match an owner value are not sent and are
-	 * committed, so later requests can be deduplicated against the confirmed values alone.
+	 * Splits the attributes into the values that need to be sent to Edge and the values that match an owner value.
+	 * Owner matches are not sent; the caller commits them so later requests can be deduplicated against the
+	 * confirmed values alone.
 	 *
 	 * @param attributes the attributes to filter
-	 * @param dedup whether to filter out unchanged values; when false, every valid value is returned
+	 * @param dedup whether to filter out unchanged values; when false, every valid value is returned as changed
 	 * @param owners owner values to compare with, in the same shape as {@code attributes}; may be null
-	 * @return the attributes to send; empty when nothing changed
+	 * @return the changed values and the owner matches; each is empty when there are none
 	 */
-	Map<String, Object> filter(
-		final Map<String, Object> attributes,
-		final boolean dedup,
-		final Map<String, Object> owners
-	) {
+	FilterResult filter(final Map<String, Object> attributes, final boolean dedup, final Map<String, Object> owners) {
 		final Map<String, Object> changed = new LinkedHashMap<>();
 		final Map<String, Object> ownerMatches = new LinkedHashMap<>();
 		collect(attributes, dedup ? synced : null, dedup ? owners : null, changed, ownerMatches);
-		if (!ownerMatches.isEmpty()) {
-			commit(ownerMatches);
-		}
-		return changed;
+		return new FilterResult(changed, ownerMatches);
 	}
 
 	private static void collect(

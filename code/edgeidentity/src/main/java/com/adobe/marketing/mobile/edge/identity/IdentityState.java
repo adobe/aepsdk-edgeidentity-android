@@ -94,7 +94,6 @@ class IdentityState {
 		hasBooted = true;
 		Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
 		publishProfileAttributesSharedState(callback, null);
-		callback.publishProfileAttributes(null);
 
 		return hasBooted;
 	}

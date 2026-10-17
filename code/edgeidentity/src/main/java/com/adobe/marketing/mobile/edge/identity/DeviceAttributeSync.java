@@ -45,8 +45,6 @@ import java.util.Map;
  */
 final class DeviceAttributeSync {
 
-	static final String RULE_RESPONSE_SOURCE = "com.adobe.eventSource.responseOperationalData";
-	static final String BYPASS_TYPE = "com.adobe.eventType.edgeBypassConsent";
 	private static final String LOG_SOURCE = "DeviceAttributeSync";
 
 	private final ExtensionApi api;
@@ -83,7 +81,7 @@ final class DeviceAttributeSync {
 	void handleDeviceAttributes(final Event event) {
 		final Map<String, Object> data = event.getEventData();
 		if (data == null || data.isEmpty()) {
-			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty or invalid device attribute request.");
+			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty device attribute request.");
 			return;
 		}
 		Log.debug(
@@ -119,6 +117,12 @@ final class DeviceAttributeSync {
 			final Event request = buildEdgeRequest(pendingRequests.removeFirst());
 			if (request != null) {
 				activeRequest = request;
+				Log.debug(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Sending device attributes to Edge (request '%s').",
+					request.getUniqueIdentifier()
+				);
 				api.dispatch(request);
 			}
 		}
@@ -130,14 +134,25 @@ final class DeviceAttributeSync {
 		attributes.remove(IdentityConstants.DeviceAttributes.APP);
 		final boolean dedup = DataReader.optBoolean(
 			configuration(),
-			IdentityConstants.DeviceAttributes.DEDUP_CONFIG_KEY,
+			IdentityConstants.DeviceAttributes.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
 			true
 		);
 		final Map<String, Object> owners = dedup && isCollectConsentYes() ? ownerValues() : null;
-		final Map<String, Object> changed = deduplicator.filter(attributes, dedup, owners);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, dedup, owners);
+		if (!result.ownerMatches.isEmpty()) {
+			deduplicator.commit(result.ownerMatches);
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Marked device attributes held by their owner as synced.");
+			publishProfileAttributes(ruleResponse);
+		}
+		final Map<String, Object> changed = result.changed;
 		if (changed.isEmpty()) {
 			// TODO: Publish a result event when all values are deduplicated.
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes unchanged, not sending to Edge.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Device attributes unchanged, not sending to Edge (rule event '%s').",
+				ruleResponse.getUniqueIdentifier()
+			);
 			return null;
 		}
 
@@ -147,7 +162,8 @@ final class DeviceAttributeSync {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Cannot send device attributes without an app package identifier."
+				"Cannot send device attributes without an app identifier. Dropping rule event '%s'.",
+				ruleResponse.getUniqueIdentifier()
 			);
 			return null;
 		}
@@ -157,7 +173,7 @@ final class DeviceAttributeSync {
 		changed.put(IdentityConstants.DeviceAttributes.APP, app);
 		return new Event.Builder(
 			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_EDGE_REQUEST,
-			BYPASS_TYPE,
+			IdentityConstants.DeviceAttributes.BYPASS_TYPE,
 			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(changed)
@@ -171,10 +187,12 @@ final class DeviceAttributeSync {
 			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Ignoring device attribute response that does not match the active request."
+				"Ignoring device attribute response '%s', it does not match the active request.",
+				event.getUniqueIdentifier()
 			);
 			return;
 		}
+		final String requestId = activeRequest.getUniqueIdentifier();
 		final Map<String, Object> attributes = new HashMap<>(activeRequest.getEventData());
 		attributes.remove(IdentityConstants.DeviceAttributes.APP);
 		activeRequest = null;
@@ -189,20 +207,27 @@ final class DeviceAttributeSync {
 				profileAttributeStore.setString(IdentityConstants.DeviceAttributes.TIME_ZONE, timezone);
 			}
 			publishProfileAttributes(event);
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
 			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_SUCCESS);
-			result.put(IdentityConstants.DeviceAttributes.ATTRIBUTES, attributes);
+			result.put(IdentityConstants.DeviceAttributes.REASON, "");
 		} else {
-			final String reason = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.REASON, null);
+			final String reason = DataReader.optString(
+				responseData,
+				IdentityConstants.DeviceAttributes.REASON,
+				IdentityConstants.DeviceAttributes.UNKNOWN_REASON
+			);
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Device attribute sync failed with status '%s' and reason '%s'. Values remain unsynced.",
-				status,
+				"Device attribute sync failed (request '%s') with status '%s' and reason '%s'. Values remain unsynced.",
+				requestId,
+				status != null ? status : "missing",
 				reason
 			);
 			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_FAILED);
-			if (reason != null) result.put(IdentityConstants.DeviceAttributes.REASON, reason);
+			result.put(IdentityConstants.DeviceAttributes.REASON, reason);
 		}
+		result.put(IdentityConstants.DeviceAttributes.ATTRIBUTES, attributes);
 		api.dispatch(
 			new Event.Builder(
 				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_SYNC_RESULT,
@@ -318,6 +343,11 @@ final class DeviceAttributeSync {
 		activeRequest = null;
 		deduplicator.clear();
 		publishProfileAttributes(event);
+		Log.debug(
+			IdentityConstants.LOG_TAG,
+			LOG_SOURCE,
+			"Cleared device attribute requests and synced values after identity reset."
+		);
 	}
 
 	/** Publishes the synced device attributes merged with the consent-path timezone in the standard shared state. */

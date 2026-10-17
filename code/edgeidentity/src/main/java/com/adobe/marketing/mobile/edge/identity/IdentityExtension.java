@@ -102,8 +102,8 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
-	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link DeviceAttributeSync#RULE_RESPONSE_SOURCE}</li>
-	 *     <li> EventType {@link DeviceAttributeSync#BYPASS_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.DeviceAttributes#RULE_RESPONSE_SOURCE}</li>
+	 *     <li> EventType {@link IdentityConstants.DeviceAttributes#BYPASS_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -144,12 +144,12 @@ class IdentityExtension extends Extension {
 		getApi()
 			.registerEventListener(
 				EventType.EDGE_IDENTITY,
-				DeviceAttributeSync.RULE_RESPONSE_SOURCE,
+				IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE,
 				deviceAttributeSync::handleDeviceAttributeRuleResponse
 			);
 		getApi()
 			.registerEventListener(
-				DeviceAttributeSync.BYPASS_TYPE,
+				IdentityConstants.DeviceAttributes.BYPASS_TYPE,
 				EventSource.RESPONSE_CONTENT,
 				deviceAttributeSync::handleDeviceAttributeResult
 			);
@@ -453,7 +453,8 @@ class IdentityExtension extends Extension {
 			Log.trace(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Ignoring device-attribute listener event with unexpected name '" + event.getName() + "'."
+				"Ignoring device attribute event with unexpected name '%s'.",
+				event.getName()
 			);
 			return;
 		}

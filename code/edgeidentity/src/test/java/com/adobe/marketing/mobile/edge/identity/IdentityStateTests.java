@@ -137,7 +137,8 @@ public class IdentityStateTests {
 			Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata")
 		);
 		verify(mockSharedStateCallback).createXDMSharedState(expectedXDMState, null);
-		verify(mockSharedStateCallback).publishProfileAttributes(null);
+		// The standard profileAttributes shared state is published once at registration, not at bootup.
+		verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 	}
 
 	@Test
