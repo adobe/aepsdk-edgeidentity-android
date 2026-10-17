@@ -16,6 +16,31 @@ Refer to the [Getting Started Guide](getting-started.md)
 | [resetIdentities](#resetIdentities)                   |
 | [setAdvertisingIdentifier](#setAdvertisingIdentifier) |
 | [updateIdentities](#updateIdentities)                 |
+| [updateDeviceAttributesBypassConsent](#updatedeviceattributesbypassconsent) |
+
+------
+
+### updateDeviceAttributesBypassConsent
+
+Requests rule-authorized operational device attribute synchronization. The map overload supports JSON-compatible values, including empty strings, arrays, and objects. Null and non-JSON attribute leaves are dropped without discarding valid sibling attributes, matching the current iOS implementation. This API is fire-and-forget; it has no public callback.
+
+```java
+public static void updateDeviceAttributesBypassConsent(DeviceAttributes attributes)
+public static void updateDeviceAttributesBypassConsent(Map<String, Object> attributes)
+```
+
+```java
+Identity.updateDeviceAttributesBypassConsent(
+    Collections.singletonMap("timezone", "Asia/Tokyo"));
+```
+
+The data is sent to the Core rules engine. Each matching `forward-operational-data` rule returns only its enabled paths. Authorized operational values use the Edge bypass request under collect consent `yes`, `no`, or `pending`; ordinary Edge events remain governed by consent. Only when the latest collect consent is explicitly `y` does Identity also compare push tokens with Messaging's latest shared-state value and timezone with its persisted owner value. Missing, pending, or malformed consent does not authorize owner-store comparisons. Confirmed bypass values are compared at every consent state. Identity queues requests in event order and reads current configuration and owner state when each request is dequeued. It waits for a correlated terminal `success`, `failed`, or `dropped` result before advancing; malformed results are ignored. Confirmed values are persisted and deduplicated across app restarts; set `edgeidentity.optimizeOperationalProfileDataSync` to `false` to disable all dedup comparisons, but requests still run one at a time. If a request fails, its values are not stored and a queued duplicate can send them again. If no rule matches, or rules are not loaded yet, nothing is sent.
+
+After Edge reports success, confirmed bypass values are persisted under `confirmedAttributes` in the separate `deviceAttributesDataStore` collection. Existing confirmed values from the earlier profile-store layout are restored when the new store has no saved values. Timezone success also updates the profile timezone owner. The complete confirmed state remains published under `profileAttributes` in Identity's standard shared state for the existing Android Messaging consumer. In addition, Identity emits a chained `Device attributes confirmed` event (`messaging` / `responseContent`) containing only the successfully sent `tokens`, matching iOS. Failed, dropped, malformed, and unrelated results do not confirm tokens.
+
+An empty map or a typed object with no values is a no-op. The typed convenience object preserves explicitly supplied empty timezone and push-token strings. Null leaves are not sent by either overload. After rules and dedup filtering, every dispatched request includes SDK-owned `app.id` (the Android package name) and `app.platform: "fcm"`; caller-provided `app` values cannot override routing, and app-only requests are not sent. Live Activity owner-store comparison and APNs sandbox routing are iOS-specific; arbitrary rule-authorized arrays remain supported by the Android map overload.
+
+See [the device attribute flow and local setup](device-attribute-transactions.md) for rule configuration and shared-state behavior.
 
 ------
 

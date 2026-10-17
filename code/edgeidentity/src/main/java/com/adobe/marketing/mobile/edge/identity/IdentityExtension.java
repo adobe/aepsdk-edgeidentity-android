@@ -46,9 +46,15 @@ class IdentityExtension extends Extension {
 		public void createXDMSharedState(final Map<String, Object> state, final Event event) {
 			getApi().createXDMSharedState(state, event);
 		}
+
+		@Override
+		public void publishProfileAttributes(final Event event) {
+			deviceAttributeSync.publishProfileAttributes(event);
+		}
 	};
 
 	private final IdentityState state;
+	private final DeviceAttributeSync deviceAttributeSync;
 
 	/**
 	 * Constructor.
@@ -64,6 +70,7 @@ class IdentityExtension extends Extension {
 	IdentityExtension(final ExtensionApi extensionApi, final IdentityState state) {
 		super(extensionApi);
 		this.state = state;
+		this.deviceAttributeSync = new DeviceAttributeSync(extensionApi, state.getProfileAttributeStore());
 	}
 
 	@NonNull @Override
@@ -94,6 +101,9 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.DeviceAttributes#RULE_RESPONSE_SOURCE}</li>
+	 *     <li> EventType {@link IdentityConstants.DeviceAttributes#BYPASS_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -127,6 +137,23 @@ class IdentityExtension extends Extension {
 
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
+
+		// Device attribute sync listeners
+		getApi()
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleDeviceAttributes);
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE,
+				deviceAttributeSync::handleDeviceAttributeRuleResponse
+			);
+		getApi()
+			.registerEventListener(
+				IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+				EventSource.RESPONSE_CONTENT,
+				deviceAttributeSync::handleDeviceAttributeResult
+			);
+		deviceAttributeSync.publishProfileAttributes(null);
 	}
 
 	@Override
@@ -344,9 +371,20 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
+		// Clear synced profile attributes (and update their shared states) so the next update re-syncs
 		// against the new ECID
-		state.clearProfileAttributes(sharedStateHandle, event);
+		try {
+			state.clearProfileAttributes(sharedStateHandle, event);
+			deviceAttributeSync.reset(event);
+		} catch (Exception exception) {
+			// The pending XDM shared state must always be resolved, or extensions reading it would wait forever.
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to clear profile and device attributes during identity reset: %s",
+				exception.getLocalizedMessage()
+			);
+		}
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -413,6 +451,24 @@ class IdentityExtension extends Extension {
 	 */
 	void handleProfileAttributes(@NonNull final Event event) {
 		state.updateProfileAttributes(event, sharedStateHandle);
+	}
+
+	/**
+	 * Handles internal device-attribute updates and dispatches an operational-data event.
+	 *
+	 * @param event the event containing device attribute data
+	 */
+	void handleDeviceAttributes(@NonNull final Event event) {
+		if (!IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())) {
+			Log.trace(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Ignoring device attribute event with unexpected name '%s'.",
+				event.getName()
+			);
+			return;
+		}
+		deviceAttributeSync.handleDeviceAttributes(event);
 	}
 
 	/**

@@ -64,6 +64,10 @@ class IdentityState {
 		return identityProperties;
 	}
 
+	ProfileAttributeStore getProfileAttributeStore() {
+		return profileAttributeStore;
+	}
+
 	/**
 	 * Completes init for this Identity extension.
 	 * If no ECID is loaded from persistence (ideally meaning first launch), attempts to migrate existing ECID
@@ -398,8 +402,9 @@ class IdentityState {
 			return;
 		}
 
-		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
+		// Persistence just changed: keep the shared states in sync, then dispatch only the changes.
 		publishProfileAttributesSharedState(callback, event);
+		callback.publishProfileAttributes(event);
 		dispatchProfileAttributesEdgeEvent(mergedAttributes);
 	}
 

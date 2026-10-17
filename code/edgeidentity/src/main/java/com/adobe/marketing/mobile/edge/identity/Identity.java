@@ -232,6 +232,45 @@ public class Identity {
 	}
 
 	/**
+	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
+	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
+	 * push token are sent only when they differ from the last successfully synced value, and all other values are
+	 * always sent; set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to
+	 * send every update. Requests are sent one at a time. Null and non-JSON values are dropped. Any {@code app} value is
+	 * replaced by the SDK.
+	 *
+	 * @param attributes map of attribute names to JSON-compatible values
+	 */
+	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
+		try {
+			if (attributes == null || attributes.isEmpty()) {
+				Log.warning(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Unable to update device attributes, attributes are null or empty."
+				);
+				return;
+			}
+			final Event event = new Event.Builder(
+				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				EventType.EDGE_IDENTITY,
+				EventSource.REQUEST_CONTENT
+			)
+				.setEventData(new HashMap<>(attributes))
+				.build();
+			MobileCore.dispatchEvent(event);
+		} catch (Exception exception) {
+			// The caller's map may be changed on another thread while it is copied; never throw into the app.
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to update device attributes, an error occurred: %s",
+				exception.getLocalizedMessage()
+			);
+		}
+	}
+
+	/**
 	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
 	 * This does not clear the identifier from the User Profile Graph.
 	 *

@@ -31,9 +31,11 @@ import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.util.JSONUtils;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -627,6 +629,74 @@ public class IdentityTests {
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		} catch (Exception e) {
 			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_mapIsDispatchedUnchanged() {
+		final Map<String, Object> attributes = new HashMap<>();
+		attributes.put("timezone", "America/Los_Angeles");
+		attributes.put(
+			"tokens",
+			Map.of(
+				"pushNotification",
+				List.of("push-token"),
+				"liveActivityStart",
+				List.of(Map.of("attributeType", "GameScore", "value", "start-token"))
+			)
+		);
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
+		}
+
+		assertEquals(attributes, eventCaptor.getValue().getEventData());
+	}
+
+	@Test
+	public void testDeviceAttributesMap_dispatchesWithoutResponseCallback() {
+		try (MockedStatic<MobileCore> core = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(Map.of("timezone", "Asia/Tokyo"));
+			core.verify(() -> MobileCore.dispatchEvent(any(Event.class)));
+			core.verifyNoMoreInteractions();
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_emptyMapDoesNotDispatch() {
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(Map.of());
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_nullAttributesDoesNotDispatch() {
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(null);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
+		}
+	}
+
+	@Test
+	public void testUpdateDeviceAttributesBypassConsent_whenCopyingAttributesThrows_doesNotThrowOrDispatch() {
+		final Map<String, Object> attributes = new HashMap<String, Object>() {
+			@Override
+			public Set<Map.Entry<String, Object>> entrySet() {
+				throw new ConcurrentModificationException();
+			}
+		};
+		attributes.put("timezone", "Asia/Tokyo");
+
+		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
+			Identity.updateDeviceAttributesBypassConsent(attributes);
+
+			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		}
 	}
 

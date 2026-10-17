@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -29,21 +30,29 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import android.app.Application;
 import com.adobe.marketing.mobile.Event;
 import com.adobe.marketing.mobile.EventSource;
 import com.adobe.marketing.mobile.EventType;
 import com.adobe.marketing.mobile.ExtensionApi;
+import com.adobe.marketing.mobile.ExtensionEventListener;
+import com.adobe.marketing.mobile.MobileCore;
 import com.adobe.marketing.mobile.SharedStateResolution;
 import com.adobe.marketing.mobile.SharedStateResolver;
 import com.adobe.marketing.mobile.SharedStateResult;
 import com.adobe.marketing.mobile.SharedStateStatus;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -51,6 +60,7 @@ import org.mockito.stubbing.Answer;
 public class IdentityExtensionTests {
 
 	private IdentityExtension extension;
+	private MockedStatic<MobileCore> mobileCore;
 
 	@Mock
 	ExtensionApi mockExtensionApi;
@@ -64,6 +74,117 @@ public class IdentityExtensionTests {
 	@Before
 	public void setup() {
 		MockitoAnnotations.openMocks(this);
+		final Application application = Mockito.mock(Application.class);
+		when(application.getPackageName()).thenReturn("com.example");
+		mobileCore = Mockito.mockStatic(MobileCore.class);
+		mobileCore.when(MobileCore::getApplication).thenReturn(application);
+	}
+
+	@After
+	public void teardown() {
+		mobileCore.close();
+	}
+
+	@Test
+	public void ruleResponseListener_sendsForwardedDeviceAttributesToEdge() {
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		final List<Event> dispatched = new ArrayList<>();
+		doAnswer(call -> {
+				dispatched.add(call.getArgument(0));
+				return null;
+			})
+			.when(mockExtensionApi)
+			.dispatch(any());
+		extension.onRegistered();
+		final Event original = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Map.of("timezone", "Asia/Tokyo"))
+			.build();
+		extension.handleDeviceAttributes(original);
+		final Event operational = dispatched.get(0);
+		assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE, operational.getType());
+		assertEquals(original.getUniqueIdentifier(), operational.getParentID());
+
+		final ArgumentCaptor<ExtensionEventListener> rules = ArgumentCaptor.forClass(ExtensionEventListener.class);
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE),
+				rules.capture()
+			);
+		rules
+			.getValue()
+			.hear(
+				new Event.Builder(
+					"Forward",
+					EventType.EDGE_IDENTITY,
+					IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE
+				)
+					.setEventData(Map.of("timezone", "Asia/Tokyo"))
+					.chainToParentEvent(operational)
+					.build()
+			);
+		final Event edge = dispatched.get(1);
+		assertEquals(IdentityConstants.DeviceAttributes.BYPASS_TYPE, edge.getType());
+		assertEquals(EventSource.REQUEST_CONTENT, edge.getSource());
+		assertEquals("Asia/Tokyo", edge.getEventData().get("timezone"));
+
+		final ArgumentCaptor<ExtensionEventListener> edgeResults = ArgumentCaptor.forClass(
+			ExtensionEventListener.class
+		);
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(IdentityConstants.DeviceAttributes.BYPASS_TYPE),
+				eq(EventSource.RESPONSE_CONTENT),
+				edgeResults.capture()
+			);
+		edgeResults
+			.getValue()
+			.hear(
+				new Event.Builder(
+					"Device Attributes Response",
+					IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+					EventSource.RESPONSE_CONTENT
+				)
+					.setEventData(Map.of("status", "success"))
+					.chainToParentEvent(edge)
+					.build()
+			);
+		verify(mockExtensionApi)
+			.createSharedState(
+				anyMap(),
+				org.mockito.ArgumentMatchers.<Event>argThat(stateEvent ->
+					stateEvent != null && edge.getUniqueIdentifier().equals(stateEvent.getParentID())
+				)
+			);
+	}
+
+	@Test
+	public void deviceAttributeAndResetEvents_waitForBootup() {
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		when(mockIdentityState.bootupIfReady(any())).thenReturn(false);
+		for (final Event event : new Event[] {
+			new Event.Builder(
+				"Forward",
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE
+			)
+				.build(),
+			new Event.Builder("Response", IdentityConstants.DeviceAttributes.BYPASS_TYPE, EventSource.RESPONSE_CONTENT)
+				.build(),
+			new Event.Builder(
+				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				EventType.EDGE_IDENTITY,
+				EventSource.REQUEST_CONTENT
+			)
+				.build(),
+			new Event.Builder("Reset", EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET).build(),
+		}) {
+			assertFalse(extension.readyForEvent(event));
+		}
 	}
 
 	// ========================================================================================
@@ -83,14 +204,82 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.PROFILE_ATTRIBUTE), eq(EventSource.REQUEST_CONTENT), any());
 		verify(mockExtensionApi)
+			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_CONTENT), any());
+		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_IDENTITY), any());
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.UPDATE_IDENTITY), any());
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REMOVE_IDENTITY), any());
 		verify(mockExtensionApi).registerEventListener(eq(EventType.HUB), eq(EventSource.SHARED_STATE), any());
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE),
+				any()
+			);
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(IdentityConstants.DeviceAttributes.BYPASS_TYPE),
+				eq(EventSource.RESPONSE_CONTENT),
+				any()
+			);
+		verify(mockExtensionApi).createSharedState(anyMap(), any());
 
 		verifyNoMoreInteractions(mockExtensionApi);
+	}
+
+	@Test
+	public void test_handleDeviceAttributes_sendsDataToRulesEngine() {
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.build();
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.handleDeviceAttributes(event);
+
+		final ArgumentCaptor<Event> response = ArgumentCaptor.forClass(Event.class);
+		verify(mockExtensionApi).dispatch(response.capture());
+		assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE, response.getValue().getType());
+		assertEquals(event.getUniqueIdentifier(), response.getValue().getParentID());
+		assertEquals("UTC", response.getValue().getEventData().get(IdentityConstants.DeviceAttributes.TIME_ZONE));
+	}
+
+	@Test
+	public void test_handleDeviceAttributes_doesNotReadDedupConfigurationBeforeRules() {
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.build();
+		when(
+			mockExtensionApi.getSharedState(
+				IdentityConstants.SharedState.Configuration.NAME,
+				event,
+				false,
+				SharedStateResolution.LAST_SET
+			)
+		)
+			.thenReturn(
+				new SharedStateResult(
+					SharedStateStatus.SET,
+					Collections.singletonMap(
+						IdentityConstants.DeviceAttributes.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
+						false
+					)
+				)
+			);
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.handleDeviceAttributes(event);
+
+		verify(mockExtensionApi, never()).getSharedState(any(), any(), anyBoolean(), any());
 	}
 
 	// ========================================================================================
@@ -947,11 +1136,37 @@ public class IdentityExtensionTests {
 		extension.handleRequestReset(resetEvent);
 
 		verify(mockIdentityState).resetIdentifiers();
-		// reset also clears synced profile attributes (and updates their shared state) for the new ECID
+		// reset also clears synced profile attributes (and updates their shared states) for the new ECID
 		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
+		verify(mockExtensionApi)
+			.createSharedState(
+				eq(Collections.singletonMap("profileAttributes", Collections.emptyMap())),
+				eq(resetEvent)
+			);
 
 		// verify pending state is created and resolved
 		verify(mockExtensionApi).createPendingXDMSharedState(eq(resetEvent));
+		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
+	}
+
+	@Test
+	public void test_handleRequestReset_whenClearingAttributesThrows_stillResolvesXDMSharedState() {
+		final IdentityProperties properties = new IdentityProperties();
+		when(mockIdentityState.getIdentityProperties()).thenReturn(properties);
+		when(mockExtensionApi.createPendingXDMSharedState(any())).thenReturn(mockSharedStateResolver);
+		Mockito
+			.doThrow(new IllegalStateException("clear failed"))
+			.when(mockIdentityState)
+			.clearProfileAttributes(any(), any());
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+
+		Event resetEvent = new Event.Builder("Test event", EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY)
+			.build();
+
+		extension.handleRequestReset(resetEvent);
+
+		verify(mockIdentityState).resetIdentifiers();
 		verify(mockSharedStateResolver).resolve(eq(properties.toXDMData(false)));
 	}
 }
