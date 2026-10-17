@@ -199,6 +199,9 @@ final class IdentityConstants {
 		static final String REQUEST_EVENT_ID = "requestEventId";
 		static final String ATTRIBUTES = "attributes";
 		static final String UNKNOWN_REASON = "unknown";
+		static final String REASON_UNCHANGED = "unchanged";
+		static final String REASON_IDENTITY_RESET = "identityReset";
+		static final String REASON_MISSING_APP_IDENTIFIER = "missingAppIdentifier";
 
 		private DeviceAttributes() {}
 	}

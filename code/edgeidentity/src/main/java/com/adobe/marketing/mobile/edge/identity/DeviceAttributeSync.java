@@ -24,10 +24,12 @@ import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.services.ServiceProvider;
 import com.adobe.marketing.mobile.util.DataReader;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -146,12 +148,17 @@ final class DeviceAttributeSync {
 		}
 		final Map<String, Object> changed = result.changed;
 		if (changed.isEmpty()) {
-			// TODO: Publish a result event when all values are deduplicated.
 			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Device attributes unchanged, not sending to Edge (rule event '%s').",
 				ruleResponse.getUniqueIdentifier()
+			);
+			dispatchSyncResult(
+				IdentityConstants.DeviceAttributes.STATUS_SUCCESS,
+				IdentityConstants.DeviceAttributes.REASON_UNCHANGED,
+				attributes,
+				ruleResponse
 			);
 			return null;
 		}
@@ -164,6 +171,12 @@ final class DeviceAttributeSync {
 				LOG_SOURCE,
 				"Cannot send device attributes without an app identifier. Dropping rule event '%s'.",
 				ruleResponse.getUniqueIdentifier()
+			);
+			dispatchSyncResult(
+				IdentityConstants.DeviceAttributes.STATUS_FAILED,
+				IdentityConstants.DeviceAttributes.REASON_MISSING_APP_IDENTIFIER,
+				changed,
+				ruleResponse
 			);
 			return null;
 		}
@@ -199,7 +212,6 @@ final class DeviceAttributeSync {
 
 		final Map<String, Object> responseData = event.getEventData();
 		final String status = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.STATUS, null);
-		final Map<String, Object> result = new HashMap<>();
 		if (IdentityConstants.DeviceAttributes.STATUS_SUCCESS.equals(status)) {
 			deduplicator.commit(attributes);
 			final String timezone = DataReader.optString(attributes, IdentityConstants.DeviceAttributes.TIMEZONE, null);
@@ -208,8 +220,7 @@ final class DeviceAttributeSync {
 			}
 			publishProfileAttributes(event);
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
-			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_SUCCESS);
-			result.put(IdentityConstants.DeviceAttributes.REASON, "");
+			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_SUCCESS, "", attributes, event);
 		} else {
 			final String reason = DataReader.optString(
 				responseData,
@@ -224,9 +235,21 @@ final class DeviceAttributeSync {
 				status != null ? status : "missing",
 				reason
 			);
-			result.put(IdentityConstants.DeviceAttributes.STATUS, IdentityConstants.DeviceAttributes.STATUS_FAILED);
-			result.put(IdentityConstants.DeviceAttributes.REASON, reason);
+			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_FAILED, reason, attributes, event);
 		}
+		processQueue();
+	}
+
+	/** Dispatches the Device Attributes Sync Result event, chained to {@code parent}. */
+	private void dispatchSyncResult(
+		final String status,
+		final String reason,
+		final Map<String, Object> attributes,
+		final Event parent
+	) {
+		final Map<String, Object> result = new HashMap<>();
+		result.put(IdentityConstants.DeviceAttributes.STATUS, status);
+		result.put(IdentityConstants.DeviceAttributes.REASON, reason);
 		result.put(IdentityConstants.DeviceAttributes.ATTRIBUTES, attributes);
 		api.dispatch(
 			new Event.Builder(
@@ -235,10 +258,9 @@ final class DeviceAttributeSync {
 				EventSource.RESPONSE_CONTENT
 			)
 				.setEventData(result)
-				.chainToParentEvent(event)
+				.chainToParentEvent(parent)
 				.build()
 		);
-		processQueue();
 	}
 
 	/** A response matches when it is chained to the active request or names it in {@code requestEventId}. */
@@ -334,11 +356,24 @@ final class DeviceAttributeSync {
 	}
 
 	/**
-	 * Clears queued requests and all synced values, then republishes the profile attributes. The profile
-	 * attribute store itself is cleared by {@link IdentityState#clearProfileAttributes}.
+	 * Reports the active and queued requests as failed, clears them and all synced values, then republishes the
+	 * profile attributes. The profile attribute store itself is cleared by
+	 * {@link IdentityState#clearProfileAttributes}.
 	 */
 	void reset(final Event event) {
-		// TODO: Publish a result event for requests dropped by a reset.
+		final List<Event> dropped = new ArrayList<>();
+		if (activeRequest != null) dropped.add(activeRequest);
+		dropped.addAll(pendingRequests);
+		for (final Event request : dropped) {
+			final Map<String, Object> attributes = new HashMap<>(request.getEventData());
+			attributes.remove(IdentityConstants.DeviceAttributes.APP);
+			dispatchSyncResult(
+				IdentityConstants.DeviceAttributes.STATUS_FAILED,
+				IdentityConstants.DeviceAttributes.REASON_IDENTITY_RESET,
+				attributes,
+				request
+			);
+		}
 		pendingRequests.clear();
 		activeRequest = null;
 		deduplicator.clear();

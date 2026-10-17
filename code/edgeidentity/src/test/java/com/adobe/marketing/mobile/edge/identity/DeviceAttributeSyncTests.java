@@ -338,7 +338,8 @@ public class DeviceAttributeSyncTests {
 		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
 
 		assertTrue(dispatched.isEmpty());
-		assertTrue(results.isEmpty());
+		assertEquals(1, results.size());
+		assertEquals("unchanged", results.get(0).getEventData().get("reason"));
 		assertTrue(stored.isEmpty());
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), syncedValues());
 	}
@@ -1106,7 +1107,8 @@ public class DeviceAttributeSyncTests {
 			.thenReturn(new SharedStateResult(SharedStateStatus.SET, Map.of("pushidentifier", "token-1")));
 		edgeResult(dispatched.get(0), "success");
 		assertEquals(1, dispatched.size());
-		assertEquals(1, results.size());
+		assertEquals(2, results.size());
+		assertEquals("unchanged", results.get(1).getEventData().get("reason"));
 		assertEquals(
 			Map.of("custom", "first", "timezone", "Europe/London", "tokens", Map.of("pushNotification", "token-1")),
 			syncedValues()
@@ -1136,5 +1138,127 @@ public class DeviceAttributeSyncTests {
 		assertEquals("Asia/Tokyo", stored.get("timeZone"));
 		assertTrue(dispatched.isEmpty());
 		assertTrue(deviceStored.isEmpty());
+	}
+
+	private void assertSyncResult(
+		final Event result,
+		final String status,
+		final String reason,
+		final Map<String, Object> attributes,
+		final Event parent
+	) {
+		assertEquals("Device Attributes Sync Result", result.getName());
+		assertEquals(EventType.EDGE_IDENTITY, result.getType());
+		assertEquals(EventSource.RESPONSE_CONTENT, result.getSource());
+		assertEquals(Map.of("status", status, "reason", reason, "attributes", attributes), result.getEventData());
+		assertEquals(parent.getUniqueIdentifier(), result.getParentID());
+	}
+
+	@Test
+	public void allValuesSynced_reportsUnchangedWithoutEdgeRequest() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		succeedAll();
+		results.clear();
+		final Event rule = consequence(
+			Map.of("timezone", "Asia/Tokyo", "app", Map.of("id", "caller.app", "platform", "apns"))
+		);
+
+		sync.handleDeviceAttributeRuleResponse(rule);
+
+		assertEquals(1, dispatched.size());
+		assertEquals(1, results.size());
+		assertSyncResult(results.get(0), "success", "unchanged", Map.of("timezone", "Asia/Tokyo"), rule);
+	}
+
+	@Test
+	public void allValuesOwnerMatched_reportsUnchangedAndPublishesOnce() {
+		collectConsent("y");
+		messagingPushToken("token-1");
+		final Event rule = consequence(Map.of("tokens", Map.of("pushNotification", "token-1")));
+
+		sync.handleDeviceAttributeRuleResponse(rule);
+
+		assertTrue(dispatched.isEmpty());
+		assertEquals(1, published.size());
+		assertEquals(1, results.size());
+		assertSyncResult(
+			results.get(0),
+			"success",
+			"unchanged",
+			Map.of("tokens", Map.of("pushNotification", "token-1")),
+			rule
+		);
+	}
+
+	@Test
+	public void partiallySyncedValues_areSentWithoutUnchangedResult() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		succeedAll();
+		results.clear();
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo", "custom", "x")));
+
+		assertEquals(2, dispatched.size());
+		assertTrue(results.isEmpty());
+		edgeResult(dispatched.get(1), "success");
+		assertEquals(1, results.size());
+		assertEquals(
+			Map.of("status", "success", "reason", "", "attributes", Map.of("custom", "x")),
+			results.get(0).getEventData()
+		);
+	}
+
+	@Test
+	public void reset_reportsActiveAndQueuedRequestsAsFailedInOrder() {
+		final Event first = consequence(Map.of("timezone", "Asia/Tokyo"));
+		final Event second = consequence(Map.of("custom", "a", "app", Map.of("id", "caller.app", "platform", "apns")));
+		final Event third = consequence(Map.of("custom", "b"));
+		sync.handleDeviceAttributeRuleResponse(first);
+		sync.handleDeviceAttributeRuleResponse(second);
+		sync.handleDeviceAttributeRuleResponse(third);
+		final Event active = dispatched.get(0);
+
+		resetLikeExtension();
+
+		assertEquals(3, results.size());
+		assertSyncResult(results.get(0), "failed", "identityReset", Map.of("timezone", "Asia/Tokyo"), active);
+		assertSyncResult(results.get(1), "failed", "identityReset", Map.of("custom", "a"), second);
+		assertSyncResult(results.get(2), "failed", "identityReset", Map.of("custom", "b"), third);
+
+		edgeResult(active, "success");
+		assertEquals(3, results.size());
+		assertEquals(1, dispatched.size());
+		assertTrue(deviceStored.isEmpty());
+	}
+
+	@Test
+	public void reset_withNothingPending_reportsNoResults() {
+		resetLikeExtension();
+		assertTrue(results.isEmpty());
+
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		succeedAll();
+		results.clear();
+		resetLikeExtension();
+		assertTrue(results.isEmpty());
+	}
+
+	@Test
+	public void missingAppIdentifier_reportsChangedValuesAndContinuesQueue() {
+		when(application.getPackageName()).thenReturn("com.example", "", "com.example");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		final Event noAppId = consequence(
+			Map.of("timezone", "Asia/Tokyo", "custom", "x", "app", Map.of("id", "caller.app", "platform", "apns"))
+		);
+		final Event next = consequence(Map.of("custom", "y"));
+		sync.handleDeviceAttributeRuleResponse(noAppId);
+		sync.handleDeviceAttributeRuleResponse(next);
+
+		edgeResult(dispatched.get(0), "success");
+
+		assertEquals(2, results.size());
+		assertSyncResult(results.get(1), "failed", "missingAppIdentifier", Map.of("custom", "x"), noAppId);
+		assertEquals(2, dispatched.size());
+		assertEquals(next.getUniqueIdentifier(), dispatched.get(1).getParentID());
 	}
 }
