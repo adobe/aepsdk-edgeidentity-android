@@ -41,6 +41,7 @@ public class DeviceAttributeSyncTests {
 	private NamedCollection collection;
 	private List<Event> dispatched;
 	private List<Event> results;
+	private List<Event> confirmed;
 	private Map<String, String> deviceStored;
 	private NamedCollection deviceCollection;
 	private List<Map<String, Object>> published;
@@ -70,6 +71,7 @@ public class DeviceAttributeSyncTests {
 			.removeAll();
 		dispatched = new ArrayList<>();
 		results = new ArrayList<>();
+		confirmed = new ArrayList<>();
 		deviceStored = new HashMap<>();
 		deviceCollection = mock(NamedCollection.class);
 		when(deviceCollection.getString(anyString(), any()))
@@ -79,12 +81,7 @@ public class DeviceAttributeSyncTests {
 			.setString(anyString(), anyString());
 		doAnswer(call -> deviceStored.remove(call.<String>getArgument(0))).when(deviceCollection).remove(anyString());
 		published = new ArrayList<>();
-		doAnswer(call -> {
-				final Event event = call.getArgument(0);
-				return isResultEvent(event) ? results.add(event) : dispatched.add(event);
-			})
-			.when(api)
-			.dispatch(any());
+		doAnswer(call -> record(call.getArgument(0))).when(api).dispatch(any());
 		doAnswer(call -> published.add(call.getArgument(0))).when(api).createSharedState(anyMap(), any());
 		sync = newSync();
 	}
@@ -100,6 +97,11 @@ public class DeviceAttributeSyncTests {
 	@After
 	public void teardown() {
 		mobileCore.close();
+	}
+
+	private boolean record(final Event event) {
+		if (EventType.MESSAGING.equals(event.getType())) return confirmed.add(event);
+		return isResultEvent(event) ? results.add(event) : dispatched.add(event);
 	}
 
 	private static boolean isResultEvent(final Event event) {
@@ -815,8 +817,7 @@ public class DeviceAttributeSyncTests {
 		doAnswer(call -> {
 				assertEquals("Asia/Tokyo", stored.get("timeZone"));
 				assertEquals(Map.of("timezone", "Asia/Tokyo"), lastProfileAttributes());
-				final Event event = call.getArgument(0);
-				return isResultEvent(event) ? results.add(event) : dispatched.add(event);
+				return record(call.getArgument(0));
 			})
 			.when(api)
 			.dispatch(any());
@@ -1260,5 +1261,106 @@ public class DeviceAttributeSyncTests {
 		assertSyncResult(results.get(1), "failed", "missingAppIdentifier", Map.of("custom", "x"), noAppId);
 		assertEquals(2, dispatched.size());
 		assertEquals(next.getUniqueIdentifier(), dispatched.get(1).getParentID());
+	}
+
+	private Event edgeResultEvent(final Event edgeRequest, final String status) {
+		final Event response = new Event.Builder(
+			"Device Attributes Response",
+			IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+			EventSource.RESPONSE_CONTENT
+		)
+			.setEventData(Map.of("status", status))
+			.chainToParentEvent(edgeRequest)
+			.build();
+		sync.handleDeviceAttributeResult(response);
+		return response;
+	}
+
+	@Test
+	public void success_withTokens_dispatchesConfirmedTokensAfterPublishAndBeforeResult() {
+		final List<String> order = new ArrayList<>();
+		doAnswer(call -> {
+				final Event event = call.getArgument(0);
+				order.add(event.getName());
+				return record(event);
+			})
+			.when(api)
+			.dispatch(any());
+		doAnswer(call -> {
+				order.add("publish");
+				return published.add(call.getArgument(0));
+			})
+			.when(api)
+			.createSharedState(anyMap(), any());
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", "token-1")))
+		);
+		order.clear();
+
+		final Event response = edgeResultEvent(dispatched.get(0), "success");
+
+		assertEquals(1, confirmed.size());
+		final Event event = confirmed.get(0);
+		assertEquals("Device attributes confirmed", event.getName());
+		assertEquals(EventType.MESSAGING, event.getType());
+		assertEquals(EventSource.RESPONSE_CONTENT, event.getSource());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-1")), event.getEventData());
+		assertEquals(response.getUniqueIdentifier(), event.getParentID());
+		assertEquals(List.of("publish", "Device attributes confirmed", "Device Attributes Sync Result"), order);
+	}
+
+	@Test
+	public void success_withoutTokens_doesNotDispatchConfirmedTokens() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		edgeResult(dispatched.get(0), "success");
+		assertEquals(1, results.size());
+		assertTrue(confirmed.isEmpty());
+	}
+
+	@Test
+	public void failure_withTokens_doesNotDispatchConfirmedTokens() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		edgeResult(dispatched.get(0), "failed");
+		assertEquals(1, results.size());
+		assertTrue(confirmed.isEmpty());
+	}
+
+	@Test
+	public void unchanged_ownerMatchedToken_doesNotDispatchConfirmedTokens() {
+		collectConsent("y");
+		messagingPushToken("token-1");
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		assertEquals(1, published.size());
+		assertEquals(1, results.size());
+		assertEquals("unchanged", results.get(0).getEventData().get("reason"));
+		assertTrue(confirmed.isEmpty());
+	}
+
+	@Test
+	public void reset_withPendingTokenRequest_doesNotDispatchConfirmedTokens() {
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("timezone", "Asia/Tokyo")));
+		sync.handleDeviceAttributeRuleResponse(consequence(Map.of("tokens", Map.of("pushNotification", "token-1"))));
+		resetLikeExtension();
+		assertEquals(2, results.size());
+		assertTrue(confirmed.isEmpty());
+	}
+
+	@Test
+	public void partialDedup_confirmsOnlyTheSentTokens() {
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", "token-1", "other", "o-1")))
+		);
+		edgeResult(dispatched.get(0), "success");
+		confirmed.clear();
+
+		sync.handleDeviceAttributeRuleResponse(
+			consequence(Map.of("tokens", Map.of("pushNotification", "token-2", "other", "o-1")))
+		);
+		assertEquals(Map.of("pushNotification", "token-2"), dispatched.get(1).getEventData().get("tokens"));
+		final Event response = edgeResultEvent(dispatched.get(1), "success");
+
+		assertEquals(1, confirmed.size());
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "token-2")), confirmed.get(0).getEventData());
+		assertEquals(response.getUniqueIdentifier(), confirmed.get(0).getParentID());
 	}
 }

@@ -220,6 +220,7 @@ final class DeviceAttributeSync {
 			}
 			publishProfileAttributes(event);
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
+			dispatchTokensConfirmed(attributes, event);
 			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_SUCCESS, "", attributes, event);
 		} else {
 			final String reason = DataReader.optString(
@@ -238,6 +239,27 @@ final class DeviceAttributeSync {
 			dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_FAILED, reason, attributes, event);
 		}
 		processQueue();
+	}
+
+	/** Tells Messaging which tokens Edge confirmed, so it does not need to send them again. */
+	private void dispatchTokensConfirmed(final Map<String, Object> attributes, final Event parent) {
+		final Map<String, Object> tokens = DataReader.optTypedMap(
+			Object.class,
+			attributes,
+			IdentityConstants.DeviceAttributes.TOKENS,
+			null
+		);
+		if (tokens == null || tokens.isEmpty()) return;
+		api.dispatch(
+			new Event.Builder(
+				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_CONFIRMED,
+				EventType.MESSAGING,
+				EventSource.RESPONSE_CONTENT
+			)
+				.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TOKENS, tokens))
+				.chainToParentEvent(parent)
+				.build()
+		);
 	}
 
 	/** Dispatches the Device Attributes Sync Result event, chained to {@code parent}. */

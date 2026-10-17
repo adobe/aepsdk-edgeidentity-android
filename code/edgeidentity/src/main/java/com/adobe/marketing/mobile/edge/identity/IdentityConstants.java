@@ -41,6 +41,7 @@ final class IdentityConstants {
 		static final String DEVICE_ATTRIBUTES_TO_RULES_ENGINE = "Device attributes for rules engine";
 		static final String DEVICE_ATTRIBUTES_EDGE_REQUEST = "Edge bypass request";
 		static final String DEVICE_ATTRIBUTES_SYNC_RESULT = "Device Attributes Sync Result";
+		static final String DEVICE_ATTRIBUTES_CONFIRMED = "Device attributes confirmed";
 
 		private EventNames() {}
 	}
