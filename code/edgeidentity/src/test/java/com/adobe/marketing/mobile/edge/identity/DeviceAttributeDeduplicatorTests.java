@@ -15,13 +15,12 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,423 +28,369 @@ public class DeviceAttributeDeduplicatorTests {
 
 	private ProfileAttributeStore store;
 	private DeviceAttributeDeduplicator deduplicator;
-	private Map<String, Map<String, Object>> persisted;
+	private Map<String, String> persisted;
 
 	@Before
 	public void setup() {
 		store = mock(ProfileAttributeStore.class);
 		persisted = new HashMap<>();
-		when(store.getMap(anyString())).thenAnswer(call -> persisted.get(call.<String>getArgument(0)));
+		when(store.getString(anyString())).thenAnswer(call -> persisted.get(call.<String>getArgument(0)));
 		doAnswer(call -> persisted.put(call.getArgument(0), call.getArgument(1)))
 			.when(store)
-			.setMap(anyString(), anyMap());
+			.setString(anyString(), anyString());
 		doAnswer(call -> persisted.remove(call.<String>getArgument(0))).when(store).remove(anyString());
 		deduplicator = new DeviceAttributeDeduplicator(store);
 	}
 
 	@Test
 	public void filterDoesNotWriteUntilCommit() {
-		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
+		final Map<String, Object> attributes = attributes("Europe/London", "push");
+		assertEquals(attributes, deduplicator.filter(attributes, null).changed);
+		assertEquals(attributes, deduplicator.filter(attributes, null).changed);
 		assertTrue(persisted.isEmpty());
 		deduplicator.commit(attributes);
-		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
-		assertEquals(attributes, new DeviceAttributeDeduplicator(store).readSynced());
+		assertTrue(deduplicator.filter(attributes, null).changed.isEmpty());
+		assertEquals(Map.of("timezone", "Europe/London", "pushNotification", "push"), persisted);
+		final DeviceAttributeDeduplicator restarted = new DeviceAttributeDeduplicator(store);
+		assertEquals(attributes, restarted.readSynced());
+		assertTrue(restarted.filter(attributes, null).changed.isEmpty());
 	}
 
 	@Test
-	public void nestedAttributesAreDeduplicatedIndependently() {
-		deduplicator.commit(Map.of("timezone", "same", "tokens", Map.of("pushNotification", "old")));
+	public void timezoneAndPushTokenAreDeduplicatedIndependently() {
+		deduplicator.commit(attributes("same", "old"));
 		assertEquals(
 			Map.of("tokens", Map.of("pushNotification", "new")),
-			deduplicator.filter(Map.of("timezone", "same", "tokens", Map.of("pushNotification", "new")), true, null)
-				.changed
+			deduplicator.filter(attributes("same", "new"), null).changed
 		);
+		assertEquals(Map.of("timezone", "new"), deduplicator.filter(attributes("new", "old"), null).changed);
 	}
 
 	@Test
-	public void filteredPayloadDoesNotRetainMutableValues() {
-		final List<Object> values = new ArrayList<>(List.of(new HashMap<>(Map.of("value", "original"))));
-		final Map<String, Object> attributes = Map.of("timezone", values);
-		final Map<String, Object> payload = deduplicator.filter(attributes, true, null).changed;
-		values.clear();
-		assertEquals(Map.of("timezone", List.of(Map.of("value", "original"))), payload);
-		deduplicator.commit(payload);
-		assertTrue(deduplicator.filter(payload, true, null).changed.isEmpty());
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
-	}
-
-	@Test
-	public void commitDoesNotRetainMutableValues() {
-		final List<Object> values = new ArrayList<>(List.of("original"));
-		deduplicator.commit(Map.of("timezone", values));
-		values.clear();
-		assertEquals(Map.of("timezone", List.of("original")), deduplicator.readSynced());
+	public void filterAndReadSyncedUseCurrentStoreValues() {
+		deduplicator.commit(attributes("old", "old"));
+		persisted.put("timezone", "external");
+		persisted.put("pushNotification", "external-push");
+		final Map<String, Object> external = attributes("external", "external-push");
+		assertEquals(external, deduplicator.readSynced());
+		assertTrue(deduplicator.filter(external, null).changed.isEmpty());
+		assertEquals(attributes("old", "old"), deduplicator.filter(attributes("old", "old"), null).changed);
+		persisted.remove("timezone");
+		persisted.remove("pushNotification");
+		assertTrue(deduplicator.readSynced().isEmpty());
+		assertEquals(external, deduplicator.filter(external, null).changed);
 	}
 
 	@Test
 	public void ownerMatchesAreReturnedSeparatelyAndNotCommitted() {
-		final Map<String, Object> attributes = Map.of(
-			"timezone",
-			"Europe/London",
-			"tokens",
-			Map.of("pushNotification", "push")
+		final Map<String, Object> attributes = attributes("Europe/London", "push");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
+			attributes,
+			attributes("Europe/London", "other")
 		);
-		final Map<String, Object> owners = Map.of(
-			"timezone",
-			"Europe/London",
-			"tokens",
-			Map.of("pushNotification", "other")
-		);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, true, owners);
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), result.changed);
 		assertEquals(Map.of("timezone", "Europe/London"), result.ownerMatches);
 		assertTrue(persisted.isEmpty());
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
+		assertEquals(attributes, deduplicator.filter(attributes, null).changed);
+		deduplicator.commit(result.ownerMatches);
+		assertEquals(Map.of("timezone", "Europe/London"), deduplicator.readSynced());
 	}
 
 	@Test
-	public void nestedOwnerMatchesKeepTheirPath() {
+	public void nestedOwnerMatchesKeepTheirPathAndUnknownSiblings() {
 		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", "push", "other", "x"));
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
-			attributes,
-			true,
-			Map.of("tokens", Map.of("pushNotification", "push"))
-		);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertEquals(Map.of("tokens", Map.of("other", "x")), result.changed);
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), result.ownerMatches);
+		deduplicator.commit(result.ownerMatches);
+		assertEquals(result.ownerMatches, deduplicator.readSynced());
 	}
 
 	@Test
-	public void syncedValuesAreNotReportedAsOwnerMatches() {
-		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
+	public void matchingBothOwnersRemovesTokensWrapper() {
+		final Map<String, Object> attributes = attributes("Europe/London", "push");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertTrue(result.changed.isEmpty());
+		assertEquals(attributes, result.ownerMatches);
+		assertTrue(persisted.isEmpty());
+	}
+
+	@Test
+	public void confirmedValuesTakePriorityOverOwnerMatches() {
+		final Map<String, Object> attributes = attributes("Europe/London", "push");
 		deduplicator.commit(attributes);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, true, attributes);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertTrue(result.changed.isEmpty());
 		assertTrue(result.ownerMatches.isEmpty());
 	}
 
 	@Test
-	public void disabledDedupIgnoresSyncedAndOwnerValues() {
-		final Map<String, Object> attributes = Map.of("timezone", "Europe/London");
-		deduplicator.commit(attributes);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, false, attributes);
+	public void changedConfirmedValueCanMatchCurrentOwner() {
+		deduplicator.commit(attributes("old", "old"));
+		final Map<String, Object> attributes = attributes("current", "current");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertTrue(result.changed.isEmpty());
+		assertEquals(attributes, result.ownerMatches);
+		assertEquals(attributes("old", "old"), deduplicator.readSynced());
+	}
+
+	@Test
+	public void unexpectedOwnerTypesDoNotMatchStrings() {
+		final Map<String, Object> attributes = attributes("1", "true");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes(1, true));
 		assertEquals(attributes, result.changed);
 		assertTrue(result.ownerMatches.isEmpty());
-		assertEquals(attributes, deduplicator.readSynced());
 	}
 
 	@Test
-	public void emptyPushTokenIsPreservedAndComparedAsAString() {
-		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", ""));
-		assertEquals(
+	public void unexpectedOwnerTokensContainerDoesNotMatch() {
+		final Map<String, Object> attributes = attributes("current", "push");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
 			attributes,
-			deduplicator.filter(attributes, true, Map.of("tokens", Map.of("pushNotification", "previous"))).changed
+			Map.of("tokens", "push")
 		);
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
+		assertEquals(attributes, result.changed);
+		assertTrue(result.ownerMatches.isEmpty());
+	}
+
+	@Test
+	public void emptyStringsAreStoredAndCompared() {
+		final Map<String, Object> attributes = attributes("", "");
+		assertEquals(attributes, deduplicator.filter(attributes, attributes("previous", "previous")).changed);
 		deduplicator.commit(attributes);
-		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
-	}
-
-	@Test
-	public void nullIsDroppedButEmptyContainersAreValues() {
-		final Map<String, Object> attributes = new HashMap<>();
-		attributes.put("null", null);
-		attributes.put("timezone", List.of());
-		attributes.put("tokens", Map.of("pushNotification", Map.of()));
-		final Map<String, Object> expected = Map.of(
-			"timezone",
-			List.of(),
-			"tokens",
-			Map.of("pushNotification", Map.of())
-		);
-		final Map<String, Object> changed = deduplicator.filter(attributes, false, null).changed;
-		assertEquals(expected, changed);
-		deduplicator.commit(changed);
-		assertEquals(expected, deduplicator.readSynced());
-		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
-	}
-
-	@Test
-	public void invalidJSONLeavesAreDroppedWithoutWritingStorage() {
-		final Map<String, Object> nested = new HashMap<>();
-		nested.put("valid", "value");
-		nested.put("null", null);
-		nested.put("invalid", new Object());
-		assertEquals(
-			Map.of("nested", Map.of("valid", "value")),
-			deduplicator.filter(Map.of("nested", nested, "nan", Double.NaN), false, null).changed
-		);
-		assertTrue(persisted.isEmpty());
-	}
-
-	@Test
-	public void arraysAreComparedAsSets() {
-		deduplicator.commit(Map.of("timezone", List.of("first", "second")));
-		assertTrue(deduplicator.filter(Map.of("timezone", List.of("second", "first")), true, null).changed.isEmpty());
-		assertTrue(
-			deduplicator.filter(Map.of("timezone", new String[] { "second", "first" }), true, null).changed.isEmpty()
-		);
-		assertEquals(
-			Map.of("timezone", List.of("first")),
-			deduplicator.filter(Map.of("timezone", List.of("first")), true, null).changed
-		);
-		assertEquals(
-			Map.of("timezone", Arrays.asList("first", null)),
-			deduplicator.filter(Map.of("timezone", Arrays.asList("first", null)), true, null).changed
-		);
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", List.of(List.of("x", "y"), List.of("z")))));
-		assertTrue(
-			deduplicator
-				.filter(
-					Map.of("tokens", Map.of("pushNotification", List.of(List.of("z", "z"), List.of("y", "x", "x")))),
-					true,
-					null
-				)
-				.changed.isEmpty()
-		);
-	}
-
-	@Test
-	public void commitReplacesValueAtEachDeduplicatedPathAndKeepsSiblings() {
-		deduplicator.commit(Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", "token-1")));
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "token-2")));
-		assertEquals(
-			Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", "token-2")),
-			deduplicator.readSynced()
-		);
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", Map.of("token", "token-3", "meta", "x"))));
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", Map.of("token", "token-4"))));
-		assertEquals(
-			Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", Map.of("token", "token-4"))),
-			deduplicator.readSynced()
-		);
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "off")));
-		assertEquals(
-			Map.of("timezone", "Asia/Tokyo", "tokens", Map.of("pushNotification", "off")),
-			new DeviceAttributeDeduplicator(store).readSynced()
-		);
-	}
-
-	@Test
-	public void mapAtDeduplicatedPathIsComparedAndStoredWhole() {
-		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", Map.of("token", "a", "meta", "x"))));
-		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", Map.of("token", "b")));
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
-
-		deduplicator.commit(attributes);
-
+		assertEquals(Map.of("timezone", "", "pushNotification", ""), persisted);
 		assertEquals(attributes, deduplicator.readSynced());
-		assertEquals(attributes, new DeviceAttributeDeduplicator(store).readSynced());
-		assertTrue(deduplicator.filter(attributes, true, null).changed.isEmpty());
+		assertTrue(deduplicator.filter(attributes, null).changed.isEmpty());
+		assertTrue(new DeviceAttributeDeduplicator(store).filter(attributes, null).changed.isEmpty());
 	}
 
 	@Test
-	public void booleansRemainDistinctFromNumbersAndNumbersSurviveSnapshots() {
-		deduplicator.commit(Map.of("timezone", true));
-		assertEquals(Map.of("timezone", 1), deduplicator.filter(Map.of("timezone", 1), true, null).changed);
-		deduplicator.commit(deduplicator.filter(Map.of("timezone", 1.0), true, null).changed);
-		assertTrue(deduplicator.filter(Map.of("timezone", 1.0), true, null).changed.isEmpty());
-		assertTrue(
-			new DeviceAttributeDeduplicator(store).filter(Map.of("timezone", 1.0), true, null).changed.isEmpty()
-		);
+	public void emptyStringsCanMatchOwners() {
+		final Map<String, Object> attributes = attributes("", "");
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertTrue(result.changed.isEmpty());
+		assertEquals(attributes, result.ownerMatches);
 	}
 
 	@Test
-	public void clearRemovesOnlyConfirmedDeviceValues() {
-		deduplicator.commit(Map.of("timezone", "Europe/London"));
-		deduplicator.clear();
+	public void originallyEmptyTokensMapIsPreserved() {
+		final Map<String, Object> tokens = new LinkedHashMap<>();
+		final Map<String, Object> attributes = Map.of("tokens", tokens);
+		deduplicator.commit(attributes("stored", "stored"));
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertEquals(attributes, result.changed);
+		assertSame(tokens, result.changed.get("tokens"));
+		assertTrue(result.ownerMatches.isEmpty());
+	}
+
+	@Test
+	public void matchingPushTokenRemovesOnlySelectedFieldAndKeepsInputUnchanged() {
+		final Map<String, Object> sibling = Map.of("nested", List.of("value"));
+		final Map<String, Object> tokens = new LinkedHashMap<>();
+		tokens.put("pushNotification", "push");
+		tokens.put("other", sibling);
+		final Map<String, Object> attributes = Map.of("tokens", tokens);
+		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "push")));
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, null);
+		assertEquals(Map.of("tokens", Map.of("other", sibling)), result.changed);
+		assertEquals("push", tokens.get("pushNotification"));
+		assertSame(sibling, ((Map<?, ?>) result.changed.get("tokens")).get("other"));
+		assertTrue(result.ownerMatches.isEmpty());
+	}
+
+	@Test
+	public void invalidNestedKeysArePreservedWhenMatchingPushTokenIsRemoved() {
+		final Map<Object, Object> tokens = new LinkedHashMap<>();
+		tokens.put("pushNotification", "push");
+		tokens.put(1, "non-string-key");
+		tokens.put(null, null);
+		final Map<String, Object> attributes = Map.of("tokens", tokens);
+		deduplicator.commit(attributes);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final Map<?, ?> changedTokens = (Map<?, ?>) result.changed.get("tokens");
+		assertEquals(2, changedTokens.size());
+		assertEquals("non-string-key", changedTokens.get(1));
+		assertTrue(changedTokens.containsKey(null));
+		assertNull(changedTokens.get(null));
+		assertEquals("push", tokens.get("pushNotification"));
+		assertEquals(Map.of("pushNotification", "push"), persisted);
+		assertTrue(result.ownerMatches.isEmpty());
+	}
+
+	@Test
+	public void nullAndInvalidJSONValuesPassThroughWithoutValidation() {
+		final Object unsupported = new Object();
+		final Map<String, Object> nested = new LinkedHashMap<>();
+		nested.put("null", null);
+		nested.put("unsupported", unsupported);
+		nested.put("nan", Double.NaN);
+		nested.put("jsonNull", JSONObject.NULL);
+		final Map<String, Object> attributes = new LinkedHashMap<>(nested);
+		attributes.put("nested", nested);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertEquals(attributes, result.changed);
+		assertSame(nested, result.changed.get("nested"));
+		assertSame(unsupported, result.changed.get("unsupported"));
+		assertTrue(result.changed.containsKey("null"));
+		assertTrue(result.ownerMatches.isEmpty());
+		deduplicator.commit(result.changed);
 		assertTrue(persisted.isEmpty());
+	}
+
+	@Test
+	public void unexpectedKnownTypesAreNeverComparedOrPersisted() {
+		final Object[] unexpected = {
+			null,
+			JSONObject.NULL,
+			1,
+			1.0,
+			true,
+			Double.NaN,
+			Double.POSITIVE_INFINITY,
+			new Object(),
+			List.of(),
+			List.of("a", "b"),
+			new String[] { "a", "b" },
+			Arrays.asList("a", null),
+			Map.of(),
+			Map.of("nested", "value"),
+		};
+		for (final Object value : unexpected) {
+			final Map<String, Object> attributes = attributes(value, value);
+			final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+			assertEquals(attributes, result.changed);
+			assertSame(value, result.changed.get("timezone"));
+			assertSame(attributes.get("tokens"), result.changed.get("tokens"));
+			assertTrue(result.ownerMatches.isEmpty());
+			deduplicator.commit(attributes);
+			assertTrue(persisted.isEmpty());
+			assertTrue(deduplicator.readSynced().isEmpty());
+		}
+	}
+
+	@Test
+	public void unexpectedKnownTypesDoNotOverwriteConfirmedStrings() {
+		final Map<String, Object> confirmed = attributes("1", "true");
+		deduplicator.commit(confirmed);
+		final Map<String, Object> unexpected = attributes(1, true);
+		assertEquals(unexpected, deduplicator.filter(unexpected, unexpected).changed);
+		deduplicator.commit(unexpected);
+		deduplicator.commit(attributes(null, JSONObject.NULL));
+		assertEquals(confirmed, deduplicator.readSynced());
+		assertTrue(deduplicator.filter(confirmed, null).changed.isEmpty());
+	}
+
+	@Test
+	public void unexpectedTokensContainerIsForwardedAndIgnoredByCommit() {
+		for (final Object value : Arrays.asList(null, "push", List.of("push"), 1, JSONObject.NULL)) {
+			final Map<String, Object> attributes = new LinkedHashMap<>();
+			attributes.put("tokens", value);
+			assertEquals(attributes, deduplicator.filter(attributes, attributes).changed);
+			deduplicator.commit(attributes);
+			assertTrue(persisted.isEmpty());
+		}
+	}
+
+	@Test
+	public void mixedNestedAttributesOnlyDeduplicateSelectedStrings() {
+		final Map<String, Object> custom = Map.of("timezone", "same", "tokens", Map.of("pushNotification", "push"));
+		final Map<String, Object> attributes = Map.of(
+			"timezone",
+			"same",
+			"custom",
+			custom,
+			"tokens",
+			Map.of("pushNotification", "push", "nested", custom, "liveActivityStart", List.of("ios-only"))
+		);
+		deduplicator.commit(attributes);
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertEquals(
+			Map.of("custom", custom, "tokens", Map.of("nested", custom, "liveActivityStart", List.of("ios-only"))),
+			result.changed
+		);
+		assertSame(custom, result.changed.get("custom"));
+		assertTrue(result.ownerMatches.isEmpty());
+		assertEquals(attributes("same", "push"), deduplicator.readSynced());
+	}
+
+	@Test
+	public void unknownValuesRemainTheOriginalReferences() {
+		final Map<String, Object> cyclic = new LinkedHashMap<>();
+		cyclic.put("self", cyclic);
+		final Map<String, Object> attributes = Map.of("custom", cyclic, "tokens", Map.of("other", cyclic));
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		assertSame(cyclic, result.changed.get("custom"));
+		assertSame(attributes.get("tokens"), result.changed.get("tokens"));
+		assertTrue(result.ownerMatches.isEmpty());
+		deduplicator.commit(attributes);
+		assertTrue(persisted.isEmpty());
+	}
+
+	@Test
+	public void commitReplacesOnlyProvidedStringsAndKeepsOtherConfirmedValues() {
+		deduplicator.commit(attributes("Asia/Tokyo", "token-1"));
+		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "token-2", "other", "ignored")));
+		assertEquals(attributes("Asia/Tokyo", "token-2"), deduplicator.readSynced());
+		deduplicator.commit(Map.of("timezone", "Europe/London", "other", "ignored"));
+		assertEquals(attributes("Europe/London", "token-2"), new DeviceAttributeDeduplicator(store).readSynced());
+		assertEquals(Map.of("timezone", "Europe/London", "pushNotification", "token-2"), persisted);
+	}
+
+	@Test
+	public void readSyncedReconstructsOnlyPresentKeys() {
 		assertTrue(deduplicator.readSynced().isEmpty());
-		verify(store).remove(IdentityConstants.DeviceAttributes.SYNCED_VALUES);
+		persisted.put("pushNotification", "push");
+		persisted.put("other", "ignored");
+		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), deduplicator.readSynced());
+		persisted.remove("pushNotification");
+		persisted.put("timezone", "Asia/Tokyo");
+		assertEquals(Map.of("timezone", "Asia/Tokyo"), deduplicator.readSynced());
+	}
+
+	@Test
+	public void modifyingReadSyncedDoesNotChangePersistence() {
+		final Map<String, Object> attributes = attributes("Europe/London", "push");
+		deduplicator.commit(attributes);
+		final Map<String, Object> snapshot = deduplicator.readSynced();
+		((Map<?, ?>) snapshot.get("tokens")).clear();
+		snapshot.clear();
+		assertEquals(attributes, deduplicator.readSynced());
+	}
+
+	@Test
+	public void clearRemovesOnlyBothConfirmedDeviceKeys() {
+		deduplicator.commit(attributes("Europe/London", "push"));
+		persisted.put("other", "keep");
+		deduplicator.clear();
+		assertEquals(Map.of("other", "keep"), persisted);
+		assertTrue(deduplicator.readSynced().isEmpty());
+		assertTrue(new DeviceAttributeDeduplicator(store).readSynced().isEmpty());
+		assertEquals(
+			attributes("Europe/London", "push"),
+			deduplicator.filter(attributes("Europe/London", "push"), null).changed
+		);
+		verify(store).remove("timezone");
+		verify(store).remove("pushNotification");
 		verify(store, never()).clearAll();
 	}
 
 	@Test
-	public void testCanonicalization_isIndependentOfMapKeyOrder() {
-		final Map<String, Object> firstNestedValue = new LinkedHashMap<>();
-		firstNestedValue.put("b", 2);
-		firstNestedValue.put("a", 1);
-		assertEquals("{\"a\":1,\"b\":2}", DeviceAttributeDeduplicator.canonicalize(firstNestedValue));
-		assertEquals(
-			DeviceAttributeDeduplicator.canonicalize(firstNestedValue),
-			DeviceAttributeDeduplicator.canonicalize(Map.of("a", 1, "b", 2))
-		);
-	}
-
-	@Test
-	public void testCanonicalization_rejectsUnsupportedValuesAndTopLevelNull() {
-		final Map<String, Object> attributes = new HashMap<>();
-		attributes.put(null, "invalid-key");
-		assertNull(DeviceAttributeDeduplicator.canonicalize(attributes));
-		assertNull(DeviceAttributeDeduplicator.canonicalize(new Object()));
-		assertNull(DeviceAttributeDeduplicator.canonicalize(Double.NaN));
-		assertNull(DeviceAttributeDeduplicator.canonicalize(null));
-		final Map<String, Object> nestedNull = new HashMap<>();
-		nestedNull.put("value", null);
-		assertEquals("{\"value\":null}", DeviceAttributeDeduplicator.canonicalize(nestedNull));
-	}
-
-	// Shared canonicalize cases: keep in sync with the iOS DeviceAttributeDeduplicator tests.
-
-	@Test
-	public void testCanonicalization_sharedEqualCases() {
-		final Map<String, Object> reorderedKeys = new LinkedHashMap<>();
-		reorderedKeys.put("b", 2);
-		reorderedKeys.put("a", 1);
-		final Object[][] equalPairs = {
-			{ 1, 1.0 },
-			{ 0, -0.0 },
-			{ 5L, 5.0f },
-			{ "a", "a" },
-			{ reorderedKeys, Map.of("a", 1, "b", 2) },
-			{ List.of("a", "b"), List.of("b", "a") },
-			{ List.of("a", "a", "b"), List.of("b", "a") },
-			{ List.of(List.of("x", "y"), List.of("z")), List.of(List.of("z"), List.of("y", "x")) },
-			{ Map.of("k", List.of(1, List.of(2, 3, 3))), Map.of("k", List.of(List.of(3, 2), 1.0)) },
-			{ List.of(Map.of("a", 1), Map.of("b", 2)), List.of(Map.of("b", 2), Map.of("a", 1)) },
-		};
-		for (final Object[] pair : equalPairs) {
-			final String first = DeviceAttributeDeduplicator.canonicalize(pair[0]);
-			assertNotNull(first);
-			assertEquals(first, DeviceAttributeDeduplicator.canonicalize(pair[1]));
-		}
-	}
-
-	@Test
-	public void testCanonicalization_sharedDistinctCases() {
-		final Object[][] distinctPairs = {
-			{ true, 1 },
-			{ false, 0 },
-			{ "1", 1 },
-			{ 1.5, 1 },
-			{ List.of(), Map.of() },
-			{ Arrays.asList((Object) null), List.of() },
-			{ Collections.singletonMap("a", null), Map.of() },
-			{ List.of(List.of("a", "b")), List.of("a", "b") },
-		};
-		for (final Object[] pair : distinctPairs) {
-			assertNotEquals(
-				DeviceAttributeDeduplicator.canonicalize(pair[0]),
-				DeviceAttributeDeduplicator.canonicalize(pair[1])
-			);
-		}
-	}
-
-	@Test
-	public void testCanonicalization_sharedInvalidCases() {
-		final Object[] invalid = {
-			null,
-			Double.NaN,
-			Double.POSITIVE_INFINITY,
-			Double.NEGATIVE_INFINITY,
-			new Object(),
-			Map.of(1, "x"),
-			List.of("a", Double.NaN),
-			Map.of("a", Double.POSITIVE_INFINITY),
-		};
-		for (final Object value : invalid) {
-			assertNull(DeviceAttributeDeduplicator.canonicalize(value));
-		}
-	}
-
-	@Test
-	public void testCanonicalization_sharedExpectedStrings() {
-		assertEquals("\"a\"", DeviceAttributeDeduplicator.canonicalize("a"));
-		assertEquals("true", DeviceAttributeDeduplicator.canonicalize(true));
-		assertEquals("1", DeviceAttributeDeduplicator.canonicalize(1.0));
-		assertEquals("0", DeviceAttributeDeduplicator.canonicalize(-0.0));
-		assertEquals("[\"a\",\"b\"]", DeviceAttributeDeduplicator.canonicalize(List.of("b", "a", "a")));
-		assertEquals("{\"a\":[1,2],\"b\":null}", DeviceAttributeDeduplicator.canonicalize(mapWithNull()));
-		assertEquals("[]", DeviceAttributeDeduplicator.canonicalize(List.of()));
-		assertEquals("{}", DeviceAttributeDeduplicator.canonicalize(Map.of()));
-	}
-
-	private static Map<String, Object> mapWithNull() {
-		final Map<String, Object> map = new HashMap<>();
-		map.put("b", null);
-		map.put("a", List.of(2, 1, 2));
-		return map;
-	}
-
-	@Test
-	public void deeplyNestedCustomValuesAreSentInFull() {
-		final Map<String, Object> attributes = Map.of(
-			"maps",
-			nestedMaps(40),
-			"lists",
-			nestedLists(40),
-			"timezone",
-			"Asia/Tokyo"
-		);
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
-
-		deduplicator.commit(attributes);
-
-		assertEquals(Map.of("timezone", "Asia/Tokyo"), deduplicator.readSynced());
-		assertEquals(
-			Map.of("maps", nestedMaps(40), "lists", nestedLists(40)),
-			deduplicator.filter(attributes, true, null).changed
-		);
-	}
-
-	/** Returns {@code levels} maps nested inside each other, with a string in the innermost one. */
-	private static Map<String, Object> nestedMaps(final int levels) {
-		Map<String, Object> value = Map.of("leaf", "value");
-		for (int level = 1; level < levels; level++) {
-			value = Map.of("level", value);
-		}
-		return value;
-	}
-
-	/** Returns {@code levels} lists nested inside each other, with a string in the innermost one. */
-	private static List<Object> nestedLists(final int levels) {
-		List<Object> value = List.of("value");
-		for (int level = 1; level < levels; level++) {
-			value = List.of(value);
-		}
-		return value;
-	}
-
-	@Test
-	public void customKeysAreAlwaysChangedAndNeverStored() {
-		final Map<String, Object> attributes = Map.of("custom", "value", "tokens", Map.of("foo", "bar"));
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
-		deduplicator.commit(attributes);
-		assertTrue(deduplicator.readSynced().isEmpty());
+	public void nullAndEmptyAttributeMapsDoNotWrite() {
+		assertTrue(deduplicator.filter(null, null).changed.isEmpty());
+		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(Map.of(), attributes("x", "y"));
+		assertTrue(result.changed.isEmpty());
+		assertTrue(result.ownerMatches.isEmpty());
+		deduplicator.commit(null);
+		deduplicator.commit(Map.of());
 		assertTrue(persisted.isEmpty());
-		assertEquals(attributes, deduplicator.filter(attributes, true, null).changed);
 	}
 
-	@Test
-	public void customKeysAreNeverOwnerMatched() {
-		final Map<String, Object> attributes = Map.of("custom", "value", "timezone", "Asia/Tokyo");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, true, attributes);
-		assertEquals(Map.of("custom", "value"), result.changed);
-		assertEquals(Map.of("timezone", "Asia/Tokyo"), result.ownerMatches);
-	}
-
-	@Test
-	public void persistedUnknownValuesArePrunedOnLoad() {
-		persisted.put(
-			IdentityConstants.DeviceAttributes.SYNCED_VALUES,
-			Map.of(
-				"timezone",
-				"Asia/Tokyo",
-				"custom",
-				"value",
-				"tokens",
-				Map.of("pushNotification", "token-1", "foo", "bar")
-			)
-		);
-		final Map<String, Object> expected = Map.of(
-			"timezone",
-			"Asia/Tokyo",
-			"tokens",
-			Map.of("pushNotification", "token-1")
-		);
-		assertEquals(expected, new DeviceAttributeDeduplicator(store).readSynced());
-		assertEquals(expected, persisted.get(IdentityConstants.DeviceAttributes.SYNCED_VALUES));
+	private static Map<String, Object> attributes(final Object timezone, final Object pushToken) {
+		final Map<String, Object> tokens = new LinkedHashMap<>();
+		tokens.put("pushNotification", pushToken);
+		final Map<String, Object> attributes = new LinkedHashMap<>();
+		attributes.put("timezone", timezone);
+		attributes.put("tokens", tokens);
+		return attributes;
 	}
 }

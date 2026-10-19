@@ -11,10 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 final class IdentityConstants {
 
 	static final String LOG_TAG = "EdgeIdentity";
@@ -196,7 +192,6 @@ final class IdentityConstants {
 		static final String APP_ID = "id";
 		static final String APP_PLATFORM = "platform";
 		static final String PLATFORM_FCM = "fcm";
-		static final String SYNCED_VALUES = "confirmedAttributes";
 		static final String STATUS = "status";
 		static final String STATUS_SUCCESS = "success";
 		static final String STATUS_FAILED = "failed";
@@ -208,14 +203,6 @@ final class IdentityConstants {
 		static final String REASON_IDENTITY_RESET = "identityReset";
 		static final String REASON_MISSING_APP_IDENTIFIER = "missingAppIdentifier";
 		static final String REASON_INTERNAL_ERROR = "internalError";
-
-		/**
-		 * The only values that are deduplicated and stored, each given as its path of keys from the top-level
-		 * attributes map. These are long-lived profile values; every other value is always sent to Edge.
-		 */
-		static final List<List<String>> DEDUPLICATED_PATHS = Collections.unmodifiableList(
-			Arrays.asList(Collections.singletonList(TIMEZONE), Arrays.asList(TOKENS, PUSH_NOTIFICATION))
-		);
 
 		private DeviceAttributes() {}
 	}

@@ -13,13 +13,6 @@ package com.adobe.marketing.mobile.edge.identity;
 
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.services.NamedCollection;
-import com.adobe.marketing.mobile.util.JSONUtils;
-import java.lang.reflect.Array;
-import java.util.List;
-import java.util.Map;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Thin, null-safe wrapper around an attribute {@link NamedCollection}. Profile handlers and
@@ -54,58 +47,6 @@ class ProfileAttributeStore {
 			return null;
 		}
 		return collection.getString(key, null);
-	}
-
-	Map<String, Object> getMap(final String key) {
-		final String value = getString(key);
-		if (value == null) return null;
-		try {
-			return JSONUtils.toMap(new JSONObject(value));
-		} catch (JSONException exception) {
-			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Unable to read stored map for key '" + key + "'.");
-			return null;
-		}
-	}
-
-	void setMap(final String key, final Map<String, Object> value) {
-		if (value == null) {
-			remove(key);
-			return;
-		}
-		try {
-			final JSONObject json = new JSONObject();
-			for (final Map.Entry<String, Object> entry : value.entrySet()) {
-				json.put(entry.getKey(), toJsonValue(entry.getValue()));
-			}
-			setString(key, json.toString());
-		} catch (Exception exception) {
-			Log.error(IdentityConstants.LOG_TAG, LOG_SOURCE, "Unable to persist map for key '" + key + "'.");
-		}
-	}
-
-	private static Object toJsonValue(final Object value) throws JSONException {
-		if (value == null) return JSONObject.NULL;
-		if (value instanceof Map<?, ?>) {
-			final JSONObject json = new JSONObject();
-			for (final Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
-				if (!(entry.getKey() instanceof String)) {
-					throw new JSONException("Map key is not a string");
-				}
-				json.put((String) entry.getKey(), toJsonValue(entry.getValue()));
-			}
-			return json;
-		}
-		if (value instanceof List<?>) {
-			final JSONArray json = new JSONArray();
-			for (final Object element : (List<?>) value) json.put(toJsonValue(element));
-			return json;
-		}
-		if (value.getClass().isArray()) {
-			final JSONArray json = new JSONArray();
-			for (int index = 0; index < Array.getLength(value); index++) json.put(toJsonValue(Array.get(value, index)));
-			return json;
-		}
-		return value;
 	}
 
 	/**

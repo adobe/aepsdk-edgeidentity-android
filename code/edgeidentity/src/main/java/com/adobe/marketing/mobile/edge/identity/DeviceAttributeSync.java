@@ -39,9 +39,8 @@ import java.util.Map;
  *     <li>{@link #handleDeviceAttributes(Event)} sends the public API data to the rules engine.</li>
  *     <li>Each matching rule returns the attributes it allows in a rule response event, handled by
  *     {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
- *     <li>Rule responses are queued, and one device attributes request event is sent to Edge at a time. Deduplicated
- *     values ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}) that are unchanged are left out; all
- *     other values are sent.</li>
+ *     <li>Rule responses are queued, and one device attributes request event is sent to Edge at a time. Unchanged
+ *     timezone and push token strings are left out; all other values are sent.</li>
  *     <li>When the device attributes response event for the active request arrives
  *     ({@link #handleDeviceAttributeResult(Event)}), the next request can be sent. On success the sent deduplicated
  *     values are stored as confirmed and published in {@code profileAttributes}. A
@@ -179,8 +178,9 @@ final class DeviceAttributeSync {
 			IdentityConstants.DeviceAttributes.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
 			true
 		);
-		final Map<String, Object> owners = dedup && isCollectConsentYes() ? ownerValues() : null;
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, dedup, owners);
+		final DeviceAttributeDeduplicator.FilterResult result = dedup
+			? deduplicator.filter(attributes, isCollectConsentYes() ? ownerValues() : null)
+			: new DeviceAttributeDeduplicator.FilterResult(attributes, Collections.emptyMap());
 		if (!result.ownerMatches.isEmpty()) {
 			deduplicator.commit(result.ownerMatches);
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Marked device attributes held by their owner as synced.");
@@ -461,13 +461,27 @@ final class DeviceAttributeSync {
 	 * {@code profileAttributes} in the standard shared state.
 	 */
 	void publishProfileAttributes(final Event event) {
+		api.createSharedState(
+			Collections.singletonMap(IdentityConstants.ProfileAttributes.SHARED_STATE_KEY, profileAttributes()),
+			event
+		);
+	}
+
+	void publishStoredProfileAttributes() {
+		final Map<String, Object> attributes = profileAttributes();
+		if (!attributes.isEmpty()) {
+			api.createSharedState(
+				Collections.singletonMap(IdentityConstants.ProfileAttributes.SHARED_STATE_KEY, attributes),
+				null
+			);
+		}
+	}
+
+	private Map<String, Object> profileAttributes() {
 		final Map<String, Object> attributes = new LinkedHashMap<>(deduplicator.readSynced());
 		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);
 		if (timezone != null) attributes.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
-		api.createSharedState(
-			Collections.singletonMap(IdentityConstants.ProfileAttributes.SHARED_STATE_KEY, attributes),
-			event
-		);
+		return attributes;
 	}
 
 	private Map<String, Object> configuration() {

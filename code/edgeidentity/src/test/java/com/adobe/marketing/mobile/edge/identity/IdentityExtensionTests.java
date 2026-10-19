@@ -224,8 +224,6 @@ public class IdentityExtensionTests {
 				eq(EventSource.RESPONSE_CONTENT),
 				any()
 			);
-		verify(mockExtensionApi).createSharedState(anyMap(), any());
-
 		verifyNoMoreInteractions(mockExtensionApi);
 	}
 

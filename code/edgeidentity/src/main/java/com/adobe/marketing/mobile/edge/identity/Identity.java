@@ -236,8 +236,9 @@ public class Identity {
 	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
 	 * push token are sent only when they differ from the last value Edge confirmed, and all other values are
 	 * always sent; set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to
-	 * send every update. Requests are sent one at a time. Null and non-JSON values are dropped. Any {@code app} value is
-	 * replaced by the SDK.
+	 * send every update. Requests are sent one at a time. Values are not validated by this API and are sent as
+	 * provided. Only string timezone and push-token values are deduplicated. Any {@code app} value is replaced by
+	 * the SDK.
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values
 	 */

@@ -153,7 +153,7 @@ class IdentityExtension extends Extension {
 				EventSource.RESPONSE_CONTENT,
 				deviceAttributeSync::handleDeviceAttributeResult
 			);
-		deviceAttributeSync.publishProfileAttributes(null);
+		deviceAttributeSync.publishStoredProfileAttributes();
 	}
 
 	@Override
