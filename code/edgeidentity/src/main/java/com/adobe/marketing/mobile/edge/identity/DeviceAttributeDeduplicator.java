@@ -26,10 +26,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Keeps the confirmed values of the known device attributes ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS})
- * as a nested map and filters out known values that do not need to be sent again. A known value is compared with the
- * confirmed value at the same path and, when owner values are given (collect consent is "y"), with the owner value at
- * that path. Arrays are compared as sets. Every other valid value is always sent and never stored.
+ * Stores the values Edge confirmed for the deduplicated device attributes, the timezone and the push token
+ * ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}), and filters out those that do not need to be sent
+ * again. Each is compared with the confirmed value at the same path and, when collect consent is "y", with the value
+ * its owner already holds (see {@link #filter}). Arrays are compared as sets. Every other valid value is always sent
+ * and never stored.
  */
 final class DeviceAttributeDeduplicator {
 
@@ -46,7 +47,7 @@ final class DeviceAttributeDeduplicator {
 		}
 	}
 
-	/** The result of {@link #filter}: the values to send to Edge and the values already held by their owner. */
+	/** The result of {@link #filter}: the values to send to Edge and the values their owner already holds. */
 	static final class FilterResult {
 
 		final Map<String, Object> changed;
@@ -59,14 +60,16 @@ final class DeviceAttributeDeduplicator {
 	}
 
 	/**
-	 * Splits the attributes into the values that need to be sent to Edge and the known values that match an owner
-	 * value. Owner matches are not sent; the caller commits them so later requests can be deduplicated against the
-	 * confirmed values alone. Values that are not known are always returned as changed.
+	 * Splits the attributes into the values to send to Edge and the deduplicated values their owner already holds.
+	 * The owner is where the value is already set: the profile attributes API for the timezone and Messaging for the
+	 * push token. Owner-held values are not sent; the caller stores them as confirmed. Values outside
+	 * {@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS} are always returned as changed.
 	 *
 	 * @param attributes the attributes to filter
-	 * @param dedup whether to filter out unchanged known values; when false, every valid value is returned as changed
-	 * @param owners owner values to compare with, in the same shape as {@code attributes}; may be null
-	 * @return the changed values and the owner matches; each is empty when there are none
+	 * @param dedup whether to filter out unchanged deduplicated values; when false, every valid value is returned as
+	 *     changed
+	 * @param owners the values their owners hold, in the same shape as {@code attributes}; may be null
+	 * @return the changed values and the owner-held values; each is empty when there are none
 	 */
 	FilterResult filter(final Map<String, Object> attributes, final boolean dedup, final Map<String, Object> owners) {
 		final Map<String, Object> changed = new LinkedHashMap<>();
@@ -100,7 +103,7 @@ final class DeviceAttributeDeduplicator {
 			final Object value = entry.getValue();
 			final List<String> path = new ArrayList<>(parentPath);
 			path.add(key);
-			// A known value is compared as a whole; maps on the way to it, and other maps, are split into their values.
+			// A value at a deduplicated path is compared as a whole, even if it is a map; other maps are split by key.
 			final boolean known = IdentityConstants.DeviceAttributes.DEDUPLICATED_PATHS.contains(path);
 			if (!known && value instanceof Map<?, ?> && !((Map<?, ?>) value).isEmpty()) {
 				final Map<String, Object> changedChild = new LinkedHashMap<>();
@@ -132,8 +135,8 @@ final class DeviceAttributeDeduplicator {
 	}
 
 	/**
-	 * Stores the known values in {@code attributes} as confirmed and persists them. Each known value replaces the
-	 * whole confirmed value at its path, and confirmed values at other paths are kept. Other values are ignored.
+	 * Stores the deduplicated values in {@code attributes} as confirmed and persists them. Each replaces the whole
+	 * confirmed value at its path, and confirmed values at other paths are kept. Other values are ignored.
 	 *
 	 * @param attributes the attributes confirmed by Edge
 	 */

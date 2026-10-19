@@ -37,13 +37,15 @@ import java.util.Map;
  *
  * <ol>
  *     <li>{@link #handleDeviceAttributes(Event)} sends the public API data to the rules engine.</li>
- *     <li>Each forward-operational-data consequence comes back through {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
- *     <li>Consequences wait in a FIFO queue until the active Edge request finishes. Known values
- *     ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}) that are already synced are dropped; all other
- *     values are sent to Edge.</li>
- *     <li>When Edge responds ({@link #handleDeviceAttributeResult(Event)}), the active request is released. On
- *     success the sent known values are merged into the synced values and published in {@code profileAttributes}.
- *     A {@code Device Attributes Sync Result} event reports the outcome.</li>
+ *     <li>Each matching rule returns the attributes it allows in a rule response event, handled by
+ *     {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
+ *     <li>Rule responses are queued, and one device attributes request event is sent to Edge at a time. Deduplicated
+ *     values ({@link IdentityConstants.DeviceAttributes#DEDUPLICATED_PATHS}) that are unchanged are left out; all
+ *     other values are sent.</li>
+ *     <li>When the device attributes response event for the active request arrives
+ *     ({@link #handleDeviceAttributeResult(Event)}), the next request can be sent. On success the sent deduplicated
+ *     values are stored as confirmed and published in {@code profileAttributes}. A
+ *     {@code Device Attributes Sync Result} event reports the outcome.</li>
  * </ol>
  */
 final class DeviceAttributeSync {
@@ -104,7 +106,7 @@ final class DeviceAttributeSync {
 		);
 	}
 
-	/** Queues a rule consequence until the active Edge request has completed. */
+	/** Queues a rule response until the active device attributes request has completed. */
 	void handleDeviceAttributeRuleResponse(final Event event) {
 		if (event.getEventData() == null || event.getEventData().isEmpty()) {
 			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Rule response contains no device attributes.");
@@ -114,7 +116,7 @@ final class DeviceAttributeSync {
 		processQueue();
 	}
 
-	/** Sends queued requests until one is waiting for an Edge response or the queue is empty. */
+	/** Sends queued requests until one is waiting for its response event or the queue is empty. */
 	private void processQueue() {
 		while (activeRequest == null && !pendingRequests.isEmpty()) {
 			final Event ruleResponse = pendingRequests.removeFirst();
@@ -165,7 +167,10 @@ final class DeviceAttributeSync {
 		}
 	}
 
-	/** Returns the Edge request for the changed values in {@code ruleResponse}, or null if there is nothing to send. */
+	/**
+	 * Returns the device attributes request event for the changed values in {@code ruleResponse}, or null if there is
+	 * nothing to send.
+	 */
 	private Event buildEdgeRequest(final Event ruleResponse) {
 		final Map<String, Object> attributes = new HashMap<>(ruleResponse.getEventData());
 		attributes.remove(IdentityConstants.DeviceAttributes.APP);
@@ -229,7 +234,7 @@ final class DeviceAttributeSync {
 			.build();
 	}
 
-	/** Handles the Edge response for the active request, then sends the next queued request. */
+	/** Handles the device attributes response event for the active request, then sends the next queued request. */
 	void handleDeviceAttributeResult(final Event event) {
 		if (!isResponseToActiveRequest(event)) {
 			Log.debug(
@@ -306,7 +311,7 @@ final class DeviceAttributeSync {
 		);
 	}
 
-	/** Dispatches the Device Attributes Sync Result event, chained to {@code parent}. */
+	/** Dispatches the Device Attributes Sync Result event, with {@code parent} as its parent event. */
 	private void dispatchSyncResult(
 		final String status,
 		final String reason,
@@ -329,7 +334,7 @@ final class DeviceAttributeSync {
 		);
 	}
 
-	/** A response matches when it is chained to the active request or names it in {@code requestEventId}. */
+	/** A response matches when its parent event is the active request or its {@code requestEventId} names it. */
 	private boolean isResponseToActiveRequest(final Event event) {
 		if (activeRequest == null) return false;
 		final String requestId = activeRequest.getUniqueIdentifier();
@@ -342,8 +347,8 @@ final class DeviceAttributeSync {
 	}
 
 	/**
-	 * Returns the values owned by other sources, in the same shape as the device attributes: the timezone set
-	 * through the profile attributes API and the push token in the Messaging shared state.
+	 * Returns the values their owners already hold, in the same shape as the device attributes: the timezone set
+	 * through the profile attributes API and the push token in Messaging's shared state.
 	 */
 	private Map<String, Object> ownerValues() {
 		final Map<String, Object> owners = new HashMap<>();
@@ -422,7 +427,7 @@ final class DeviceAttributeSync {
 	}
 
 	/**
-	 * Reports the active and queued requests as failed, clears them and all synced values, then republishes the
+	 * Reports the active and queued requests as failed, clears them and all confirmed values, then republishes the
 	 * profile attributes. The profile attribute store itself is cleared by
 	 * {@link IdentityState#clearProfileAttributes}.
 	 */
@@ -451,7 +456,10 @@ final class DeviceAttributeSync {
 		);
 	}
 
-	/** Publishes the synced device attributes merged with the consent-path timezone in the standard shared state. */
+	/**
+	 * Publishes the confirmed device attributes, plus the timezone from the profile attribute store, as
+	 * {@code profileAttributes} in the standard shared state.
+	 */
 	void publishProfileAttributes(final Event event) {
 		final Map<String, Object> attributes = new LinkedHashMap<>(deduplicator.readSynced());
 		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);

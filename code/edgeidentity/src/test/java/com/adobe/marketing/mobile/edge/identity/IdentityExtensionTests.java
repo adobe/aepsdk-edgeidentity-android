@@ -1136,7 +1136,7 @@ public class IdentityExtensionTests {
 		extension.handleRequestReset(resetEvent);
 
 		verify(mockIdentityState).resetIdentifiers();
-		// reset also clears synced profile attributes (and updates their shared states) for the new ECID
+		// reset also clears the stored profile and device attributes (and updates their shared states) for the new ECID
 		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
 		verify(mockExtensionApi)
 			.createSharedState(

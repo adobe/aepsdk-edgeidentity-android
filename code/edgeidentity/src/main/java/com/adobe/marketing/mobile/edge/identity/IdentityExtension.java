@@ -371,8 +371,8 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear synced profile attributes (and update their shared states) so the next update re-syncs
-		// against the new ECID
+		// Clear the stored profile and device attributes (and update their shared states) so the next update is sent
+		// again for the new ECID
 		try {
 			state.clearProfileAttributes(sharedStateHandle, event);
 			deviceAttributeSync.reset(event);
@@ -454,7 +454,8 @@ class IdentityExtension extends Extension {
 	}
 
 	/**
-	 * Handles internal device-attribute updates and dispatches an operational-data event.
+	 * Handles the {@code Update Device Attributes} event from {@link Identity#updateDeviceAttributesBypassConsent}
+	 * and forwards its data to the rules engine.
 	 *
 	 * @param event the event containing device attribute data
 	 */
