@@ -42,8 +42,8 @@ import java.util.Map;
  *     <li>Rule responses are queued, and one device attributes request event is sent to Edge at a time. Unchanged
  *     timezone and push token strings are left out; all other values are sent.</li>
  *     <li>When the device attributes response event for the active request arrives
- *     ({@link #handleDeviceAttributeResult(Event)}), the next request can be sent. On success the sent deduplicated
- *     values are stored as confirmed and published in {@code profileAttributes}. A
+ *     ({@link #handleDeviceAttributeResult(Event)}), the next request can be sent. On success the timezone and
+ *     push token that were sent are stored as confirmed and published in {@code profileAttributes}. A
  *     {@code Device Attributes Sync Result} event reports the outcome.</li>
  * </ol>
  */
@@ -347,7 +347,7 @@ final class DeviceAttributeSync {
 	}
 
 	/**
-	 * Returns the values their owners already hold, in the same shape as the device attributes: the timezone set
+	 * Returns the owner-held values, in the same shape as the device attributes: the timezone set
 	 * through the profile attributes API and the push token in Messaging's shared state.
 	 */
 	private Map<String, Object> ownerValues() {

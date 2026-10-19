@@ -234,9 +234,11 @@ public class Identity {
 	/**
 	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
 	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
-	 * push token are sent only when they differ from the last value Edge confirmed, and all other values are
-	 * always sent; set {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to
-	 * send every update. Requests are sent one at a time. Values are not validated by this API and are sent as
+	 * push token are sent only when they differ from the last value Edge confirmed. When collect consent is "y", or
+	 * the Consent extension is not registered, they are also not sent when they match the timezone set through the
+	 * profile attributes API or Messaging's push token. All other values are always sent; set
+	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to send every update.
+	 * Requests are sent one at a time. Values are not validated by this API and are sent as
 	 * provided. Only string timezone and push-token values are deduplicated. Any {@code app} value is replaced by
 	 * the SDK.
 	 *

@@ -16,7 +16,7 @@ import java.util.Map;
 
 /**
  * Stores the confirmed timezone and push token strings and filters out those that do not need to be sent again.
- * Values at any other path, and deduplicated values of an unexpected type, are always sent and never stored.
+ * Values at any other path, and a timezone or push token that is not a string, are always sent and never stored.
  */
 final class DeviceAttributeDeduplicator {
 
@@ -26,7 +26,7 @@ final class DeviceAttributeDeduplicator {
 		this.store = store;
 	}
 
-	/** The result of {@link #filter}: the values to send to Edge and the values their owner already holds. */
+	/** The result of {@link #filter}: the values to send to Edge and the owner-held values. */
 	static final class FilterResult {
 
 		final Map<String, Object> changed;
@@ -39,12 +39,14 @@ final class DeviceAttributeDeduplicator {
 	}
 
 	/**
-	 * Removes the strings that match the confirmed value or, when owners are given, the owner value.
-	 * Owner matches are returned separately and are not committed here; the caller commits them.
+	 * Removes the timezone and push token strings that match the confirmed value or the owner-held value. The owner
+	 * of the timezone is the profile attributes API, and the owner of the push token is Messaging; the values they
+	 * hold are owner-held. Owner-held values are returned separately and are not stored here; the caller stores them
+	 * as confirmed.
 	 *
 	 * @param attributes the attributes to filter
-	 * @param owners the values their owners hold, in the same shape as {@code attributes}; may be null
-	 * @return the values to send and the owner matches; each is empty when there are none
+	 * @param owners the owner-held values, in the same shape as {@code attributes}; may be null
+	 * @return the values to send and the owner-held values; each is empty when there are none
 	 */
 	FilterResult filter(final Map<String, Object> attributes, final Map<String, Object> owners) {
 		final Map<String, Object> changed = new LinkedHashMap<>();
@@ -90,7 +92,7 @@ final class DeviceAttributeDeduplicator {
 	 * Stores the timezone and push token strings in {@code attributes}, replacing the confirmed value of each.
 	 * Other values are ignored.
 	 *
-	 * @param attributes the attributes confirmed by Edge, or matched with their owner
+	 * @param attributes the attributes Edge confirmed, or owner-held values
 	 */
 	void commit(final Map<String, Object> attributes) {
 		if (attributes == null) return;
