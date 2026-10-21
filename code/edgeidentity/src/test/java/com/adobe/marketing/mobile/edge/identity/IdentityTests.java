@@ -653,7 +653,11 @@ public class IdentityTests {
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
 		}
 
-		assertEquals(attributes, eventCaptor.getValue().getEventData());
+		final Event event = eventCaptor.getValue();
+		assertEquals(IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA, event.getName());
+		assertEquals(EventType.EDGE_IDENTITY, event.getType());
+		assertEquals("com.adobe.eventSource.requestOperationalData", event.getSource());
+		assertEquals(attributes, event.getEventData());
 	}
 
 	@Test

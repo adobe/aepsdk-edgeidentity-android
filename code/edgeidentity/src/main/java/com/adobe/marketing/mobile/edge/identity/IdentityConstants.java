@@ -180,6 +180,7 @@ final class IdentityConstants {
 
 	static final class OperationalData {
 
+		static final String REQUEST_SOURCE = "com.adobe.eventSource.requestOperationalData";
 		static final String RULE_RESPONSE_SOURCE = "com.adobe.eventSource.responseOperationalData";
 		static final String EDGE_DEVICE_ATTRIBUTES_TYPE = "com.adobe.eventType.edgeDeviceAttributes";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";

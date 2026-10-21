@@ -99,11 +99,11 @@ public class IdentityExtensionTests {
 		final Event original = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
+			IdentityConstants.OperationalData.REQUEST_SOURCE
 		)
 			.setEventData(Map.of("timezone", "Asia/Tokyo"))
 			.build();
-		extension.handleOperationalData(original);
+		operationalDataListener().hear(original);
 		final Event operational = dispatched.get(0);
 		assertEquals(IdentityConstants.OperationalData.OPERATIONAL_DATA_TYPE, operational.getType());
 		assertEquals(original.getUniqueIdentifier(), operational.getParentID());
@@ -182,7 +182,7 @@ public class IdentityExtensionTests {
 			new Event.Builder(
 				IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 				EventType.EDGE_IDENTITY,
-				EventSource.REQUEST_CONTENT
+				IdentityConstants.OperationalData.REQUEST_SOURCE
 			)
 				.build(),
 			new Event.Builder("Reset", EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET).build(),
@@ -208,7 +208,11 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.PROFILE_ATTRIBUTE), eq(EventSource.REQUEST_CONTENT), any());
 		verify(mockExtensionApi)
-			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_CONTENT), any());
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(IdentityConstants.OperationalData.REQUEST_SOURCE),
+				any()
+			);
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_IDENTITY), any());
 		verify(mockExtensionApi)
@@ -236,13 +240,14 @@ public class IdentityExtensionTests {
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
+			IdentityConstants.OperationalData.REQUEST_SOURCE
 		)
 			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIME_ZONE, "UTC"))
 			.build();
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		extension.handleOperationalData(event);
+		extension.onRegistered();
+		operationalDataListener().hear(event);
 
 		final ArgumentCaptor<Event> response = ArgumentCaptor.forClass(Event.class);
 		verify(mockExtensionApi).dispatch(response.capture());
@@ -256,7 +261,7 @@ public class IdentityExtensionTests {
 		final Event event = new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
+			IdentityConstants.OperationalData.REQUEST_SOURCE
 		)
 			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIME_ZONE, "UTC"))
 			.build();
@@ -279,9 +284,83 @@ public class IdentityExtensionTests {
 			);
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		extension.handleOperationalData(event);
+		extension.onRegistered();
+		operationalDataListener().hear(event);
 
 		verify(mockExtensionApi, never()).getSharedState(any(), any(), anyBoolean(), any());
+	}
+
+	@Test
+	public void test_onRegistered_registersOperationalDataListenerOnRequestOperationalDataSource() {
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.onRegistered();
+
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq("com.adobe.eventSource.requestOperationalData"),
+				any()
+			);
+	}
+
+	@Test
+	public void test_requestContentEvent_doesNotReachOperationalDataSync() {
+		final Map<String, ExtensionEventListener> listeners = new HashMap<>();
+		doAnswer(call -> {
+				listeners.put(call.getArgument(0) + "|" + call.getArgument(1), call.getArgument(2));
+				return null;
+			})
+			.when(mockExtensionApi)
+			.registerEventListener(any(), any(), any());
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.onRegistered();
+		final Event event = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
+			EventType.EDGE_IDENTITY,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIMEZONE, "UTC"))
+			.build();
+
+		// Delivers the event the way the event hub does: only to listeners registered for its type and source.
+		final ExtensionEventListener listener = listeners.get(event.getType() + "|" + event.getSource());
+		if (listener != null) {
+			listener.hear(event);
+		}
+
+		verify(mockExtensionApi, never()).dispatch(any());
+	}
+
+	@Test
+	public void test_requestOperationalDataEventWithOtherName_isSentToRulesEngine() {
+		final Event event = new Event.Builder(
+			"Other Name",
+			EventType.EDGE_IDENTITY,
+			IdentityConstants.OperationalData.REQUEST_SOURCE
+		)
+			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIMEZONE, "UTC"))
+			.build();
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+		extension.onRegistered();
+
+		operationalDataListener().hear(event);
+
+		final ArgumentCaptor<Event> response = ArgumentCaptor.forClass(Event.class);
+		verify(mockExtensionApi).dispatch(response.capture());
+		assertEquals(IdentityConstants.OperationalData.OPERATIONAL_DATA_TYPE, response.getValue().getType());
+		assertEquals(event.getUniqueIdentifier(), response.getValue().getParentID());
+		assertEquals("UTC", response.getValue().getEventData().get(IdentityConstants.OperationalData.TIMEZONE));
+	}
+
+	private ExtensionEventListener operationalDataListener() {
+		final ArgumentCaptor<ExtensionEventListener> listener = ArgumentCaptor.forClass(ExtensionEventListener.class);
+		verify(mockExtensionApi)
+			.registerEventListener(
+				eq(EventType.EDGE_IDENTITY),
+				eq(IdentityConstants.OperationalData.REQUEST_SOURCE),
+				listener.capture()
+			);
+		return listener.getValue();
 	}
 
 	// ========================================================================================

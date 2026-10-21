@@ -101,7 +101,7 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
-	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.OperationalData#REQUEST_SOURCE}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.OperationalData#RULE_RESPONSE_SOURCE}</li>
 	 *     <li> EventType {@link IdentityConstants.OperationalData#EDGE_DEVICE_ATTRIBUTES_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
@@ -140,7 +140,11 @@ class IdentityExtension extends Extension {
 
 		// Operational data sync listeners
 		getApi()
-			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleOperationalData);
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.OperationalData.REQUEST_SOURCE,
+				operationalDataSync::handleOperationalData
+			);
 		getApi()
 			.registerEventListener(
 				EventType.EDGE_IDENTITY,
@@ -451,25 +455,6 @@ class IdentityExtension extends Extension {
 	 */
 	void handleProfileAttributes(@NonNull final Event event) {
 		state.updateProfileAttributes(event, sharedStateHandle);
-	}
-
-	/**
-	 * Handles the {@code Update Operational Data} event from {@link Identity#updateOperationalData}
-	 * and forwards its data to the rules engine.
-	 *
-	 * @param event the event containing operational data
-	 */
-	void handleOperationalData(@NonNull final Event event) {
-		if (!IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA.equals(event.getName())) {
-			Log.trace(
-				IdentityConstants.LOG_TAG,
-				LOG_SOURCE,
-				"Ignoring operational data event with unexpected name '%s'.",
-				event.getName()
-			);
-			return;
-		}
-		operationalDataSync.handleOperationalData(event);
 	}
 
 	/**

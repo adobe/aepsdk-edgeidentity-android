@@ -172,7 +172,7 @@ public class OperationalDataSyncTests {
 		return new Event.Builder(
 			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
-			EventSource.REQUEST_CONTENT
+			IdentityConstants.OperationalData.REQUEST_SOURCE
 		)
 			.setEventData(data)
 			.build();
