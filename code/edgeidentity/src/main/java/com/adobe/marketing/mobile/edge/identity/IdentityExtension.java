@@ -46,9 +46,15 @@ class IdentityExtension extends Extension {
 		public void createXDMSharedState(final Map<String, Object> state, final Event event) {
 			getApi().createXDMSharedState(state, event);
 		}
+
+		@Override
+		public void publishProfileAttributes(final Event event) {
+			operationalDataSync.publishProfileAttributes(event);
+		}
 	};
 
 	private final IdentityState state;
+	private final OperationalDataSync operationalDataSync;
 
 	/**
 	 * Constructor.
@@ -64,6 +70,7 @@ class IdentityExtension extends Extension {
 	IdentityExtension(final ExtensionApi extensionApi, final IdentityState state) {
 		super(extensionApi);
 		this.state = state;
+		this.operationalDataSync = new OperationalDataSync(extensionApi, state.getProfileAttributeStore());
 	}
 
 	@NonNull @Override
@@ -94,6 +101,9 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.OperationalData#REQUEST_SOURCE}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.OperationalData#RULE_RESPONSE_SOURCE}</li>
+	 *     <li> EventType {@link IdentityConstants.OperationalData#EDGE_DEVICE_ATTRIBUTES_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -127,6 +137,27 @@ class IdentityExtension extends Extension {
 
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
+
+		// Operational data sync listeners
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.OperationalData.REQUEST_SOURCE,
+				operationalDataSync::handleOperationalData
+			);
+		getApi()
+			.registerEventListener(
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE,
+				operationalDataSync::handleOperationalDataRuleResponse
+			);
+		getApi()
+			.registerEventListener(
+				IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE,
+				EventSource.RESPONSE_CONTENT,
+				operationalDataSync::handleOperationalDataResult
+			);
+		operationalDataSync.publishStoredProfileAttributes();
 	}
 
 	@Override
@@ -344,9 +375,20 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
-		// against the new ECID
-		state.clearProfileAttributes(sharedStateHandle, event);
+		// Clear the stored profile attributes and operational data (and update their shared states) so the next update is sent
+		// again for the new ECID
+		try {
+			state.clearProfileAttributes(sharedStateHandle, event);
+			operationalDataSync.reset(event);
+		} catch (Exception exception) {
+			// The pending XDM shared state must always be resolved, or extensions reading it would wait forever.
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to clear profile attributes and operational data during identity reset: %s",
+				exception.getLocalizedMessage()
+			);
+		}
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event

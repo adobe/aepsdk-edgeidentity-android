@@ -64,6 +64,10 @@ class IdentityState {
 		return identityProperties;
 	}
 
+	ProfileAttributeStore getProfileAttributeStore() {
+		return profileAttributeStore;
+	}
+
 	/**
 	 * Completes init for this Identity extension.
 	 * If no ECID is loaded from persistence (ideally meaning first launch), attempts to migrate existing ECID
@@ -370,7 +374,7 @@ class IdentityState {
 	void updateProfileAttributes(final Event event, final SharedStateCallback callback) {
 		final Map<String, Object> eventData = event.getEventData();
 		if (MapUtils.isNullOrEmpty(eventData)) {
-			Log.warning(
+			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Event data is null or empty for '" + event.getName() + "'; skipping update."
@@ -390,7 +394,7 @@ class IdentityState {
 		}
 
 		if (mergedAttributes.isEmpty()) {
-			Log.warning(
+			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"No profile attributes collected from event data; skipping update."
@@ -398,8 +402,9 @@ class IdentityState {
 			return;
 		}
 
-		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
+		// Persistence just changed: keep the shared states in sync, then dispatch only the changes.
 		publishProfileAttributesSharedState(callback, event);
+		callback.publishProfileAttributes(event);
 		dispatchProfileAttributesEdgeEvent(mergedAttributes);
 	}
 
