@@ -137,6 +137,8 @@ public class IdentityStateTests {
 			Collections.singletonMap(TIMEZONE_KEY, "Asia/Kolkata")
 		);
 		verify(mockSharedStateCallback).createXDMSharedState(expectedXDMState, null);
+		// The standard profileAttributes shared state is published at registration when stored values exist, not at bootup.
+		verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 	}
 
 	@Test
@@ -831,6 +833,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -851,6 +854,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -877,6 +881,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(any(), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -917,6 +922,7 @@ public class IdentityStateTests {
 				"{ \"profileAttributes\": { \"timeZone\": \"America/New_York\" } }",
 				sharedStateCaptor.getValue()
 			);
+			verify(mockSharedStateCallback).publishProfileAttributes(event);
 		}
 	}
 
@@ -932,6 +938,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 
@@ -946,6 +953,7 @@ public class IdentityStateTests {
 			verify(mockProfileAttributeStore, never()).setString(eq(TIMEZONE_KEY), any());
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any()), never());
 			verify(mockSharedStateCallback, never()).createXDMSharedState(any(), any());
+			verify(mockSharedStateCallback, never()).publishProfileAttributes(any());
 		}
 	}
 

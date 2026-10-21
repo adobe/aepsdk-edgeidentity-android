@@ -15,9 +15,8 @@ import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.services.NamedCollection;
 
 /**
- * Thin, null-safe wrapper around the profile-attributes {@link NamedCollection}. Each
- * {@link ProfileAttributeHandler} owns its own persistence key and reads/writes through this
- * store, keeping per-attribute persistence concerns out of {@link IdentityStorageManager}.
+ * Thin, null-safe wrapper around an attribute {@link NamedCollection}. Profile handlers and
+ * device-attribute synchronization use separate collections with the same persistence helpers.
  *
  * <p>All operations no-op (and log a warning) when the underlying collection is unavailable.
  */
@@ -43,7 +42,7 @@ class ProfileAttributeStore {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Profile attributes named collection is null. Unable to read key '" + key + "'."
+				"Attribute named collection is null. Unable to read key '" + key + "'."
 			);
 			return null;
 		}
@@ -61,7 +60,7 @@ class ProfileAttributeStore {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Profile attributes named collection is null. Unable to write key '" + key + "'."
+				"Attribute named collection is null. Unable to write key '" + key + "'."
 			);
 			return;
 		}
@@ -82,7 +81,7 @@ class ProfileAttributeStore {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Profile attributes named collection is null. Unable to remove key '" + key + "'."
+				"Attribute named collection is null. Unable to remove key '" + key + "'."
 			);
 			return;
 		}
@@ -90,7 +89,7 @@ class ProfileAttributeStore {
 	}
 
 	/**
-	 * Clears every key in the profile-attributes collection. Invoked on reset to force a fresh
+	 * Clears every key in the attribute collection. Invoked on reset to force a fresh
 	 * sync against the new ECID.
 	 */
 	void clearAll() {
@@ -98,7 +97,7 @@ class ProfileAttributeStore {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Profile attributes named collection is null. Unable to clear profile attributes."
+				"Attribute named collection is null. Unable to clear stored attributes."
 			);
 			return;
 		}
