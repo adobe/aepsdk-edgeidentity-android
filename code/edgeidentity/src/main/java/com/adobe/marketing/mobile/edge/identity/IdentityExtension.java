@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
@@ -58,7 +56,7 @@ class IdentityExtension extends Extension {
 	 *
 	 * @param extensionApi {@link ExtensionApi} instance
 	 */
-	protected IdentityExtension(ExtensionApi extensionApi) {
+	protected IdentityExtension(final ExtensionApi extensionApi) {
 		this(extensionApi, new IdentityState());
 	}
 
@@ -91,6 +89,7 @@ class IdentityExtension extends Extension {
 	 * <ul>
 	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
 	 *     <li> EventType {@link EventType#GENERIC_IDENTITY} and EventSource {@link EventSource#REQUEST_RESET}</li>
+	 *     <li> EventType {@link EventType#PROFILE_ATTRIBUTE} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#UPDATE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
@@ -108,6 +107,14 @@ class IdentityExtension extends Extension {
 
 		getApi().registerEventListener(EventType.GENERIC_IDENTITY, EventSource.REQUEST_RESET, this::handleRequestReset);
 
+		// PROFILE_ATTRIBUTE event listener
+		getApi()
+			.registerEventListener(
+				EventType.PROFILE_ATTRIBUTE,
+				EventSource.REQUEST_CONTENT,
+				this::handleProfileAttributes
+			);
+
 		// EDGE_IDENTITY event listeners
 		getApi()
 			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_IDENTITY, this::handleRequestIdentity);
@@ -123,7 +130,7 @@ class IdentityExtension extends Extension {
 	}
 
 	@Override
-	public boolean readyForEvent(@NonNull Event event) {
+	public boolean readyForEvent(@NonNull final Event event) {
 		if (!state.bootupIfReady(sharedStateHandle)) return false;
 
 		// Get url variables request depends on Configuration shared state
@@ -237,7 +244,7 @@ class IdentityExtension extends Extension {
 			.build();
 
 		if (StringUtils.isNullOrEmpty(urlVariables) && !StringUtils.isNullOrEmpty(errorMsg)) {
-			Log.warning(LOG_TAG, LOG_SOURCE, errorMsg);
+			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, errorMsg);
 		}
 
 		getApi().dispatch(responseEvent);
@@ -255,7 +262,7 @@ class IdentityExtension extends Extension {
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
-			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot update identifiers, event data is null.");
+			Log.trace(IdentityConstants.LOG_TAG, LOG_SOURCE, "Cannot update identifiers, event data is null.");
 			resolver.resolve(state.getIdentityProperties().toXDMData());
 			return;
 		}
@@ -264,7 +271,7 @@ class IdentityExtension extends Extension {
 
 		if (map == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Failed to update identifiers as no identifiers were found in the event data."
 			);
@@ -288,7 +295,7 @@ class IdentityExtension extends Extension {
 		final Map<String, Object> eventData = event.getEventData();
 
 		if (eventData == null) {
-			Log.trace(LOG_TAG, LOG_SOURCE, "Cannot remove identifiers, event data is null.");
+			Log.trace(IdentityConstants.LOG_TAG, LOG_SOURCE, "Cannot remove identifiers, event data is null.");
 			resolver.resolve(state.getIdentityProperties().toXDMData());
 			return;
 		}
@@ -297,7 +304,7 @@ class IdentityExtension extends Extension {
 
 		if (map == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Failed to remove identifiers as no identifiers were found in the event data."
 			);
@@ -337,6 +344,9 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
+		// Clear synced profile attributes (and update their shared state) so the next update re-syncs
+		// against the new ECID
+		state.clearProfileAttributes(sharedStateHandle, event);
 		resolver.resolve(state.getIdentityProperties().toXDMData());
 
 		// dispatch reset complete event
@@ -395,11 +405,22 @@ class IdentityExtension extends Extension {
 	}
 
 	/**
+	 * Handles {@link EventType#PROFILE_ATTRIBUTE} request content events dispatched by
+	 * {@code MobileCore.updateProfileAttributes}. Delegates to the {@link IdentityState} collector
+	 * layer, which decides per attribute what (if anything) to sync.
+	 *
+	 * @param event the {@link Event} containing profile attribute data
+	 */
+	void handleProfileAttributes(@NonNull final Event event) {
+		state.updateProfileAttributes(event, sharedStateHandle);
+	}
+
+	/**
 	 * Fetches the latest Identity properties and shares the XDMSharedState.
 	 *
 	 * @param event the {@link Event} that triggered the XDM shared state change
 	 */
 	private void shareIdentityXDMSharedState(final Event event) {
-		sharedStateHandle.createXDMSharedState(state.getIdentityProperties().toXDMData(), event);
+		sharedStateHandle.createXDMSharedState(state.buildXDMSharedState(), event);
 	}
 }

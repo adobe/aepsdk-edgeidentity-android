@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import com.adobe.marketing.mobile.services.Log;
 import com.adobe.marketing.mobile.util.StringUtils;
 import java.util.Arrays;
@@ -153,7 +151,11 @@ class IdentityProperties {
 
 		// do not set secondary ECID if primary ECID is not set
 		if (getECID() == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Cannot set secondary ECID value as no primary ECID exists.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Cannot set secondary ECID value as no primary ECID exists."
+			);
 			return;
 		}
 
@@ -259,7 +261,7 @@ class IdentityProperties {
 					reservedNamespace.equalsIgnoreCase(IdentityConstants.Namespaces.IDFA)
 				) {
 					Log.debug(
-						LOG_TAG,
+						IdentityConstants.LOG_TAG,
 						LOG_SOURCE,
 						String.format(
 							"Operation not allowed for namespace %s; use MobileCore.setAdvertisingIdentifier instead.",
@@ -268,7 +270,7 @@ class IdentityProperties {
 					);
 				} else {
 					Log.debug(
-						LOG_TAG,
+						IdentityConstants.LOG_TAG,
 						LOG_SOURCE,
 						String.format(
 							"Updating/Removing identifiers in namespace %s is not allowed.",

@@ -20,7 +20,9 @@ aepLibrary {
     namespace = "com.adobe.marketing.mobile.edge.identity"
     enableSpotless = true
     enableSpotlessPrettierForJava = true
- 
+    enableCheckStyle = true
+    enableDokkaDoc = true
+
     publishing {
         gitRepoName = "aepsdk-edgeidentity-android"
         addCoreDependency(mavenCoreVersion)

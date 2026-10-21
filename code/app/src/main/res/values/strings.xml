@@ -60,4 +60,9 @@
 
     <!-- Labels -->
     <string name="label_enter_ad_id">Enter Ad ID</string>
+
+    <!-- Profile Attributes -->
+    <string name="menu_profile_attributes">Profile Attributes</string>
+    <string name="btn_sync_timezone">Sync Timezone</string>
+    <string name="hint_timezone">e.g. America/New_York</string>
 </resources>

@@ -81,6 +81,8 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.GENERIC_IDENTITY), eq(EventSource.REQUEST_RESET), any());
 		verify(mockExtensionApi)
+			.registerEventListener(eq(EventType.PROFILE_ATTRIBUTE), eq(EventSource.REQUEST_CONTENT), any());
+		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.REQUEST_IDENTITY), any());
 		verify(mockExtensionApi)
 			.registerEventListener(eq(EventType.EDGE_IDENTITY), eq(EventSource.UPDATE_IDENTITY), any());
@@ -899,6 +901,35 @@ public class IdentityExtensionTests {
 	}
 
 	// ========================================================================================
+	// handleProfileAttributes
+	// ========================================================================================
+
+	@Test
+	public void test_handleProfileAttributes_routesToUpdateProfileAttributes() {
+		// Setup
+		final Event event = new Event.Builder(
+			"Update Profile Attributes",
+			EventType.PROFILE_ATTRIBUTE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(
+				new HashMap<String, Object>() {
+					{
+						put("timeZone", "America/New_York");
+					}
+				}
+			)
+			.build();
+
+		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
+
+		// Test
+		extension.handleProfileAttributes(event);
+
+		verify(mockIdentityState).updateProfileAttributes(eq(event), any());
+	}
+
+	// ========================================================================================
 	// handleRequestReset
 	// ========================================================================================
 
@@ -916,6 +947,8 @@ public class IdentityExtensionTests {
 		extension.handleRequestReset(resetEvent);
 
 		verify(mockIdentityState).resetIdentifiers();
+		// reset also clears synced profile attributes (and updates their shared state) for the new ECID
+		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
 
 		// verify pending state is created and resolved
 		verify(mockExtensionApi).createPendingXDMSharedState(eq(resetEvent));

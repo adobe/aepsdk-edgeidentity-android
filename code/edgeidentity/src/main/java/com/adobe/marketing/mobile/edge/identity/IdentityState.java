@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import com.adobe.marketing.mobile.Event;
@@ -26,6 +24,7 @@ import com.adobe.marketing.mobile.services.ServiceProvider;
 import com.adobe.marketing.mobile.util.DataReader;
 import com.adobe.marketing.mobile.util.MapUtils;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,8 +35,10 @@ class IdentityState {
 	private static final String LOG_SOURCE = "IdentityState";
 
 	private final IdentityStorageManager identityStorageManager;
+	private final ProfileAttributeStore profileAttributeStore;
 	private IdentityProperties identityProperties;
 	private boolean hasBooted;
+	private final List<ProfileAttributeHandler> profileAttributeHandlers;
 
 	IdentityState() {
 		this(new IdentityStorageManager(ServiceProvider.getInstance().getDataStoreService()));
@@ -49,6 +50,8 @@ class IdentityState {
 	@VisibleForTesting
 	IdentityState(final IdentityStorageManager identityStorageManager) {
 		this.identityStorageManager = identityStorageManager;
+		this.profileAttributeStore = identityStorageManager.getProfileAttributeStore();
+		this.profileAttributeHandlers = ProfileAttributeHandlers.all(profileAttributeStore);
 
 		final IdentityProperties persistedProperties = identityStorageManager.loadPropertiesFromPersistence();
 		this.identityProperties = (persistedProperties != null) ? persistedProperties : new IdentityProperties();
@@ -79,67 +82,84 @@ class IdentityState {
 
 		// Reuse the ECID from Identity Direct (if registered) or generate new ECID on first launch
 		if (identityProperties.getECID() == null) {
-			// Wait for all extensions to be registered as forthcoming logic depends on Identity Direct state.
-			// This is inferred via EventHub's shared state and is based on the assumption that EventHub
-			// sets its state only when all the extensions are registered initially.
-			final SharedStateResult eventHubStateResult = callback.getSharedState(
-				IdentityConstants.SharedState.Hub.NAME,
-				null
-			);
-			if (eventHubStateResult == null || eventHubStateResult.getStatus() != SharedStateStatus.SET) {
+			if (!loadEcidForBootup(callback)) {
 				return false;
 			}
-
-			// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
-			final ECID directIdentityEcid = identityStorageManager.loadEcidFromDirectIdentityPersistence();
-
-			if (directIdentityEcid != null) {
-				identityProperties.setECID(directIdentityEcid);
-				Log.debug(
-					LOG_TAG,
-					LOG_SOURCE,
-					"On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'"
-				);
-			}
-			// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
-			else if (isIdentityDirectRegistered(eventHubStateResult.getValue())) {
-				// If the direct Identity extension is registered, attempt to get its shared state
-				final SharedStateResult sharedStateResult = callback.getSharedState(
-					IdentityConstants.SharedState.IdentityDirect.NAME,
-					null
-				);
-
-				// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
-				if (sharedStateResult == null || sharedStateResult.getStatus() != SharedStateStatus.SET) {
-					Log.debug(
-						LOG_TAG,
-						LOG_SOURCE,
-						"On bootup direct Identity extension is registered, waiting for its state change."
-					);
-					return false;
-				}
-
-				final Map<String, Object> identityDirectSharedState = sharedStateResult.getValue();
-				handleECIDFromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
-			}
-			// Generate a new ECID as the direct Identity extension is not registered with the SDK and there was no direct Identity persisted ECID
-			else {
-				identityProperties.setECID(new ECID());
-				Log.debug(
-					LOG_TAG,
-					LOG_SOURCE,
-					"Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'"
-				);
-			}
-
-			identityStorageManager.savePropertiesToPersistence(identityProperties);
 		}
 
 		hasBooted = true;
-		Log.debug(LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
-		callback.createXDMSharedState(identityProperties.toXDMData(), null);
+		Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Edge Identity has successfully booted up");
+		publishProfileAttributesSharedState(callback, null);
 
 		return hasBooted;
+	}
+
+	/**
+	 * Loads or generates the ECID during bootup when no ECID is currently set. Attempts to migrate an
+	 * existing ECID from the direct Identity extension (from its persisted store, or from its shared state
+	 * if the extension is registered), otherwise generates a new ECID. The resolved
+	 * {@code identityProperties} are saved to persistence.
+	 *
+	 * @param callback {@link SharedStateCallback} used to get the EventHub and/or Identity direct shared state
+	 * @return true once an ECID has been resolved and persisted; false if bootup should be deferred until a
+	 *         required shared state becomes available
+	 */
+	private boolean loadEcidForBootup(final SharedStateCallback callback) {
+		// Wait for all extensions to be registered as forthcoming logic depends on Identity Direct state.
+		// This is inferred via EventHub's shared state and is based on the assumption that EventHub
+		// sets its state only when all the extensions are registered initially.
+		final SharedStateResult eventHubStateResult = callback.getSharedState(
+			IdentityConstants.SharedState.Hub.NAME,
+			null
+		);
+		if (eventHubStateResult == null || eventHubStateResult.getStatus() != SharedStateStatus.SET) {
+			return false;
+		}
+
+		// Attempt to get ECID from direct Identity persistence to migrate an existing ECID
+		final ECID directIdentityEcid = identityStorageManager.loadEcidFromDirectIdentityPersistence();
+
+		if (directIdentityEcid != null) {
+			identityProperties.setECID(directIdentityEcid);
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"On bootup Loading ECID from direct Identity extension '" + directIdentityEcid + "'"
+			);
+		}
+		// If direct Identity has no persisted ECID, check if direct Identity is registered with the SDK
+		else if (isIdentityDirectRegistered(eventHubStateResult.getValue())) {
+			// If the direct Identity extension is registered, attempt to get its shared state
+			final SharedStateResult sharedStateResult = callback.getSharedState(
+				IdentityConstants.SharedState.IdentityDirect.NAME,
+				null
+			);
+
+			// If there is no direct Identity shared state, abort boot-up and try again when direct Identity shares its state
+			if (sharedStateResult == null || sharedStateResult.getStatus() != SharedStateStatus.SET) {
+				Log.debug(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"On bootup direct Identity extension is registered, waiting for its state change."
+				);
+				return false;
+			}
+
+			final Map<String, Object> identityDirectSharedState = sharedStateResult.getValue();
+			handleECIDFromIdentityDirect(EventUtils.getECID(identityDirectSharedState));
+		}
+		// Generate a new ECID as the direct Identity extension is not registered with the SDK and there was no direct Identity persisted ECID
+		else {
+			identityProperties.setECID(new ECID());
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Generating new ECID on bootup '" + identityProperties.getECID().toString() + "'"
+			);
+		}
+
+		identityStorageManager.savePropertiesToPersistence(identityProperties);
+		return true;
 	}
 
 	/**
@@ -209,7 +229,7 @@ class IdentityState {
 
 		// Save to persistence
 		identityStorageManager.savePropertiesToPersistence(identityProperties);
-		callback.createXDMSharedState(identityProperties.toXDMData(), event);
+		callback.createXDMSharedState(buildXDMSharedState(), event);
 	}
 
 	/**
@@ -235,7 +255,7 @@ class IdentityState {
 		identityProperties.setECIDSecondary(legacyEcid);
 		identityStorageManager.savePropertiesToPersistence(identityProperties);
 		Log.debug(
-			LOG_TAG,
+			IdentityConstants.LOG_TAG,
 			LOG_SOURCE,
 			"Identity direct ECID updated to '" + legacyEcid + "', updating the IdentityMap"
 		);
@@ -253,14 +273,14 @@ class IdentityState {
 		if (legacyEcid != null) {
 			identityProperties.setECID(legacyEcid); // migrate legacy ECID
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Identity direct ECID '" + legacyEcid + "' " + "was migrated to Edge Identity, updating the IdentityMap"
 			);
 		} else { // opt-out scenario or an unexpected state for Identity direct, generate new ECID
 			identityProperties.setECID(new ECID());
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Identity direct ECID is null, generating new ECID '" +
 				identityProperties.getECID() +
@@ -335,5 +355,141 @@ class IdentityState {
 			.build();
 
 		MobileCore.dispatchEvent(consentEvent);
+	}
+
+	/**
+	 * Collector layer for profile-attribute update requests. Runs every {@link ProfileAttributeHandler}
+	 * whose key is present in the event (each owns its own dedup + persistence) and dispatches a
+	 * single collated {@code profile.updateAttributes} Edge event with whatever changed. When
+	 * anything changed, the profile-attributes shared state is also (re)published from persistence
+	 * so it stays in sync with storage.
+	 *
+	 * @param event the profile attributes update {@link Event}
+	 * @param callback {@link SharedStateCallback} used to publish the profile-attributes shared state
+	 */
+	void updateProfileAttributes(final Event event, final SharedStateCallback callback) {
+		final Map<String, Object> eventData = event.getEventData();
+		if (MapUtils.isNullOrEmpty(eventData)) {
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Event data is null or empty for '" + event.getName() + "'; skipping update."
+			);
+			return;
+		}
+
+		final Map<String, Object> mergedAttributes = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			if (!eventData.containsKey(handler.getAttributeKey())) {
+				continue;
+			}
+			final Map<String, Object> attributes = handler.collectFromEvent(event);
+			if (attributes != null) {
+				mergedAttributes.putAll(attributes);
+			}
+		}
+
+		if (mergedAttributes.isEmpty()) {
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"No profile attributes collected from event data; skipping update."
+			);
+			return;
+		}
+
+		// Persistence just changed: keep the shared state in sync, then dispatch only the changes.
+		publishProfileAttributesSharedState(callback, event);
+		dispatchProfileAttributesEdgeEvent(mergedAttributes);
+	}
+
+	/**
+	 * Clears all stored profile attributes and updates the shared state to match (now empty). Invoked
+	 * on reset so that the next update re-syncs the attributes against the newly generated ECID.
+	 *
+	 * @param callback {@link SharedStateCallback} used to publish the updated (empty) shared state
+	 * @param event the reset {@link Event} the shared state is versioned at
+	 */
+	void clearProfileAttributes(final SharedStateCallback callback, final Event event) {
+		profileAttributeStore.clearAll();
+		publishProfileAttributesSharedState(callback, event);
+	}
+
+	/**
+	 * Dispatches a single generic {@code profile.updateAttributes} {@link EventType#EDGE} /
+	 * {@link EventSource#REQUEST_CONTENT} event whose {@code data} is the collated contribution of
+	 * all {@link ProfileAttributeHandler}s (currently only the timezone handler). Callers must only
+	 * invoke this with a non-empty {@code data} map (see {@link #updateProfileAttributes}). The
+	 * payload shape is
+	 * {@code {"xdm": {"eventType": "profile.updateAttributes"}, "data": { ...collated attributes... }}};
+	 * the Edge extension enriches it with {@code _id}, {@code timestamp}, implementationDetails,
+	 * and identityMap.
+	 *
+	 * @param data the collated profile attributes payload; must not be null or empty
+	 */
+	private void dispatchProfileAttributesEdgeEvent(final Map<String, Object> data) {
+		final Map<String, Object> xdm = new HashMap<>();
+		xdm.put(
+			IdentityConstants.ProfileAttributes.EVENT_TYPE,
+			IdentityConstants.ProfileAttributes.XDM_EVENT_TYPE_UPDATE_ATTRIBUTES
+		);
+
+		final Map<String, Object> eventData = new HashMap<>();
+		eventData.put(IdentityConstants.ProfileAttributes.XDM, xdm);
+		eventData.put(IdentityConstants.ProfileAttributes.DATA, data);
+
+		final Event edgeEvent = new Event.Builder(
+			IdentityConstants.EventNames.UPDATE_PROFILE_ATTRIBUTES,
+			EventType.EDGE,
+			EventSource.REQUEST_CONTENT
+		)
+			.setEventData(eventData)
+			.build();
+
+		MobileCore.dispatchEvent(edgeEvent);
+	}
+
+	/**
+	 * Publishes the full XDM shared state, merging the identity map with any stored profile
+	 * attributes under the {@code profileAttributes} key. Called on bootup, after any profile
+	 * attribute change, and after reset.
+	 *
+	 * @param callback {@link SharedStateCallback} used to create the XDM shared state
+	 * @param event the {@link Event} the shared state is versioned at; {@code null} for the next version
+	 */
+	private void publishProfileAttributesSharedState(final SharedStateCallback callback, final Event event) {
+		callback.createXDMSharedState(buildXDMSharedState(), event);
+	}
+
+	/**
+	 * Builds the full XDM shared state map, combining the identity map with any stored profile
+	 * attributes nested under {@link IdentityConstants.XDMKeys#PROFILE_ATTRIBUTES}. The
+	 * {@code profileAttributes} key is omitted when no attributes are stored.
+	 *
+	 * @return the merged XDM state map
+	 */
+	Map<String, Object> buildXDMSharedState() {
+		final Map<String, Object> xdmState = new HashMap<>(identityProperties.toXDMData(false));
+		final Map<String, Object> attributes = collectStoredProfileAttributes();
+		if (!attributes.isEmpty()) {
+			xdmState.put(IdentityConstants.XDMKeys.PROFILE_ATTRIBUTES, attributes);
+		}
+		return xdmState;
+	}
+
+	/**
+	 * Collates every {@link ProfileAttributeHandler}'s persisted contribution into a single map.
+	 *
+	 * @return the collated stored attributes; empty when nothing is persisted
+	 */
+	private Map<String, Object> collectStoredProfileAttributes() {
+		final Map<String, Object> mergedData = new HashMap<>();
+		for (final ProfileAttributeHandler handler : profileAttributeHandlers) {
+			final Map<String, Object> attributes = handler.collectFromStorage();
+			if (attributes != null) {
+				mergedData.putAll(attributes);
+			}
+		}
+		return mergedData;
 	}
 }

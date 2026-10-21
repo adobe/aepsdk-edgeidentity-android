@@ -47,6 +47,9 @@ public class IdentityStorageManagerTests {
 	@Mock
 	private NamedCollection mockDirectIdentityNamedCollection;
 
+	@Mock
+	private NamedCollection mockProfileAttributesNamedCollection;
+
 	@Before
 	public void before() throws Exception {
 		MockitoAnnotations.openMocks(this);
@@ -59,6 +62,8 @@ public class IdentityStorageManagerTests {
 			.thenReturn(mockEdgeIdentityNamedCollection);
 		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.IDENTITY_DIRECT_DATASTORE_NAME))
 			.thenReturn(mockDirectIdentityNamedCollection);
+		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME))
+			.thenReturn(mockProfileAttributesNamedCollection);
 	}
 
 	@Test
@@ -199,6 +204,30 @@ public class IdentityStorageManagerTests {
 		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
 
 		assertNull(identityStorageManager.loadEcidFromDirectIdentityPersistence());
+	}
+
+	@Test
+	public void testGetProfileAttributeStore_returnsStoreBackedByProfileAttributesCollection() {
+		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
+
+		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
+
+		// Round-trip a write through the store; assert it lands on the underlying NamedCollection.
+		store.setString("timeZone", "Asia/Kolkata");
+		verify(mockProfileAttributesNamedCollection, times(1)).setString("timeZone", "Asia/Kolkata");
+	}
+
+	@Test
+	public void testGetProfileAttributeStore_whenCollectionIsNull_storeNoOps() {
+		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.PROFILE_ATTRIBUTES_DATASTORE_NAME))
+			.thenReturn(null);
+		final IdentityStorageManager identityStorageManager = new IdentityStorageManager(mockDataStoreService);
+
+		// Wraps a null NamedCollection but never throws; reads return null, writes are no-ops.
+		final ProfileAttributeStore store = identityStorageManager.getProfileAttributeStore();
+		assertNull(store.getString("timeZone"));
+		store.setString("timeZone", "Asia/Kolkata");
+		store.clearAll();
 	}
 
 	@After

@@ -11,8 +11,6 @@
 
 package com.adobe.marketing.mobile.edge.identity;
 
-import static com.adobe.marketing.mobile.edge.identity.IdentityConstants.LOG_TAG;
-
 import androidx.annotation.NonNull;
 import com.adobe.marketing.mobile.AdobeCallback;
 import com.adobe.marketing.mobile.AdobeCallbackWithError;
@@ -59,7 +57,11 @@ public class Identity {
 	 */
 	public static void getExperienceCloudId(@NonNull final AdobeCallback<String> callback) {
 		if (callback == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Unexpected null callback, provide a callback to retrieve current ECID.");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unexpected null callback, provide a callback to retrieve current ECID."
+			);
 			return;
 		}
 
@@ -82,7 +84,7 @@ public class Identity {
 
 				if (identityMap == null) {
 					Log.debug(
-						LOG_TAG,
+						IdentityConstants.LOG_TAG,
 						LOG_SOURCE,
 						"Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
 					);
@@ -105,7 +107,7 @@ public class Identity {
 			public void fail(final AdobeError adobeError) {
 				returnError(callback, adobeError);
 				Log.debug(
-					LOG_TAG,
+					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
 					String.format(
 						"Failed to dispatch %s event: Error : %s.",
@@ -139,7 +141,7 @@ public class Identity {
 	public static void getUrlVariables(@NonNull final AdobeCallback<String> callback) {
 		if (callback == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Unexpected null callback, provide a callback to retrieve current visitor identifiers (URLVariables) query string."
 			);
@@ -186,7 +188,7 @@ public class Identity {
 			public void fail(final AdobeError adobeError) {
 				returnError(callback, adobeError);
 				Log.debug(
-					LOG_TAG,
+					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
 					String.format(
 						"Failed to dispatch %s event: Error : %s.",
@@ -210,7 +212,11 @@ public class Identity {
 	 */
 	public static void updateIdentities(@NonNull final IdentityMap identityMap) {
 		if (identityMap == null || identityMap.isEmpty()) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Unable to updateIdentities, IdentityMap is null or empty");
+			Log.debug(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to updateIdentities, IdentityMap is null or empty"
+			);
 			return;
 		}
 
@@ -234,12 +240,12 @@ public class Identity {
 	 */
 	public static void removeIdentity(@NonNull final IdentityItem item, @NonNull final String namespace) {
 		if (StringUtils.isNullOrEmpty(namespace)) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Unable to removeIdentity, namespace is null or empty");
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Unable to removeIdentity, namespace is null or empty");
 			return;
 		}
 
 		if (item == null) {
-			Log.debug(LOG_TAG, LOG_SOURCE, "Unable to removeIdentity, IdentityItem is null");
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Unable to removeIdentity, IdentityItem is null");
 			return;
 		}
 
@@ -266,7 +272,7 @@ public class Identity {
 	public static void getIdentities(@NonNull final AdobeCallback<IdentityMap> callback) {
 		if (callback == null) {
 			Log.debug(
-				LOG_TAG,
+				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
 				"Unexpected null callback, provide a callback to retrieve current IdentityMap."
 			);
@@ -292,7 +298,7 @@ public class Identity {
 
 				if (identityMap == null) {
 					Log.debug(
-						LOG_TAG,
+						IdentityConstants.LOG_TAG,
 						LOG_SOURCE,
 						"Failed to read IdentityMap from response event, invoking error callback with AdobeError.UNEXPECTED_ERROR"
 					);
@@ -307,7 +313,7 @@ public class Identity {
 			public void fail(final AdobeError adobeError) {
 				returnError(callback, adobeError);
 				Log.debug(
-					LOG_TAG,
+					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
 					String.format(
 						"Failed to dispatch %s event: Error : %s.",
