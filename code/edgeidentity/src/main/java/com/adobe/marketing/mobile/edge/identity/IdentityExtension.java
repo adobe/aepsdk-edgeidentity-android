@@ -49,12 +49,12 @@ class IdentityExtension extends Extension {
 
 		@Override
 		public void publishProfileAttributes(final Event event) {
-			deviceAttributeSync.publishProfileAttributes(event);
+			operationalDataSync.publishProfileAttributes(event);
 		}
 	};
 
 	private final IdentityState state;
-	private final DeviceAttributeSync deviceAttributeSync;
+	private final OperationalDataSync operationalDataSync;
 
 	/**
 	 * Constructor.
@@ -70,7 +70,7 @@ class IdentityExtension extends Extension {
 	IdentityExtension(final ExtensionApi extensionApi, final IdentityState state) {
 		super(extensionApi);
 		this.state = state;
-		this.deviceAttributeSync = new DeviceAttributeSync(extensionApi, state.getProfileAttributeStore());
+		this.operationalDataSync = new OperationalDataSync(extensionApi, state.getProfileAttributeStore());
 	}
 
 	@NonNull @Override
@@ -102,8 +102,8 @@ class IdentityExtension extends Extension {
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REMOVE_IDENTITY}</li>
 	 *     <li> EventType {@link EventType#HUB} and EventSource {@link EventSource#SHARED_STATE}</li>
 	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link EventSource#REQUEST_CONTENT}</li>
-	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.DeviceAttributes#RULE_RESPONSE_SOURCE}</li>
-	 *     <li> EventType {@link IdentityConstants.DeviceAttributes#BYPASS_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
+	 *     <li> EventType {@link EventType#EDGE_IDENTITY} and EventSource {@link IdentityConstants.OperationalData#RULE_RESPONSE_SOURCE}</li>
+	 *     <li> EventType {@link IdentityConstants.OperationalData#EDGE_DEVICE_ATTRIBUTES_TYPE} and EventSource {@link EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -138,22 +138,22 @@ class IdentityExtension extends Extension {
 		// HUB shared state event listener
 		getApi().registerEventListener(EventType.HUB, EventSource.SHARED_STATE, this::handleIdentityDirectECIDUpdate);
 
-		// Device attribute sync listeners
+		// Operational data sync listeners
 		getApi()
-			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleDeviceAttributes);
+			.registerEventListener(EventType.EDGE_IDENTITY, EventSource.REQUEST_CONTENT, this::handleOperationalData);
 		getApi()
 			.registerEventListener(
 				EventType.EDGE_IDENTITY,
-				IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE,
-				deviceAttributeSync::handleDeviceAttributeRuleResponse
+				IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE,
+				operationalDataSync::handleOperationalDataRuleResponse
 			);
 		getApi()
 			.registerEventListener(
-				IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+				IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE,
 				EventSource.RESPONSE_CONTENT,
-				deviceAttributeSync::handleDeviceAttributeResult
+				operationalDataSync::handleOperationalDataResult
 			);
-		deviceAttributeSync.publishStoredProfileAttributes();
+		operationalDataSync.publishStoredProfileAttributes();
 	}
 
 	@Override
@@ -371,17 +371,17 @@ class IdentityExtension extends Extension {
 		// Add pending shared state to avoid race condition between updating and reading identity map
 		final SharedStateResolver resolver = getApi().createPendingXDMSharedState(event);
 		state.resetIdentifiers();
-		// Clear the stored profile and device attributes (and update their shared states) so the next update is sent
+		// Clear the stored profile attributes and operational data (and update their shared states) so the next update is sent
 		// again for the new ECID
 		try {
 			state.clearProfileAttributes(sharedStateHandle, event);
-			deviceAttributeSync.reset(event);
+			operationalDataSync.reset(event);
 		} catch (Exception exception) {
 			// The pending XDM shared state must always be resolved, or extensions reading it would wait forever.
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Unable to clear profile and device attributes during identity reset: %s",
+				"Unable to clear profile attributes and operational data during identity reset: %s",
 				exception.getLocalizedMessage()
 			);
 		}
@@ -454,22 +454,22 @@ class IdentityExtension extends Extension {
 	}
 
 	/**
-	 * Handles the {@code Update Device Attributes} event from {@link Identity#updateDeviceAttributesBypassConsent}
+	 * Handles the {@code Update Operational Data} event from {@link Identity#updateOperationalData}
 	 * and forwards its data to the rules engine.
 	 *
-	 * @param event the event containing device attribute data
+	 * @param event the event containing operational data
 	 */
-	void handleDeviceAttributes(@NonNull final Event event) {
-		if (!IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES.equals(event.getName())) {
+	void handleOperationalData(@NonNull final Event event) {
+		if (!IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA.equals(event.getName())) {
 			Log.trace(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Ignoring device attribute event with unexpected name '%s'.",
+				"Ignoring operational data event with unexpected name '%s'.",
 				event.getName()
 			);
 			return;
 		}
-		deviceAttributeSync.handleDeviceAttributes(event);
+		operationalDataSync.handleOperationalData(event);
 	}
 
 	/**

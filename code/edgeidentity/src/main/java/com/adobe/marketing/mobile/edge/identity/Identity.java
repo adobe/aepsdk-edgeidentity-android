@@ -232,7 +232,7 @@ public class Identity {
 	}
 
 	/**
-	 * Updates JSON-compatible device attributes that should be delivered to the Edge Network
+	 * Updates JSON-compatible operational data that should be delivered to the Edge Network
 	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
 	 * push token are sent only when they differ from the last value Edge confirmed. When collect consent is "y", or
 	 * the Consent extension is not registered, they are also not sent when they match the timezone set through the
@@ -244,18 +244,18 @@ public class Identity {
 	 *
 	 * @param attributes map of attribute names to JSON-compatible values
 	 */
-	public static void updateDeviceAttributesBypassConsent(@NonNull final Map<String, Object> attributes) {
+	public static void updateOperationalData(@NonNull final Map<String, Object> attributes) {
 		try {
 			if (attributes == null || attributes.isEmpty()) {
 				Log.warning(
 					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
-					"Unable to update device attributes, attributes are null or empty."
+					"Unable to update operational data, attributes are null or empty."
 				);
 				return;
 			}
 			final Event event = new Event.Builder(
-				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 				EventType.EDGE_IDENTITY,
 				EventSource.REQUEST_CONTENT
 			)
@@ -267,7 +267,7 @@ public class Identity {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Unable to update device attributes, an error occurred: %s",
+				"Unable to update operational data, an error occurred: %s",
 				exception.getLocalizedMessage()
 			);
 		}

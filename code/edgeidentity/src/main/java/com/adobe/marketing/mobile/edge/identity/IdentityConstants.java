@@ -37,11 +37,11 @@ final class IdentityConstants {
 		static final String REQUEST_IDENTITIES = "Edge Identity Request Identities";
 		static final String RESET_IDENTITIES_COMPLETE = "Edge Identity Reset Identities Complete";
 		static final String UPDATE_PROFILE_ATTRIBUTES = "Update Profile Attributes";
-		static final String UPDATE_DEVICE_ATTRIBUTES = "Update Device Attributes";
-		static final String DEVICE_ATTRIBUTES_TO_RULES_ENGINE = "Device attributes for rules engine";
-		static final String DEVICE_ATTRIBUTES_EDGE_REQUEST = "Edge bypass request";
-		static final String DEVICE_ATTRIBUTES_SYNC_RESULT = "Device Attributes Sync Result";
-		static final String DEVICE_ATTRIBUTES_CONFIRMED = "Device attributes confirmed";
+		static final String UPDATE_OPERATIONAL_DATA = "Update Operational Data";
+		static final String OPERATIONAL_DATA_TO_RULES_ENGINE = "Operational data for rules engine";
+		static final String EDGE_DEVICE_ATTRIBUTES_REQUEST = "Edge device attributes request";
+		static final String OPERATIONAL_DATA_SYNC_RESULT = "Operational Data Sync Result";
+		static final String OPERATIONAL_DATA_CONFIRMED = "Operational data confirmed";
 
 		private EventNames() {}
 	}
@@ -142,7 +142,7 @@ final class IdentityConstants {
 		static final String IDENTITY_DIRECT_DATASTORE_NAME = "visitorIDServiceDataStore";
 		static final String IDENTITY_DIRECT_ECID_KEY = "ADOBEMOBILE_PERSISTED_MID";
 		static final String PROFILE_ATTRIBUTES_DATASTORE_NAME = "profileAttributesDataStore";
-		static final String DEVICE_ATTRIBUTES_DATASTORE_NAME = "deviceAttributesDataStore";
+		static final String OPERATIONAL_DATA_DATASTORE_NAME = "operationalDataDataStore";
 
 		private DataStoreKey() {}
 	}
@@ -178,10 +178,10 @@ final class IdentityConstants {
 		private ProfileAttributes() {}
 	}
 
-	static final class DeviceAttributes {
+	static final class OperationalData {
 
 		static final String RULE_RESPONSE_SOURCE = "com.adobe.eventSource.responseOperationalData";
-		static final String BYPASS_TYPE = "com.adobe.eventType.edgeBypassConsent";
+		static final String EDGE_DEVICE_ATTRIBUTES_TYPE = "com.adobe.eventType.edgeDeviceAttributes";
 		static final String OPERATIONAL_DATA_TYPE = "com.adobe.eventType.generic.operationalData";
 		static final String OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC = "edgeidentity.optimizeOperationalProfileDataSync";
 		static final String TIME_ZONE = "timeZone";
@@ -204,7 +204,7 @@ final class IdentityConstants {
 		static final String REASON_MISSING_APP_IDENTIFIER = "missingAppIdentifier";
 		static final String REASON_INTERNAL_ERROR = "internalError";
 
-		private DeviceAttributes() {}
+		private OperationalData() {}
 	}
 
 	private IdentityConstants() {}

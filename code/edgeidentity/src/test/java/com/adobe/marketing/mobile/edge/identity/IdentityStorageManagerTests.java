@@ -67,9 +67,9 @@ public class IdentityStorageManagerTests {
 	}
 
 	@Test
-	public void testStorageManager_doesNotCreateDeviceAttributeTransactionStore() {
+	public void testStorageManager_doesNotCreateOperationalDataTransactionStore() {
 		new IdentityStorageManager(mockDataStoreService);
-		verify(mockDataStoreService, never()).getNamedCollection("deviceAttributesDataStore");
+		verify(mockDataStoreService, never()).getNamedCollection("operationalDataDataStore");
 	}
 
 	@Test

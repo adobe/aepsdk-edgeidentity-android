@@ -16,30 +16,28 @@ Refer to the [Getting Started Guide](getting-started.md)
 | [resetIdentities](#resetIdentities)                   |
 | [setAdvertisingIdentifier](#setAdvertisingIdentifier) |
 | [updateIdentities](#updateIdentities)                 |
-| [updateDeviceAttributesBypassConsent](#updatedeviceattributesbypassconsent) |
+| [updateOperationalData](#updateoperationaldata) |
 
 ------
 
-### updateDeviceAttributesBypassConsent
+### updateOperationalData
 
-Requests that device attributes allowed by a matching rule are sent to the Edge Network. It supports JSON-compatible values, including empty strings, arrays, and objects. Values are not validated by Identity and are sent as provided. Only string values at `timezone` and `tokens.pushNotification` are deduplicated and stored; unexpected types at those paths and all other attributes are always forwarded. This API is fire-and-forget; it has no public callback.
+Requests that operational data allowed by a matching rule is sent to the Edge Network. It supports JSON-compatible values, including empty strings, arrays, and objects. Values are not validated by Identity and are sent as provided. Only string values at `timezone` and `tokens.pushNotification` are deduplicated and stored; unexpected types at those paths and all other attributes are always forwarded. This API is fire-and-forget; it has no public callback.
 
 ```java
-public static void updateDeviceAttributesBypassConsent(Map<String, Object> attributes)
+public static void updateOperationalData(Map<String, Object> attributes)
 ```
 
 ```java
-Identity.updateDeviceAttributesBypassConsent(
+Identity.updateOperationalData(
     Collections.singletonMap("timezone", "Asia/Tokyo"));
 ```
 
 The data is sent to the Core rules engine. Each matching `forward-operational-data` rule returns only its enabled paths. Values a rule allows are sent in a device attributes request event whether collect consent is `yes`, `no`, or `pending`; ordinary Edge events remain governed by consent. When the latest collect consent is explicitly `y`, or the Hub shared state confirms that the Consent extension is not registered, Identity also compares push tokens with Messaging's latest shared-state value and timezone with the timezone set through the profile attributes API. Missing, pending, or malformed consent from a registered Consent extension does not enable these comparisons. Values Edge confirmed are compared at every consent state. Identity queues requests in event order and reads the current configuration, profile timezone and Messaging push token when each request is taken from the queue. It waits for the active request's device attributes response event before sending the next request. A response that isn't a success, including one with no status, is reported as failed; responses for other requests are ignored. Confirmed values are persisted and deduplicated across app restarts; set `edgeidentity.optimizeOperationalProfileDataSync` to `false` to disable all comparisons, but requests still run one at a time. If a request fails, its values are not stored and a queued duplicate can send them again. If no rule matches, or rules are not loaded yet, nothing is sent.
 
-After Edge reports success, confirmed strings are persisted under the individual `timezone` and `pushNotification` keys in the separate `deviceAttributesDataStore` collection. A confirmed timezone also replaces the timezone set through the profile attributes API. The complete confirmed state remains published under `profileAttributes` in Identity's standard shared state for the existing Android Messaging consumer. On registration, this shared state is published only when stored attributes exist; explicit updates and identity reset still publish an empty state when appropriate. In addition, Identity dispatches a `Device attributes confirmed` event (`messaging` / `responseContent`), with the response event as its parent, containing only the successfully sent `tokens`, matching iOS. Failed, dropped, malformed, and unrelated results do not confirm tokens.
+After Edge reports success, confirmed strings are persisted under the individual `timezone` and `pushNotification` keys in the separate `operationalDataDataStore` collection. A confirmed timezone also replaces the timezone set through the profile attributes API. The complete confirmed state remains published under `profileAttributes` in Identity's standard shared state for the existing Android Messaging consumer. On registration, this shared state is published only when stored attributes exist; explicit updates and identity reset still publish an empty state when appropriate. In addition, Identity dispatches an `Operational data confirmed` event (`messaging` / `responseContent`), with the response event as its parent, containing only the successfully sent `tokens`, matching iOS. Failed, dropped, malformed, and unrelated results do not confirm tokens.
 
 An empty map is a no-op. Identity does not drop null values during deduplication, although the rules engine and transport determine which values can reach Edge. After rules and deduplication filter the values, every dispatched request includes SDK-owned `app.id` (the Android package name) and `app.platform: "fcm"`; caller-provided `app` values cannot override routing, and app-only requests are not sent. Live Activity deduplication and APNs sandbox routing are iOS-specific; arbitrary arrays allowed by a rule remain supported on Android.
-
-See [the device attribute flow and local setup](device-attribute-transactions.md) for rule configuration and shared-state behavior.
 
 ------
 

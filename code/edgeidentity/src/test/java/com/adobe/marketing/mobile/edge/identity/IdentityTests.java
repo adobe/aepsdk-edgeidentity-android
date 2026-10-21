@@ -633,7 +633,7 @@ public class IdentityTests {
 	}
 
 	@Test
-	public void testUpdateDeviceAttributesBypassConsent_mapIsDispatchedUnchanged() {
+	public void testUpdateOperationalData_mapIsDispatchedUnchanged() {
 		final Map<String, Object> attributes = new HashMap<>();
 		attributes.put("timezone", "America/Los_Angeles");
 		attributes.put(
@@ -648,7 +648,7 @@ public class IdentityTests {
 		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
-			Identity.updateDeviceAttributesBypassConsent(attributes);
+			Identity.updateOperationalData(attributes);
 
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(eventCaptor.capture()), times(1));
 		}
@@ -657,34 +657,34 @@ public class IdentityTests {
 	}
 
 	@Test
-	public void testDeviceAttributesMap_dispatchesWithoutResponseCallback() {
+	public void testOperationalDataMap_dispatchesWithoutResponseCallback() {
 		try (MockedStatic<MobileCore> core = Mockito.mockStatic(MobileCore.class)) {
-			Identity.updateDeviceAttributesBypassConsent(Map.of("timezone", "Asia/Tokyo"));
+			Identity.updateOperationalData(Map.of("timezone", "Asia/Tokyo"));
 			core.verify(() -> MobileCore.dispatchEvent(any(Event.class)));
 			core.verifyNoMoreInteractions();
 		}
 	}
 
 	@Test
-	public void testUpdateDeviceAttributesBypassConsent_emptyMapDoesNotDispatch() {
+	public void testUpdateOperationalData_emptyMapDoesNotDispatch() {
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
-			Identity.updateDeviceAttributesBypassConsent(Map.of());
+			Identity.updateOperationalData(Map.of());
 
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		}
 	}
 
 	@Test
-	public void testUpdateDeviceAttributesBypassConsent_nullAttributesDoesNotDispatch() {
+	public void testUpdateOperationalData_nullAttributesDoesNotDispatch() {
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
-			Identity.updateDeviceAttributesBypassConsent(null);
+			Identity.updateOperationalData(null);
 
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		}
 	}
 
 	@Test
-	public void testUpdateDeviceAttributesBypassConsent_whenCopyingAttributesThrows_doesNotThrowOrDispatch() {
+	public void testUpdateOperationalData_whenCopyingAttributesThrows_doesNotThrowOrDispatch() {
 		final Map<String, Object> attributes = new HashMap<String, Object>() {
 			@Override
 			public Set<Map.Entry<String, Object>> entrySet() {
@@ -694,7 +694,7 @@ public class IdentityTests {
 		attributes.put("timezone", "Asia/Tokyo");
 
 		try (MockedStatic<MobileCore> mockedStaticMobileCore = Mockito.mockStatic(MobileCore.class)) {
-			Identity.updateDeviceAttributesBypassConsent(attributes);
+			Identity.updateOperationalData(attributes);
 
 			mockedStaticMobileCore.verify(() -> MobileCore.dispatchEvent(any(Event.class)), never());
 		}

@@ -18,11 +18,11 @@ import java.util.Map;
  * Stores the confirmed timezone and push token strings and filters out those that do not need to be sent again.
  * Values at any other path, and a timezone or push token that is not a string, are always sent and never stored.
  */
-final class DeviceAttributeDeduplicator {
+final class OperationalDataDeduplicator {
 
 	private final ProfileAttributeStore store;
 
-	DeviceAttributeDeduplicator(final ProfileAttributeStore store) {
+	OperationalDataDeduplicator(final ProfileAttributeStore store) {
 		this.store = store;
 	}
 
@@ -54,37 +54,37 @@ final class DeviceAttributeDeduplicator {
 		if (attributes == null) return new FilterResult(changed, ownerMatches);
 		changed.putAll(attributes);
 		filterString(
-			IdentityConstants.DeviceAttributes.TIMEZONE,
+			IdentityConstants.OperationalData.TIMEZONE,
 			attributes,
 			changed,
 			ownerMatches,
-			store.getString(IdentityConstants.DeviceAttributes.TIMEZONE),
-			owners != null ? owners.get(IdentityConstants.DeviceAttributes.TIMEZONE) : null
+			store.getString(IdentityConstants.OperationalData.TIMEZONE),
+			owners != null ? owners.get(IdentityConstants.OperationalData.TIMEZONE) : null
 		);
 
-		final Map<?, ?> tokens = asMap(attributes.get(IdentityConstants.DeviceAttributes.TOKENS));
+		final Map<?, ?> tokens = asMap(attributes.get(IdentityConstants.OperationalData.TOKENS));
 		if (tokens == null) return new FilterResult(changed, ownerMatches);
 		final Map<?, ?> ownerTokens = owners != null
-			? asMap(owners.get(IdentityConstants.DeviceAttributes.TOKENS))
+			? asMap(owners.get(IdentityConstants.OperationalData.TOKENS))
 			: null;
 		final Map<Object, Object> changedTokens = new LinkedHashMap<>(tokens);
 		final Map<String, Object> matchedTokens = new LinkedHashMap<>();
 		filterString(
-			IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION,
+			IdentityConstants.OperationalData.PUSH_NOTIFICATION,
 			tokens,
 			changedTokens,
 			matchedTokens,
-			store.getString(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION),
-			ownerTokens != null ? ownerTokens.get(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION) : null
+			store.getString(IdentityConstants.OperationalData.PUSH_NOTIFICATION),
+			ownerTokens != null ? ownerTokens.get(IdentityConstants.OperationalData.PUSH_NOTIFICATION) : null
 		);
 		if (changedTokens.size() != tokens.size()) {
 			if (changedTokens.isEmpty()) {
-				changed.remove(IdentityConstants.DeviceAttributes.TOKENS);
+				changed.remove(IdentityConstants.OperationalData.TOKENS);
 			} else {
-				changed.put(IdentityConstants.DeviceAttributes.TOKENS, changedTokens);
+				changed.put(IdentityConstants.OperationalData.TOKENS, changedTokens);
 			}
 		}
-		if (!matchedTokens.isEmpty()) ownerMatches.put(IdentityConstants.DeviceAttributes.TOKENS, matchedTokens);
+		if (!matchedTokens.isEmpty()) ownerMatches.put(IdentityConstants.OperationalData.TOKENS, matchedTokens);
 		return new FilterResult(changed, ownerMatches);
 	}
 
@@ -96,36 +96,36 @@ final class DeviceAttributeDeduplicator {
 	 */
 	void commit(final Map<String, Object> attributes) {
 		if (attributes == null) return;
-		final Object timezone = attributes.get(IdentityConstants.DeviceAttributes.TIMEZONE);
-		if (timezone instanceof String) store.setString(IdentityConstants.DeviceAttributes.TIMEZONE, (String) timezone);
-		final Map<?, ?> tokens = asMap(attributes.get(IdentityConstants.DeviceAttributes.TOKENS));
+		final Object timezone = attributes.get(IdentityConstants.OperationalData.TIMEZONE);
+		if (timezone instanceof String) store.setString(IdentityConstants.OperationalData.TIMEZONE, (String) timezone);
+		final Map<?, ?> tokens = asMap(attributes.get(IdentityConstants.OperationalData.TOKENS));
 		final Object pushToken = tokens != null
-			? tokens.get(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION)
+			? tokens.get(IdentityConstants.OperationalData.PUSH_NOTIFICATION)
 			: null;
 		if (pushToken instanceof String) store.setString(
-			IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION,
+			IdentityConstants.OperationalData.PUSH_NOTIFICATION,
 			(String) pushToken
 		);
 	}
 
-	/** Returns the confirmed strings in the same nested shape as the device attributes. */
+	/** Returns the confirmed strings in the same nested shape as the operational data. */
 	Map<String, Object> readSynced() {
 		final Map<String, Object> synced = new LinkedHashMap<>();
-		final String timezone = store.getString(IdentityConstants.DeviceAttributes.TIMEZONE);
-		if (timezone != null) synced.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
-		final String pushToken = store.getString(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION);
+		final String timezone = store.getString(IdentityConstants.OperationalData.TIMEZONE);
+		if (timezone != null) synced.put(IdentityConstants.OperationalData.TIMEZONE, timezone);
+		final String pushToken = store.getString(IdentityConstants.OperationalData.PUSH_NOTIFICATION);
 		if (pushToken != null) {
 			final Map<String, Object> tokens = new LinkedHashMap<>();
-			tokens.put(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, pushToken);
-			synced.put(IdentityConstants.DeviceAttributes.TOKENS, tokens);
+			tokens.put(IdentityConstants.OperationalData.PUSH_NOTIFICATION, pushToken);
+			synced.put(IdentityConstants.OperationalData.TOKENS, tokens);
 		}
 		return synced;
 	}
 
-	/** Removes all confirmed device attribute strings. */
+	/** Removes all confirmed operational data strings. */
 	void clear() {
-		store.remove(IdentityConstants.DeviceAttributes.TIMEZONE);
-		store.remove(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION);
+		store.remove(IdentityConstants.OperationalData.TIMEZONE);
+		store.remove(IdentityConstants.OperationalData.PUSH_NOTIFICATION);
 	}
 
 	private static Map<?, ?> asMap(final Object value) {

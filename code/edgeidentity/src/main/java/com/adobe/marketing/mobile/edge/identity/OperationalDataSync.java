@@ -33,31 +33,31 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Sends device attributes to Edge after the rules engine has filtered them.
+ * Sends operational data to Edge after the rules engine has filtered it.
  *
  * <ol>
- *     <li>{@link #handleDeviceAttributes(Event)} sends the public API data to the rules engine.</li>
+ *     <li>{@link #handleOperationalData(Event)} sends the public API data to the rules engine.</li>
  *     <li>Each matching rule returns the attributes it allows in a rule response event, handled by
- *     {@link #handleDeviceAttributeRuleResponse(Event)}.</li>
+ *     {@link #handleOperationalDataRuleResponse(Event)}.</li>
  *     <li>Rule responses are queued, and one device attributes request event is sent to Edge at a time. Unchanged
  *     timezone and push token strings are left out; all other values are sent.</li>
  *     <li>When the device attributes response event for the active request arrives
- *     ({@link #handleDeviceAttributeResult(Event)}), the next request can be sent. On success the timezone and
+ *     ({@link #handleOperationalDataResult(Event)}), the next request can be sent. On success the timezone and
  *     push token that were sent are stored as confirmed and published in {@code profileAttributes}. A
- *     {@code Device Attributes Sync Result} event reports the outcome.</li>
+ *     {@code Operational Data Sync Result} event reports the outcome.</li>
  * </ol>
  */
-final class DeviceAttributeSync {
+final class OperationalDataSync {
 
-	private static final String LOG_SOURCE = "DeviceAttributeSync";
+	private static final String LOG_SOURCE = "OperationalDataSync";
 
 	private final ExtensionApi api;
 	private final ProfileAttributeStore profileAttributeStore;
-	private final DeviceAttributeDeduplicator deduplicator;
+	private final OperationalDataDeduplicator deduplicator;
 	private final Deque<Event> pendingRequests = new ArrayDeque<>();
 	private Event activeRequest;
 
-	DeviceAttributeSync(final ExtensionApi api, final ProfileAttributeStore profileAttributeStore) {
+	OperationalDataSync(final ExtensionApi api, final ProfileAttributeStore profileAttributeStore) {
 		this(
 			api,
 			profileAttributeStore,
@@ -65,38 +65,38 @@ final class DeviceAttributeSync {
 				ServiceProvider
 					.getInstance()
 					.getDataStoreService()
-					.getNamedCollection(IdentityConstants.DataStoreKey.DEVICE_ATTRIBUTES_DATASTORE_NAME)
+					.getNamedCollection(IdentityConstants.DataStoreKey.OPERATIONAL_DATA_DATASTORE_NAME)
 			)
 		);
 	}
 
-	DeviceAttributeSync(
+	OperationalDataSync(
 		final ExtensionApi api,
 		final ProfileAttributeStore profileAttributeStore,
-		final ProfileAttributeStore deviceAttributeStore
+		final ProfileAttributeStore operationalDataStore
 	) {
 		this.api = api;
 		this.profileAttributeStore =
 			profileAttributeStore != null ? profileAttributeStore : new ProfileAttributeStore(null);
-		this.deduplicator = new DeviceAttributeDeduplicator(deviceAttributeStore);
+		this.deduplicator = new OperationalDataDeduplicator(operationalDataStore);
 	}
 
 	/** Forwards public API data to the rules engine, which decides which attributes may be sent. */
-	void handleDeviceAttributes(final Event event) {
+	void handleOperationalData(final Event event) {
 		final Map<String, Object> data = event.getEventData();
 		if (data == null || data.isEmpty()) {
-			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty device attribute request.");
+			Log.warning(IdentityConstants.LOG_TAG, LOG_SOURCE, "Ignoring empty operational data request.");
 			return;
 		}
 		Log.debug(
 			IdentityConstants.LOG_TAG,
 			LOG_SOURCE,
-			"Forwarding device attributes to the rules engine. Nothing is sent to Edge unless a forward operational data rule matches."
+			"Forwarding operational data to the rules engine. Nothing is sent to Edge unless a forward operational data rule matches."
 		);
 		api.dispatch(
 			new Event.Builder(
-				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_TO_RULES_ENGINE,
-				IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE,
+				IdentityConstants.EventNames.OPERATIONAL_DATA_TO_RULES_ENGINE,
+				IdentityConstants.OperationalData.OPERATIONAL_DATA_TYPE,
 				EventSource.REQUEST_CONTENT
 			)
 				.setEventData(data)
@@ -106,9 +106,9 @@ final class DeviceAttributeSync {
 	}
 
 	/** Queues a rule response until the active device attributes request has completed. */
-	void handleDeviceAttributeRuleResponse(final Event event) {
+	void handleOperationalDataRuleResponse(final Event event) {
 		if (event.getEventData() == null || event.getEventData().isEmpty()) {
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Rule response contains no device attributes.");
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Rule response contains no operational data.");
 			return;
 		}
 		pendingRequests.addLast(event);
@@ -128,7 +128,7 @@ final class DeviceAttributeSync {
 				Log.debug(
 					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
-					"Sending device attributes to Edge (request '%s').",
+					"Sending operational data to Edge (request '%s').",
 					request.getUniqueIdentifier()
 				);
 				api.dispatch(request);
@@ -138,7 +138,7 @@ final class DeviceAttributeSync {
 				Log.warning(
 					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
-					"Unable to send device attributes for rule event '%s': %s",
+					"Unable to send operational data for rule event '%s': %s",
 					ruleResponse.getUniqueIdentifier(),
 					exception.getLocalizedMessage()
 				);
@@ -146,10 +146,10 @@ final class DeviceAttributeSync {
 					final Map<String, Object> attributes = ruleResponse.getEventData() != null
 						? new HashMap<>(ruleResponse.getEventData())
 						: new HashMap<>();
-					attributes.remove(IdentityConstants.DeviceAttributes.APP);
+					attributes.remove(IdentityConstants.OperationalData.APP);
 					dispatchSyncResult(
-						IdentityConstants.DeviceAttributes.STATUS_FAILED,
-						IdentityConstants.DeviceAttributes.REASON_INTERNAL_ERROR,
+						IdentityConstants.OperationalData.STATUS_FAILED,
+						IdentityConstants.OperationalData.REASON_INTERNAL_ERROR,
 						attributes,
 						ruleResponse
 					);
@@ -157,7 +157,7 @@ final class DeviceAttributeSync {
 					Log.warning(
 						IdentityConstants.LOG_TAG,
 						LOG_SOURCE,
-						"Unable to report the device attribute sync result for rule event '%s': %s",
+						"Unable to report the operational data sync result for rule event '%s': %s",
 						ruleResponse.getUniqueIdentifier(),
 						resultException.getLocalizedMessage()
 					);
@@ -172,18 +172,18 @@ final class DeviceAttributeSync {
 	 */
 	private Event buildEdgeRequest(final Event ruleResponse) {
 		final Map<String, Object> attributes = new HashMap<>(ruleResponse.getEventData());
-		attributes.remove(IdentityConstants.DeviceAttributes.APP);
+		attributes.remove(IdentityConstants.OperationalData.APP);
 		final boolean dedup = DataReader.optBoolean(
 			configuration(),
-			IdentityConstants.DeviceAttributes.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
+			IdentityConstants.OperationalData.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
 			true
 		);
-		final DeviceAttributeDeduplicator.FilterResult result = dedup
+		final OperationalDataDeduplicator.FilterResult result = dedup
 			? deduplicator.filter(attributes, isCollectConsentYes() ? ownerValues() : null)
-			: new DeviceAttributeDeduplicator.FilterResult(attributes, Collections.emptyMap());
+			: new OperationalDataDeduplicator.FilterResult(attributes, Collections.emptyMap());
 		if (!result.ownerMatches.isEmpty()) {
 			deduplicator.commit(result.ownerMatches);
-			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Marked device attributes held by their owner as synced.");
+			Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Marked operational data held by its owner as synced.");
 			publishProfileAttributes(ruleResponse);
 		}
 		final Map<String, Object> changed = result.changed;
@@ -191,12 +191,12 @@ final class DeviceAttributeSync {
 			Log.debug(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Device attributes unchanged, not sending to Edge (rule event '%s').",
+				"Operational data unchanged, not sending to Edge (rule event '%s').",
 				ruleResponse.getUniqueIdentifier()
 			);
 			dispatchSyncResult(
-				IdentityConstants.DeviceAttributes.STATUS_SUCCESS,
-				IdentityConstants.DeviceAttributes.REASON_UNCHANGED,
+				IdentityConstants.OperationalData.STATUS_SUCCESS,
+				IdentityConstants.OperationalData.REASON_UNCHANGED,
 				attributes,
 				ruleResponse
 			);
@@ -209,24 +209,24 @@ final class DeviceAttributeSync {
 			Log.warning(
 				IdentityConstants.LOG_TAG,
 				LOG_SOURCE,
-				"Cannot send device attributes without an app identifier. Dropping rule event '%s'.",
+				"Cannot send operational data without an app identifier. Dropping rule event '%s'.",
 				ruleResponse.getUniqueIdentifier()
 			);
 			dispatchSyncResult(
-				IdentityConstants.DeviceAttributes.STATUS_FAILED,
-				IdentityConstants.DeviceAttributes.REASON_MISSING_APP_IDENTIFIER,
+				IdentityConstants.OperationalData.STATUS_FAILED,
+				IdentityConstants.OperationalData.REASON_MISSING_APP_IDENTIFIER,
 				changed,
 				ruleResponse
 			);
 			return null;
 		}
 		final Map<String, Object> app = new HashMap<>();
-		app.put(IdentityConstants.DeviceAttributes.APP_ID, appId);
-		app.put(IdentityConstants.DeviceAttributes.APP_PLATFORM, IdentityConstants.DeviceAttributes.PLATFORM_FCM);
-		changed.put(IdentityConstants.DeviceAttributes.APP, app);
+		app.put(IdentityConstants.OperationalData.APP_ID, appId);
+		app.put(IdentityConstants.OperationalData.APP_PLATFORM, IdentityConstants.OperationalData.PLATFORM_FCM);
+		changed.put(IdentityConstants.OperationalData.APP, app);
 		return new Event.Builder(
-			IdentityConstants.EventNames.DEVICE_ATTRIBUTES_EDGE_REQUEST,
-			IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+			IdentityConstants.EventNames.EDGE_DEVICE_ATTRIBUTES_REQUEST,
+			IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE,
 			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(changed)
@@ -235,7 +235,7 @@ final class DeviceAttributeSync {
 	}
 
 	/** Handles the device attributes response event for the active request, then sends the next queued request. */
-	void handleDeviceAttributeResult(final Event event) {
+	void handleOperationalDataResult(final Event event) {
 		if (!isResponseToActiveRequest(event)) {
 			Log.debug(
 				IdentityConstants.LOG_TAG,
@@ -251,39 +251,39 @@ final class DeviceAttributeSync {
 		try {
 			final String requestId = request.getUniqueIdentifier();
 			final Map<String, Object> attributes = new HashMap<>(request.getEventData());
-			attributes.remove(IdentityConstants.DeviceAttributes.APP);
+			attributes.remove(IdentityConstants.OperationalData.APP);
 
 			final Map<String, Object> responseData = event.getEventData();
-			final String status = DataReader.optString(responseData, IdentityConstants.DeviceAttributes.STATUS, null);
-			if (IdentityConstants.DeviceAttributes.STATUS_SUCCESS.equals(status)) {
+			final String status = DataReader.optString(responseData, IdentityConstants.OperationalData.STATUS, null);
+			if (IdentityConstants.OperationalData.STATUS_SUCCESS.equals(status)) {
 				deduplicator.commit(attributes);
 				final String timezone = DataReader.optString(
 					attributes,
-					IdentityConstants.DeviceAttributes.TIMEZONE,
+					IdentityConstants.OperationalData.TIMEZONE,
 					null
 				);
 				if (timezone != null) {
-					profileAttributeStore.setString(IdentityConstants.DeviceAttributes.TIME_ZONE, timezone);
+					profileAttributeStore.setString(IdentityConstants.OperationalData.TIME_ZONE, timezone);
 				}
 				publishProfileAttributes(event);
-				Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Device attributes synced (request '%s').", requestId);
+				Log.debug(IdentityConstants.LOG_TAG, LOG_SOURCE, "Operational data synced (request '%s').", requestId);
 				dispatchTokensConfirmed(attributes, event);
-				dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_SUCCESS, "", attributes, event);
+				dispatchSyncResult(IdentityConstants.OperationalData.STATUS_SUCCESS, "", attributes, event);
 			} else {
 				final String reason = DataReader.optString(
 					responseData,
-					IdentityConstants.DeviceAttributes.REASON,
-					IdentityConstants.DeviceAttributes.UNKNOWN_REASON
+					IdentityConstants.OperationalData.REASON,
+					IdentityConstants.OperationalData.UNKNOWN_REASON
 				);
 				Log.warning(
 					IdentityConstants.LOG_TAG,
 					LOG_SOURCE,
-					"Device attribute sync failed (request '%s') with status '%s' and reason '%s'. Values remain unsynced.",
+					"Operational data sync failed (request '%s') with status '%s' and reason '%s'. Values remain unsynced.",
 					requestId,
 					status != null ? status : "missing",
 					reason
 				);
-				dispatchSyncResult(IdentityConstants.DeviceAttributes.STATUS_FAILED, reason, attributes, event);
+				dispatchSyncResult(IdentityConstants.OperationalData.STATUS_FAILED, reason, attributes, event);
 			}
 		} finally {
 			processQueue();
@@ -295,23 +295,23 @@ final class DeviceAttributeSync {
 		final Map<String, Object> tokens = DataReader.optTypedMap(
 			Object.class,
 			attributes,
-			IdentityConstants.DeviceAttributes.TOKENS,
+			IdentityConstants.OperationalData.TOKENS,
 			null
 		);
 		if (tokens == null || tokens.isEmpty()) return;
 		api.dispatch(
 			new Event.Builder(
-				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_CONFIRMED,
+				IdentityConstants.EventNames.OPERATIONAL_DATA_CONFIRMED,
 				EventType.MESSAGING,
 				EventSource.RESPONSE_CONTENT
 			)
-				.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TOKENS, tokens))
+				.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TOKENS, tokens))
 				.chainToParentEvent(parent)
 				.build()
 		);
 	}
 
-	/** Dispatches the Device Attributes Sync Result event, with {@code parent} as its parent event. */
+	/** Dispatches the Operational Data Sync Result event, with {@code parent} as its parent event. */
 	private void dispatchSyncResult(
 		final String status,
 		final String reason,
@@ -319,12 +319,12 @@ final class DeviceAttributeSync {
 		final Event parent
 	) {
 		final Map<String, Object> result = new HashMap<>();
-		result.put(IdentityConstants.DeviceAttributes.STATUS, status);
-		result.put(IdentityConstants.DeviceAttributes.REASON, reason);
-		result.put(IdentityConstants.DeviceAttributes.ATTRIBUTES, attributes);
+		result.put(IdentityConstants.OperationalData.STATUS, status);
+		result.put(IdentityConstants.OperationalData.REASON, reason);
+		result.put(IdentityConstants.OperationalData.ATTRIBUTES, attributes);
 		api.dispatch(
 			new Event.Builder(
-				IdentityConstants.EventNames.DEVICE_ATTRIBUTES_SYNC_RESULT,
+				IdentityConstants.EventNames.OPERATIONAL_DATA_SYNC_RESULT,
 				EventType.EDGE_IDENTITY,
 				EventSource.RESPONSE_CONTENT
 			)
@@ -341,19 +341,19 @@ final class DeviceAttributeSync {
 		return (
 			requestId.equals(event.getParentID()) ||
 			requestId.equals(
-				DataReader.optString(event.getEventData(), IdentityConstants.DeviceAttributes.REQUEST_EVENT_ID, null)
+				DataReader.optString(event.getEventData(), IdentityConstants.OperationalData.REQUEST_EVENT_ID, null)
 			)
 		);
 	}
 
 	/**
-	 * Returns the owner-held values, in the same shape as the device attributes: the timezone set
+	 * Returns the owner-held values, in the same shape as the operational data: the timezone set
 	 * through the profile attributes API and the push token in Messaging's shared state.
 	 */
 	private Map<String, Object> ownerValues() {
 		final Map<String, Object> owners = new HashMap<>();
-		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);
-		if (timezone != null) owners.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
+		final String timezone = profileAttributeStore.getString(IdentityConstants.OperationalData.TIME_ZONE);
+		if (timezone != null) owners.put(IdentityConstants.OperationalData.TIMEZONE, timezone);
 
 		final SharedStateResult messaging = api.getSharedState(
 			IdentityConstants.SharedState.Messaging.NAME,
@@ -369,8 +369,8 @@ final class DeviceAttributeSync {
 			);
 			if (pushToken != null) {
 				owners.put(
-					IdentityConstants.DeviceAttributes.TOKENS,
-					Collections.singletonMap(IdentityConstants.DeviceAttributes.PUSH_NOTIFICATION, pushToken)
+					IdentityConstants.OperationalData.TOKENS,
+					Collections.singletonMap(IdentityConstants.OperationalData.PUSH_NOTIFICATION, pushToken)
 				);
 			}
 		}
@@ -437,10 +437,10 @@ final class DeviceAttributeSync {
 		dropped.addAll(pendingRequests);
 		for (final Event request : dropped) {
 			final Map<String, Object> attributes = new HashMap<>(request.getEventData());
-			attributes.remove(IdentityConstants.DeviceAttributes.APP);
+			attributes.remove(IdentityConstants.OperationalData.APP);
 			dispatchSyncResult(
-				IdentityConstants.DeviceAttributes.STATUS_FAILED,
-				IdentityConstants.DeviceAttributes.REASON_IDENTITY_RESET,
+				IdentityConstants.OperationalData.STATUS_FAILED,
+				IdentityConstants.OperationalData.REASON_IDENTITY_RESET,
 				attributes,
 				request
 			);
@@ -452,12 +452,12 @@ final class DeviceAttributeSync {
 		Log.debug(
 			IdentityConstants.LOG_TAG,
 			LOG_SOURCE,
-			"Cleared device attribute requests and synced values after identity reset."
+			"Cleared operational data requests and synced values after identity reset."
 		);
 	}
 
 	/**
-	 * Publishes the confirmed device attributes, plus the timezone from the profile attribute store, as
+	 * Publishes the confirmed operational data, plus the timezone from the profile attribute store, as
 	 * {@code profileAttributes} in the standard shared state.
 	 */
 	void publishProfileAttributes(final Event event) {
@@ -479,8 +479,8 @@ final class DeviceAttributeSync {
 
 	private Map<String, Object> profileAttributes() {
 		final Map<String, Object> attributes = new LinkedHashMap<>(deduplicator.readSynced());
-		final String timezone = profileAttributeStore.getString(IdentityConstants.DeviceAttributes.TIME_ZONE);
-		if (timezone != null) attributes.put(IdentityConstants.DeviceAttributes.TIMEZONE, timezone);
+		final String timezone = profileAttributeStore.getString(IdentityConstants.OperationalData.TIME_ZONE);
+		if (timezone != null) attributes.put(IdentityConstants.OperationalData.TIMEZONE, timezone);
 		return attributes;
 	}
 

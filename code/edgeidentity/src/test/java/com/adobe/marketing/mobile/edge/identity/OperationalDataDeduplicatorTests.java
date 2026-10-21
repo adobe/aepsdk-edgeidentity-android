@@ -24,10 +24,10 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DeviceAttributeDeduplicatorTests {
+public class OperationalDataDeduplicatorTests {
 
 	private ProfileAttributeStore store;
-	private DeviceAttributeDeduplicator deduplicator;
+	private OperationalDataDeduplicator deduplicator;
 	private Map<String, String> persisted;
 
 	@Before
@@ -39,7 +39,7 @@ public class DeviceAttributeDeduplicatorTests {
 			.when(store)
 			.setString(anyString(), anyString());
 		doAnswer(call -> persisted.remove(call.<String>getArgument(0))).when(store).remove(anyString());
-		deduplicator = new DeviceAttributeDeduplicator(store);
+		deduplicator = new OperationalDataDeduplicator(store);
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class DeviceAttributeDeduplicatorTests {
 		deduplicator.commit(attributes);
 		assertTrue(deduplicator.filter(attributes, null).changed.isEmpty());
 		assertEquals(Map.of("timezone", "Europe/London", "pushNotification", "push"), persisted);
-		final DeviceAttributeDeduplicator restarted = new DeviceAttributeDeduplicator(store);
+		final OperationalDataDeduplicator restarted = new OperationalDataDeduplicator(store);
 		assertEquals(attributes, restarted.readSynced());
 		assertTrue(restarted.filter(attributes, null).changed.isEmpty());
 	}
@@ -84,7 +84,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void ownerMatchesAreReturnedSeparatelyAndNotCommitted() {
 		final Map<String, Object> attributes = attributes("Europe/London", "push");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(
 			attributes,
 			attributes("Europe/London", "other")
 		);
@@ -99,7 +99,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void nestedOwnerMatchesKeepTheirPathAndUnknownSiblings() {
 		final Map<String, Object> attributes = Map.of("tokens", Map.of("pushNotification", "push", "other", "x"));
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertEquals(Map.of("tokens", Map.of("other", "x")), result.changed);
 		assertEquals(Map.of("tokens", Map.of("pushNotification", "push")), result.ownerMatches);
 		deduplicator.commit(result.ownerMatches);
@@ -109,7 +109,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void matchingBothOwnersRemovesTokensWrapper() {
 		final Map<String, Object> attributes = attributes("Europe/London", "push");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertTrue(result.changed.isEmpty());
 		assertEquals(attributes, result.ownerMatches);
 		assertTrue(persisted.isEmpty());
@@ -119,7 +119,7 @@ public class DeviceAttributeDeduplicatorTests {
 	public void confirmedValuesTakePriorityOverOwnerMatches() {
 		final Map<String, Object> attributes = attributes("Europe/London", "push");
 		deduplicator.commit(attributes);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertTrue(result.changed.isEmpty());
 		assertTrue(result.ownerMatches.isEmpty());
 	}
@@ -128,7 +128,7 @@ public class DeviceAttributeDeduplicatorTests {
 	public void changedConfirmedValueCanMatchCurrentOwner() {
 		deduplicator.commit(attributes("old", "old"));
 		final Map<String, Object> attributes = attributes("current", "current");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertTrue(result.changed.isEmpty());
 		assertEquals(attributes, result.ownerMatches);
 		assertEquals(attributes("old", "old"), deduplicator.readSynced());
@@ -137,7 +137,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void unexpectedOwnerTypesDoNotMatchStrings() {
 		final Map<String, Object> attributes = attributes("1", "true");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes(1, true));
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes(1, true));
 		assertEquals(attributes, result.changed);
 		assertTrue(result.ownerMatches.isEmpty());
 	}
@@ -145,7 +145,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void unexpectedOwnerTokensContainerDoesNotMatch() {
 		final Map<String, Object> attributes = attributes("current", "push");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(
 			attributes,
 			Map.of("tokens", "push")
 		);
@@ -161,13 +161,13 @@ public class DeviceAttributeDeduplicatorTests {
 		assertEquals(Map.of("timezone", "", "pushNotification", ""), persisted);
 		assertEquals(attributes, deduplicator.readSynced());
 		assertTrue(deduplicator.filter(attributes, null).changed.isEmpty());
-		assertTrue(new DeviceAttributeDeduplicator(store).filter(attributes, null).changed.isEmpty());
+		assertTrue(new OperationalDataDeduplicator(store).filter(attributes, null).changed.isEmpty());
 	}
 
 	@Test
 	public void emptyStringsCanMatchOwners() {
 		final Map<String, Object> attributes = attributes("", "");
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertTrue(result.changed.isEmpty());
 		assertEquals(attributes, result.ownerMatches);
 	}
@@ -177,7 +177,7 @@ public class DeviceAttributeDeduplicatorTests {
 		final Map<String, Object> tokens = new LinkedHashMap<>();
 		final Map<String, Object> attributes = Map.of("tokens", tokens);
 		deduplicator.commit(attributes("stored", "stored"));
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertEquals(attributes, result.changed);
 		assertSame(tokens, result.changed.get("tokens"));
 		assertTrue(result.ownerMatches.isEmpty());
@@ -191,7 +191,7 @@ public class DeviceAttributeDeduplicatorTests {
 		tokens.put("other", sibling);
 		final Map<String, Object> attributes = Map.of("tokens", tokens);
 		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "push")));
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, null);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, null);
 		assertEquals(Map.of("tokens", Map.of("other", sibling)), result.changed);
 		assertEquals("push", tokens.get("pushNotification"));
 		assertSame(sibling, ((Map<?, ?>) result.changed.get("tokens")).get("other"));
@@ -206,7 +206,7 @@ public class DeviceAttributeDeduplicatorTests {
 		tokens.put(null, null);
 		final Map<String, Object> attributes = Map.of("tokens", tokens);
 		deduplicator.commit(attributes);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		final Map<?, ?> changedTokens = (Map<?, ?>) result.changed.get("tokens");
 		assertEquals(2, changedTokens.size());
 		assertEquals("non-string-key", changedTokens.get(1));
@@ -227,7 +227,7 @@ public class DeviceAttributeDeduplicatorTests {
 		nested.put("jsonNull", JSONObject.NULL);
 		final Map<String, Object> attributes = new LinkedHashMap<>(nested);
 		attributes.put("nested", nested);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertEquals(attributes, result.changed);
 		assertSame(nested, result.changed.get("nested"));
 		assertSame(unsupported, result.changed.get("unsupported"));
@@ -257,7 +257,7 @@ public class DeviceAttributeDeduplicatorTests {
 		};
 		for (final Object value : unexpected) {
 			final Map<String, Object> attributes = attributes(value, value);
-			final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+			final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 			assertEquals(attributes, result.changed);
 			assertSame(value, result.changed.get("timezone"));
 			assertSame(attributes.get("tokens"), result.changed.get("tokens"));
@@ -303,7 +303,7 @@ public class DeviceAttributeDeduplicatorTests {
 			Map.of("pushNotification", "push", "nested", custom, "liveActivityStart", List.of("ios-only"))
 		);
 		deduplicator.commit(attributes);
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertEquals(
 			Map.of("custom", custom, "tokens", Map.of("nested", custom, "liveActivityStart", List.of("ios-only"))),
 			result.changed
@@ -318,7 +318,7 @@ public class DeviceAttributeDeduplicatorTests {
 		final Map<String, Object> cyclic = new LinkedHashMap<>();
 		cyclic.put("self", cyclic);
 		final Map<String, Object> attributes = Map.of("custom", cyclic, "tokens", Map.of("other", cyclic));
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(attributes, attributes);
 		assertSame(cyclic, result.changed.get("custom"));
 		assertSame(attributes.get("tokens"), result.changed.get("tokens"));
 		assertTrue(result.ownerMatches.isEmpty());
@@ -332,7 +332,7 @@ public class DeviceAttributeDeduplicatorTests {
 		deduplicator.commit(Map.of("tokens", Map.of("pushNotification", "token-2", "other", "ignored")));
 		assertEquals(attributes("Asia/Tokyo", "token-2"), deduplicator.readSynced());
 		deduplicator.commit(Map.of("timezone", "Europe/London", "other", "ignored"));
-		assertEquals(attributes("Europe/London", "token-2"), new DeviceAttributeDeduplicator(store).readSynced());
+		assertEquals(attributes("Europe/London", "token-2"), new OperationalDataDeduplicator(store).readSynced());
 		assertEquals(Map.of("timezone", "Europe/London", "pushNotification", "token-2"), persisted);
 	}
 
@@ -364,7 +364,7 @@ public class DeviceAttributeDeduplicatorTests {
 		deduplicator.clear();
 		assertEquals(Map.of("other", "keep"), persisted);
 		assertTrue(deduplicator.readSynced().isEmpty());
-		assertTrue(new DeviceAttributeDeduplicator(store).readSynced().isEmpty());
+		assertTrue(new OperationalDataDeduplicator(store).readSynced().isEmpty());
 		assertEquals(
 			attributes("Europe/London", "push"),
 			deduplicator.filter(attributes("Europe/London", "push"), null).changed
@@ -377,7 +377,7 @@ public class DeviceAttributeDeduplicatorTests {
 	@Test
 	public void nullAndEmptyAttributeMapsDoNotWrite() {
 		assertTrue(deduplicator.filter(null, null).changed.isEmpty());
-		final DeviceAttributeDeduplicator.FilterResult result = deduplicator.filter(Map.of(), attributes("x", "y"));
+		final OperationalDataDeduplicator.FilterResult result = deduplicator.filter(Map.of(), attributes("x", "y"));
 		assertTrue(result.changed.isEmpty());
 		assertTrue(result.ownerMatches.isEmpty());
 		deduplicator.commit(null);

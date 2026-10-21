@@ -86,7 +86,7 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
-	public void ruleResponseListener_sendsForwardedDeviceAttributesToEdge() {
+	public void ruleResponseListener_sendsForwardedOperationalDataToEdge() {
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 		final List<Event> dispatched = new ArrayList<>();
 		doAnswer(call -> {
@@ -97,22 +97,22 @@ public class IdentityExtensionTests {
 			.dispatch(any());
 		extension.onRegistered();
 		final Event original = new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
 			EventSource.REQUEST_CONTENT
 		)
 			.setEventData(Map.of("timezone", "Asia/Tokyo"))
 			.build();
-		extension.handleDeviceAttributes(original);
+		extension.handleOperationalData(original);
 		final Event operational = dispatched.get(0);
-		assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE, operational.getType());
+		assertEquals(IdentityConstants.OperationalData.OPERATIONAL_DATA_TYPE, operational.getType());
 		assertEquals(original.getUniqueIdentifier(), operational.getParentID());
 
 		final ArgumentCaptor<ExtensionEventListener> rules = ArgumentCaptor.forClass(ExtensionEventListener.class);
 		verify(mockExtensionApi)
 			.registerEventListener(
 				eq(EventType.EDGE_IDENTITY),
-				eq(IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE),
+				eq(IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE),
 				rules.capture()
 			);
 		rules
@@ -121,14 +121,14 @@ public class IdentityExtensionTests {
 				new Event.Builder(
 					"Forward",
 					EventType.EDGE_IDENTITY,
-					IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE
+					IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE
 				)
 					.setEventData(Map.of("timezone", "Asia/Tokyo"))
 					.chainToParentEvent(operational)
 					.build()
 			);
 		final Event edge = dispatched.get(1);
-		assertEquals(IdentityConstants.DeviceAttributes.BYPASS_TYPE, edge.getType());
+		assertEquals(IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE, edge.getType());
 		assertEquals(EventSource.REQUEST_CONTENT, edge.getSource());
 		assertEquals("Asia/Tokyo", edge.getEventData().get("timezone"));
 
@@ -137,7 +137,7 @@ public class IdentityExtensionTests {
 		);
 		verify(mockExtensionApi)
 			.registerEventListener(
-				eq(IdentityConstants.DeviceAttributes.BYPASS_TYPE),
+				eq(IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE),
 				eq(EventSource.RESPONSE_CONTENT),
 				edgeResults.capture()
 			);
@@ -146,7 +146,7 @@ public class IdentityExtensionTests {
 			.hear(
 				new Event.Builder(
 					"Device Attributes Response",
-					IdentityConstants.DeviceAttributes.BYPASS_TYPE,
+					IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE,
 					EventSource.RESPONSE_CONTENT
 				)
 					.setEventData(Map.of("status", "success"))
@@ -163,20 +163,24 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
-	public void deviceAttributeAndResetEvents_waitForBootup() {
+	public void operationalDataAndResetEvents_waitForBootup() {
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
 		when(mockIdentityState.bootupIfReady(any())).thenReturn(false);
 		for (final Event event : new Event[] {
 			new Event.Builder(
 				"Forward",
 				EventType.EDGE_IDENTITY,
-				IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE
+				IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE
 			)
 				.build(),
-			new Event.Builder("Response", IdentityConstants.DeviceAttributes.BYPASS_TYPE, EventSource.RESPONSE_CONTENT)
+			new Event.Builder(
+				"Response",
+				IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE,
+				EventSource.RESPONSE_CONTENT
+			)
 				.build(),
 			new Event.Builder(
-				IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+				IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 				EventType.EDGE_IDENTITY,
 				EventSource.REQUEST_CONTENT
 			)
@@ -215,12 +219,12 @@ public class IdentityExtensionTests {
 		verify(mockExtensionApi)
 			.registerEventListener(
 				eq(EventType.EDGE_IDENTITY),
-				eq(IdentityConstants.DeviceAttributes.RULE_RESPONSE_SOURCE),
+				eq(IdentityConstants.OperationalData.RULE_RESPONSE_SOURCE),
 				any()
 			);
 		verify(mockExtensionApi)
 			.registerEventListener(
-				eq(IdentityConstants.DeviceAttributes.BYPASS_TYPE),
+				eq(IdentityConstants.OperationalData.EDGE_DEVICE_ATTRIBUTES_TYPE),
 				eq(EventSource.RESPONSE_CONTENT),
 				any()
 			);
@@ -228,33 +232,33 @@ public class IdentityExtensionTests {
 	}
 
 	@Test
-	public void test_handleDeviceAttributes_sendsDataToRulesEngine() {
+	public void test_handleOperationalData_sendsDataToRulesEngine() {
 		final Event event = new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
 			EventSource.REQUEST_CONTENT
 		)
-			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIME_ZONE, "UTC"))
 			.build();
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		extension.handleDeviceAttributes(event);
+		extension.handleOperationalData(event);
 
 		final ArgumentCaptor<Event> response = ArgumentCaptor.forClass(Event.class);
 		verify(mockExtensionApi).dispatch(response.capture());
-		assertEquals(IdentityConstants.DeviceAttributes.OPERATIONAL_DATA_TYPE, response.getValue().getType());
+		assertEquals(IdentityConstants.OperationalData.OPERATIONAL_DATA_TYPE, response.getValue().getType());
 		assertEquals(event.getUniqueIdentifier(), response.getValue().getParentID());
-		assertEquals("UTC", response.getValue().getEventData().get(IdentityConstants.DeviceAttributes.TIME_ZONE));
+		assertEquals("UTC", response.getValue().getEventData().get(IdentityConstants.OperationalData.TIME_ZONE));
 	}
 
 	@Test
-	public void test_handleDeviceAttributes_doesNotReadDedupConfigurationBeforeRules() {
+	public void test_handleOperationalData_doesNotReadDedupConfigurationBeforeRules() {
 		final Event event = new Event.Builder(
-			IdentityConstants.EventNames.UPDATE_DEVICE_ATTRIBUTES,
+			IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
 			EventType.EDGE_IDENTITY,
 			EventSource.REQUEST_CONTENT
 		)
-			.setEventData(Collections.singletonMap(IdentityConstants.DeviceAttributes.TIME_ZONE, "UTC"))
+			.setEventData(Collections.singletonMap(IdentityConstants.OperationalData.TIME_ZONE, "UTC"))
 			.build();
 		when(
 			mockExtensionApi.getSharedState(
@@ -268,14 +272,14 @@ public class IdentityExtensionTests {
 				new SharedStateResult(
 					SharedStateStatus.SET,
 					Collections.singletonMap(
-						IdentityConstants.DeviceAttributes.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
+						IdentityConstants.OperationalData.OPTIMIZE_OPERATIONAL_PROFILE_DATA_SYNC,
 						false
 					)
 				)
 			);
 
 		extension = new IdentityExtension(mockExtensionApi, mockIdentityState);
-		extension.handleDeviceAttributes(event);
+		extension.handleOperationalData(event);
 
 		verify(mockExtensionApi, never()).getSharedState(any(), any(), anyBoolean(), any());
 	}
@@ -1134,7 +1138,7 @@ public class IdentityExtensionTests {
 		extension.handleRequestReset(resetEvent);
 
 		verify(mockIdentityState).resetIdentifiers();
-		// reset also clears the stored profile and device attributes (and updates their shared states) for the new ECID
+		// reset also clears the stored profile attributes and operational data (and updates their shared states) for the new ECID
 		verify(mockIdentityState).clearProfileAttributes(any(), eq(resetEvent));
 		verify(mockExtensionApi)
 			.createSharedState(
