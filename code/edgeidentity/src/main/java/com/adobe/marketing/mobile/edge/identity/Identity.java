@@ -232,6 +232,48 @@ public class Identity {
 	}
 
 	/**
+	 * Updates JSON-compatible operational data that should be delivered to the Edge Network
+	 * independently of collect consent. Launch rules decide which values are sent. By default, the timezone and
+	 * push token are sent only when they differ from the last value Edge confirmed. When collect consent is "y", or
+	 * the Consent extension is not registered, they are also not sent when they match the timezone set through the
+	 * profile attributes API or Messaging's push token. All other values are always sent; set
+	 * {@code edgeidentity.optimizeOperationalProfileDataSync} to {@code false} in Configuration to send every update.
+	 * Requests are sent one at a time. Values are not validated by this API and are sent as
+	 * provided. Only string timezone and push-token values are deduplicated. Any {@code app} value is replaced by
+	 * the SDK.
+	 *
+	 * @param attributes map of attribute names to JSON-compatible values
+	 */
+	public static void updateOperationalData(@NonNull final Map<String, Object> attributes) {
+		try {
+			if (attributes == null || attributes.isEmpty()) {
+				Log.warning(
+					IdentityConstants.LOG_TAG,
+					LOG_SOURCE,
+					"Unable to update operational data, attributes are null or empty."
+				);
+				return;
+			}
+			final Event event = new Event.Builder(
+				IdentityConstants.EventNames.UPDATE_OPERATIONAL_DATA,
+				EventType.EDGE_IDENTITY,
+				IdentityConstants.OperationalData.REQUEST_SOURCE
+			)
+				.setEventData(new HashMap<>(attributes))
+				.build();
+			MobileCore.dispatchEvent(event);
+		} catch (Exception exception) {
+			// The caller's map may be changed on another thread while it is copied; never throw into the app.
+			Log.warning(
+				IdentityConstants.LOG_TAG,
+				LOG_SOURCE,
+				"Unable to update operational data, an error occurred: %s",
+				exception.getLocalizedMessage()
+			);
+		}
+	}
+
+	/**
 	 * Removes the identity from the stored client-side {@link IdentityMap}. The Identity extension will stop sending this identifier.
 	 * This does not clear the identifier from the User Profile Graph.
 	 *

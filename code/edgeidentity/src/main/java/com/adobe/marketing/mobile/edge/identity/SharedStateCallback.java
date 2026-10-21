@@ -35,4 +35,11 @@ interface SharedStateCallback {
 	 * @param event current event for which to set the shared state; if null is passed, the next shared state version will be set
 	 */
 	void createXDMSharedState(final Map<String, Object> state, final Event event);
+
+	/**
+	 * Publishes the {@code profileAttributes} standard shared state.
+	 *
+	 * @param event current event for which to set the shared state; if null is passed, the next shared state version will be set
+	 */
+	void publishProfileAttributes(final Event event);
 }

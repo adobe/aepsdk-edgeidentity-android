@@ -67,6 +67,12 @@ public class IdentityStorageManagerTests {
 	}
 
 	@Test
+	public void testStorageManager_doesNotCreateOperationalDataTransactionStore() {
+		new IdentityStorageManager(mockDataStoreService);
+		verify(mockDataStoreService, never()).getNamedCollection("operationalDataDataStore");
+	}
+
+	@Test
 	public void testLoadPropertiesFromPersistence_edgeIdentityDataStoreIsNull() {
 		// setup
 		when(mockDataStoreService.getNamedCollection(IdentityConstants.DataStoreKey.DATASTORE_NAME)).thenReturn(null);
